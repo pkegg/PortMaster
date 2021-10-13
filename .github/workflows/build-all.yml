@@ -1,8 +1,8 @@
 name: build-all
 
 on:
-  push:
-    #keep manual for now
+  #keep manual for now
+  #push:
     #branches:
     #  - main
   workflow_dispatch:
