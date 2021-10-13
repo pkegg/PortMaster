@@ -5,4 +5,4 @@ set -e
 # - that git/download is checked out in 'source'
 # - the current directory is source
 
-make -f Makefile.libretro platform=arm64 clean all
+make -f Makefile.libretro platform=arm64 all
