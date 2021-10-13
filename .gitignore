@@ -1,0 +1,5 @@
+**/source/
+.env
+**/.ccache
+**/pkg
+**/bld

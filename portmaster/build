@@ -1,0 +1,13 @@
+#! /bin/bash
+set -e
+
+source "./package.info"
+
+mkdir -p pkg/libs
+cp /lib/aarch64-linux-gnu/libpcre.so.3 pkg/libs
+cp /usr/lib/aarch64-linux-gnu/libunistring.so.2 pkg/libs
+cp /usr/lib/aarch64-linux-gnu/libpsl.so.5  pkg/libs
+cp /usr/lib/aarch64-linux-gnu/libpcre2-8.so.0 pkg/libs
+cp oga-controls/source/oga_controls pkg
+
+echo "$PKG_VERSION" > pkg/version
