@@ -19,7 +19,6 @@ jobs:
     strategy:
       matrix:
         build: 
-          - portmaster
           - 2048
           - cdogs
           - hcl
@@ -55,4 +54,5 @@ jobs:
         id: build
         run: |
            set -e
+           ./build portmaster
            ./build  ${{matrix.build}}
