@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: portmaster
+  IMAGE_NAME: pkegg/portmaster
 
 jobs:
 
