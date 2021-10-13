@@ -1,4 +1,4 @@
-name: build-all
+name: build-matrix
 
 on:
   #keep manual for now
