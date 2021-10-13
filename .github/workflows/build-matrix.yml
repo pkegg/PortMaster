@@ -18,7 +18,12 @@ jobs:
       packages: write
     strategy:
       matrix:
-        build: [portmaster, cdogs]
+        build: 
+          - portmaster
+          - 2048
+          - cdogs
+          - hcl
+          - moonlight
     steps:
       - name: Checkout
         uses: actions/checkout@v2
