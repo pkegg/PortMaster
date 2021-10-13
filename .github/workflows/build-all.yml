@@ -1,9 +1,10 @@
-name: port-builder-dockerfile
+name: build-all
 
 on:
   push:
-    branches:
-      - main
+    #keep manual for now
+    #branches:
+    #  - main
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
