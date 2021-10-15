@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.event.repository.full_name }}-build
+  IMAGE_NAME: ${{ github.event.repository.full_name }}/build
 
 jobs:
 
@@ -51,23 +51,21 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: lowercase IMAGE_NAME
         run: |
-          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >>${GITHUB_ENV}
+          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+          echo "BRANCH_NAME=${GITHUB_REF##*/}" >> ${GITHUB_ENV}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY}}/${{ env.IMAGE_NAME_LOWER }}
-      - name: Build and push docker image
-        run: |
-          docker buildx build . --platform  ${{matrix.platform}} \
-             --push --tag ${{ steps.meta.outputs.tags }}
-      #- name: Build and push Docker image
-      #  uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-      #  with:
-      #    platforms: ${{matrix.platform}}
-      #    context: .
-      #    push: true
-      #    cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-cache
-      #    cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-cache,mode=max
-      #    tags: ${{ steps.meta.outputs.tags }} --labels 
-      #    labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          platforms: ${{matrix.platform}}
+          context: .
+          push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-cache:${{ env.BRANCH_NAME }}
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-cache:${{ env.BRANCH_NAME }},mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
