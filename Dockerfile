@@ -39,10 +39,11 @@ RUN apt-get update && apt-get -y install build-essential \
                                  libsdl2-ttf-dev \
                                  ccache \
                                  libpsl5 \
-                                 libpcre2-8-0
+                                 libpcre2-8-0 \
+                                 zip 
 
 # Copy the build scripts so they can be run in the container if desired
-COPY build* ../
+COPY build ../
 COPY portmaster/ ../portmaster/
 WORKDIR ../
 RUN USE_DOCKER=false ./build portmaster
