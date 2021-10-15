@@ -18,17 +18,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        # Platforms needed:
-        # - arm64/v8 - 64-bit compiling for arm (qemu)
-        # - arm/v7 - 32-bit compiling for arm (qemu).
-        # - amd64 - For crosscompiling to arm64/arm (native - "faster")
-        platform: 
-          - linux/arm64/v8
-          - linux/arm/v7
-          - linux/amd64
-          
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -58,11 +48,15 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY}}/${{ env.IMAGE_NAME_LOWER }}
-
+          
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          platforms: ${{matrix.platform}}
+          # Platforms needed:
+          # - arm64/v8 - 64-bit compiling for arm (qemu)
+          # - arm/v7 - 32-bit compiling for arm (qemu).
+          # - amd64 - For crosscompiling to arm64/arm (native - "faster")
+          platforms: linux/arm64/v8,linux/arm/v7,linux/amd64
           context: .
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/cache:${{ env.BRANCH_NAME }}
