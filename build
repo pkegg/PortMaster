@@ -67,7 +67,6 @@ function build_package() {
   if [[ -z "$DOCKER_PLATFORM" ]]; then
     DOCKER_PLATFORM="linux/arm64/v8"
   fi
-
   if [[ -f "${PACKAGE}/Dockerfile" ]]; then
     echo "${PACKAGE}/Dockerfile exists"
     DOCKER_IMAGE=pkegg/port-builder/${PACKAGE}
@@ -106,12 +105,18 @@ function build_package() {
   fi
   
   pushd "${SOURCE_DIR}" &> /dev/null
-  # Get .env file ready
-  env | grep "=" > .env
+
   
-  echo "building ${PACKAGE} with docker..."
-  ${SUDO} ${DOCKER_CMD} run --platform ${DOCKER_PLATFORM} ${PODMAN_ARGS} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PWD}/${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "${BUILD_DIR}/build"
-  echo "bdone"
+  if [[ "${USE_DOCKER}" == "false" ]]; then
+    echo "building ${PACKAGE} without docker..."
+    "${BUILD_DIR}/build"
+  else
+    echo "building ${PACKAGE} with docker..."
+    # Get .env file ready
+    env | grep "=" > .env
+    ${SUDO} ${DOCKER_CMD} run --platform ${DOCKER_PLATFORM} ${PODMAN_ARGS} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PWD}/${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "${BUILD_DIR}/build"
+  fi
+  echo "build done"
   popd &> /dev/null
 
   if [[ -d "${PACKAGE_DIR}/pkg" ]]; then
