@@ -1,4 +1,4 @@
-FROM debian:buster-20211011-slim
+FROM debian:buster-20211011
 
 RUN apt-get update && apt-get -y install build-essential \
                                  git \
