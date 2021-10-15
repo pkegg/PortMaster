@@ -37,7 +37,12 @@ RUN apt-get update && apt-get -y install build-essential \
                                  libgbm-dev \
                                  libsdl2-ttf-2.0-0 \
                                  libsdl2-ttf-dev \
-                                 ccache
+                                 ccache \
+                                 libpsl5 \
+                                 libpcre2-8-0
 
 # Copy the build scripts so they can be run in the container if desired
 COPY build* ../
+COPY portmaster/ ../portmaster/
+WORKDIR ../
+RUN USE_DOCKER=false ./build portmaster
