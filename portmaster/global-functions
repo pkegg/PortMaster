@@ -1,6 +1,6 @@
 #! /bin/bash
 # Common functions used across ports
-#  - Will be copied into the package next to run.sh
+#  - Will be copied into the package next to run.sh for every port
 
 function get_device() {
   local param_device="unknown"
