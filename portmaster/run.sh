@@ -19,21 +19,16 @@ ROMS_DIR=$(get_roms_dir)
 TOOLS_DIR=$(get_tools_dir)
 HOTKEY=$(get_hotkey)
 CONSOLE=$(get_console)
-OUTPUT=$(get_output)
-GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian
+GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
 WEBSITE="https://raw.githubusercontent.com/${GITHUB_ORG}/PortMaster/main/"
 WEBSITE_IN_CHINA=
 
-echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR}"
+echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR}" 
 
 ESUDO="sudo"
-GREP="grep"
-WGET="wget"
 if [ "${OS}" == "351ELEC" ]; then
   ESUDO=""
   export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/storage/roms/ports/PortMaster/libs"
-  GREP="/storage/roms/ports/PortMaster/grep"
-  WGET="/storage/roms/ports/PortMaster/wget"
 elif [ "${OS}" == "unknown" ]; then
   $ESUDO mkdir -p "${ROMS_DIR}" "${TOOLS_DIR}"
 fi
@@ -41,13 +36,15 @@ fi
 $ESUDO chmod 666 ${CONSOLE}
 export TERM=linux
 export XDG_RUNTIME_DIR=/run/user/$UID/
-printf "\033c" > ${CONSOLE}
-dialog --clear
+
+#TODO: Does `clear` work on all systems?  If yes - use that for clarity
+printf "\033c" >> ${CONSOLE}
+dialog --clear --stdout
 
 HEIGHT="15"
 WIDTH="55"
 
-if [[ "${DEVICE}" == "anbernic-rg351p" || "${DEVICE}" == "anbernic-rg351v" ]]; then
+if [[ "${DEVICE}" == "rg351p" || "${DEVICE}" == "rg351v" ]]; then
   if [[ "${OS}" == "ArkOS" ]]; then
     $ESUDO setfont /usr/share/consolefonts/Lat7-Terminus20x10.psf.gz
     HEIGHT="20"
@@ -64,15 +61,15 @@ elif [[ "${DEVICE}" == "chi" ]]; then
 fi
 
 cd "$TOOLS_DIR"
-$ESUDO "$DIR/oga_controls" PortMaster.sh "$DEVICE" > /dev/null 2>&1 &
+$ESUDO "$DIR/oga_controls" PortMaster.sh "$DEVICE" &> /dev/null &
 
 curversion="$(curl "file://$(realpath "${DIR}")/version")"
 
 GW=$(ip route | awk '/default/ { print $3 }')
 if [ -z "$GW" ]; then
-  dialog --clear --backtitle "PortMaster v$curversion" --title "${TITLE}" --clear \
+  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "${TITLE}" \
   --msgbox "\n\nYour network connection doesn't seem to be working. \
-  \nDid you make sure to configure your wifi connection?" $HEIGHT $WIDTH &> ${CONSOLE}
+  \nDid you make sure to configure your wifi connection?" $HEIGHT $WIDTH
   $ESUDO kill -9 "$(pidof oga_controls)"
   $ESUDO systemctl restart oga_events &
   exit 0
@@ -87,7 +84,7 @@ in_china=$(in_china)
 if [[ "$in_china" == "true" ]]; then
   website="${WEBSITE_IN_CHINA}"
 fi
-echo "In china: ${in_china}" > /dev/stderr
+echo "In china: ${in_china}"
 
 if [ ! -d "/dev/shm/portmaster" ]; then
   mkdir /dev/shm/portmaster
@@ -117,13 +114,13 @@ function UpdateCheck() {
 
   if [[ "$gitversion" != "$curversion" ]]; then
     wget -t 3 -T 60 -q --show-progress "${WEBSITE}PortMaster.zip" -O ${portmaster_download_zip} 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog \
-          --progressbox "Downloading and installing PortMaster update..." "$HEIGHT" "$WIDTH" > "${CONSOLE}"
+          --progressbox "Downloading and installing PortMaster update..." "$HEIGHT" "$WIDTH"
    	if [ "${PIPESTATUS[0]}" -eq 0 ]; then
          unzip -X -o ${portmaster_download_zip} -d "${TOOLS_DIR}/"
    	  if [[ "TheRA" == "${OS}" ]]; then
    		  $ESUDO chmod -R 777 "$TOOLS_DIR/PortMaster"
    	  fi
-   	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --clear --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH" &> "${CONSOLE}"
+   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH"
    	  
        oga_pid="$(pidof oga_controls)"
        if [[ -n "${oga_pid}" ]];then
@@ -133,11 +130,11 @@ function UpdateCheck() {
    	  $ESUDO systemctl restart oga_events &
    	  exit 0
    	else
-   	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --clear --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH" &> "${CONSOLE}"
+   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH"
    	  $ESUDO rm -f ${portmaster_download_zip}
    	fi
   else
-    dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --clear --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH" &> "${CONSOLE}"
+    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH"
   fi
 }
 
@@ -152,35 +149,35 @@ PortInfoInstall() {
   installloc=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=locat=").*?(?=")')
   porter=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=porter=").*?(?=")')
 
-  if dialog --clear --backtitle "PortMaster v$curversion" \
-            --title "$choice" --clear \
+  if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
+            --title "$choice" \
             --yesno "\n$msgtxt \n\nPorted By: $porter\n\nWould you like to continue to install this port?" \
             $HEIGHT $WIDTH &> ${CONSOLE}; then
   
     wget -t 3 -T 60 -q --show-progress ${port_url} -O \
 	    $portmaster_tmp/$installloc 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox \
-		"Downloading ${1} package..." $HEIGHT $WIDTH > ${CONSOLE}
+		"Downloading ${1} package..." $HEIGHT $WIDTH
 
 		if [ ${PIPESTATUS[0]} -eq 0 ] ; then
           
-      if unzip -o $portmaster_tmp/$installloc -d ${ROMS_DIR}/ports/ > ${OUTPUT}; then
+      if unzip -o $portmaster_tmp/$installloc -d ${ROMS_DIR}/ports/; then
   		  if [[ "$OS" == "TheRA" ]]; then
   		    $ESUDO chmod -R 777 ${ROMS_DIR}/ports
   		  fi
   			if [[ "${OS}" == "351ELEC" ]]; then
   			  sed -i 's/sudo //g' ${ROMS_DIR}/ports/*.sh
   			fi
-  		    dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --clear --msgbox "\n\n$choice installed successfully. \
-  		    \n\nMake sure to restart EmulationStation in order to see it in the ports menu." $HEIGHT $WIDTH &> ${CONSOLE}
+  		    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice installed successfully. \
+  		    \n\nMake sure to restart EmulationStation in order to see it in the ports menu." $HEIGHT $WIDTH
   		  else
-  		    dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --clear --msgbox "\n\n$choice did NOT install. \
-  		    \n\nYour roms partition seems to be full." $HEIGHT $WIDTH &> ${CONSOLE}
+  		    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice"--msgbox "\n\n$choice did NOT install. \
+  		    \n\nYour roms partition seems to be full." $HEIGHT $WIDTH
   		  fi
       else
-        dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --clear --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH &> ${CONSOLE}
+        dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH
       fi
   	else
-  		  dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --clear --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH &> ${CONSOLE}
+  		  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH
   	fi
     $ESUDO rm -f $portmaster_tmp/$installloc
 
@@ -190,8 +187,8 @@ userExit() {
   rm -f /dev/shm/portmaster/ports.md
   $ESUDO kill -9 $(pidof oga_controls)
   $ESUDO systemctl restart oga_events &
-  dialog --clear
-  printf "\033c" > ${CONSOLE}
+  dialog --clear --stdout
+  printf "\033c" >> ${CONSOLE}
   exit 0
 }
 
@@ -209,11 +206,11 @@ MainMenu() {
    	--backtitle "PortMaster v$curversion" \
    	--title "[ Main Menu ]" \
    	--no-collapse \
-   	--clear \
-	--cancel-label "$HOTKEY + Start to Exit" \
+   	--clear --stdout \
+	  --cancel-label "$HOTKEY + Start to Exit" \
     --menu "Available ports for install" $HEIGHT $WIDTH 15)
 
-    choices=$("${selection[@]}" "${options[@]}" &> ${CONSOLE}) || userExit
+    choices=$("${selection[@]}" "${options[@]}") || userExit
 
     for choice in $choices; do
       case $choice in
@@ -224,10 +221,10 @@ MainMenu() {
 }
 
 wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
-echo "done with ports.md" &> ${CONSOLE}
+echo_err "done with ports.md"
 
-if dialog --clear --backtitle "PortMaster v$curversion" \
-          --title "$1" --clear --yesno "\nWould you like to check for an update to the PortMaster tool?" \
+if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
+          --title "$1" --yesno "\nWould you like to check for an update to the PortMaster tool?" \
           $HEIGHT $WIDTH; then
    UpdateCheck
 fi

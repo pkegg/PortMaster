@@ -3,7 +3,6 @@ set -e
 
 # Current directory of the script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 source "${DIR}/global-functions"
 
 DEVICE="$(get_device)"
@@ -14,7 +13,7 @@ if [[ ! -f "${DIR}/conf/cdogs-sdl/options.cnf" ]]; then
   config_type=480 #oga, rk2020
   if [[ "${DEVICE}" == "ogs" ]]; then
     config_type=ogs
-  elif [[ "${DEVICE}" == "chi" || "${DEVICE}" == "anbernic-rg351v" || "${DEVICE}" == "anbernic-rg351mp"  ]]; then
+  elif [[ "${DEVICE}" == "chi" || "${DEVICE}" == "rg351v" || "${DEVICE}" == "rg351mp"  ]]; then
     config_type=640
   fi
   mv -f "${DIR}/conf/cdogs-sdl/options.cnf.${config_type}" "${DIR}/conf/cdogs-sdl/options.cnf"

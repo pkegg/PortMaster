@@ -69,10 +69,12 @@ function build_package() {
   fi
   if [[ -f "${PACKAGE}/Dockerfile" ]]; then
     echo "${PACKAGE}/Dockerfile exists"
-    DOCKER_IMAGE=pkegg/port-builder/${PACKAGE}
+    DOCKER_IMAGE=ghcr.io/pkegg/portmaster/${PACKAGE}:main #TODO: branch
   
     #make lower case as docker must be lowers
     DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
+
+    echo "docker image: ${DOCKER_IMAGE}"
 
     if [[ "${USE_DOCKER}" != "false" ]]; then
       pushd "${PACKAGE}" &> /dev/null
@@ -81,7 +83,18 @@ function build_package() {
     fi 
   else
     echo "${PACKAGE}/Dockerfile does not exist"
-    DOCKER_IMAGE=ghcr.io/pkegg/port-builder:main
+    DOCKER_IMAGE=ghcr.io/pkegg/portmaster:main
+  fi
+  if [[ -f "${PACKAGE}/Dockerfile.build" && "${USE_DOCKER}" != "false" ]]; then
+    echo "${PACKAGE}/Dockerfile.build exists"
+    DOCKER_IMAGE=pkegg/portmaster/${PACKAGE}.build
+  
+    #make lower case as docker must be lowers
+    DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
+
+    pushd "${PACKAGE}" &> /dev/null
+    docker buildx build --pull --platform ${DOCKER_PLATFORM} -f Dockerfile.build --tag "${DOCKER_IMAGE}" --load .
+    popd &> /dev/null
   fi
   
   if [[ -z "${DOCKER_WORK_DIR}" ]]; then

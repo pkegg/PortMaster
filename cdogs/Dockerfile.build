@@ -1,0 +1,9 @@
+FROM ghcr.io/pkegg/portmaster/cdogs:main
+     
+RUN mkdir -p ../cdogs
+WORKDIR ../cdogs
+COPY ./build ./
+COPY ./package.info ./
+COPY ./run.sh ./
+WORKDIR ../
+RUN USE_DOCKER=false ./build cdogs
