@@ -74,9 +74,11 @@ function build_package() {
     #make lower case as docker must be lowers
     DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
 
-    pushd "${PACKAGE}" &> /dev/null
-    docker buildx build --pull --platform ${DOCKER_PLATFORM} --tag "${DOCKER_IMAGE}" --load .
-    popd &> /dev/null
+    if [[ "${USE_DOCKER}" != "false" ]]; then
+      pushd "${PACKAGE}" &> /dev/null
+      docker buildx build --pull --platform ${DOCKER_PLATFORM} --tag "${DOCKER_IMAGE}" --load .
+      popd &> /dev/null
+    fi 
   else
     echo "${PACKAGE}/Dockerfile does not exist"
     DOCKER_IMAGE=ghcr.io/pkegg/port-builder:main
@@ -94,7 +96,7 @@ function build_package() {
   
   # Use 'sudo' if docker ps doesn't work.  In theory, other things than missing sudo could cause this.  But sudo needed is a common issue and easy to fix.
   SUDO=""
-  if ! docker ps -q 2> /dev/null 1> /dev/null && sudo docker ps -q> /dev/null; then
+  if ! docker ps -q &> /dev/null && sudo docker ps -q &> /dev/null; then
    SUDO="sudo"
   fi
   
