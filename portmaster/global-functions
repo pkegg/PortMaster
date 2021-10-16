@@ -1,5 +1,5 @@
 #! /bin/bash
-# Common functions used across ports
+# Common functions used across all ports
 #  - Will be copied into the package next to run.sh for every port
 
 function get_device() {
