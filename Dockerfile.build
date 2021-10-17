@@ -1,4 +1,4 @@
-FROM ghcr.io/pkegg/portmaster/build:main
+FROM ghcr.io/pkegg/portmaster:main
 
 # Copy the build scripts so they can be run in the container if desired
 COPY build ../
