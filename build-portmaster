@@ -14,7 +14,7 @@ IMAGE_BUILD=${IMAGE_BUILD_BASE}:${BRANCH}
 IMAGE_BUILD_CACHE=${IMAGE_BUILD_BASE}/cache:${BRANCH}
 
 if [[ "${DOCKER_PUSH}" == "true" ]]; then
-  IMAGE_CACHE_TO="--cache-to=type=registry,ref=${IMAGE_CACHE},mode=max"
+  IMAGE_CACHE_TO="--cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
 fi
 
 PLATFORM=linux/arm64/v8
@@ -25,7 +25,7 @@ docker buildx build --tag ${IMAGE} \
   --platform ${PLATFORM} .
 
 docker buildx build --tag ${IMAGE_BUILD} \
-  --cache-from ${IMAGE_BUILD_CACHE} \
+  --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
   ${IMAGE_CACHE_TO} \
   --platform ${PLATFORM} -f ${DOCKERFILE_BUILD} .
 
