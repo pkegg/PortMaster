@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
+BRANCH=main
+
+IMAGE_BASE=ghcr.io/pkegg/portmaster
 
 function build_package() {
   local PACKAGE="$1"
@@ -10,6 +13,7 @@ function build_package() {
   local SOURCE_DOCKER_DIR=source
   local BUILD_DIR=".."
   export CCACHE_DIR="../.ccache"
+  
   
   if [[ -z "$PACKAGE" ]]; then
     echo "Please specify package: $0 <package>"
@@ -69,7 +73,12 @@ function build_package() {
   fi
   if [[ -f "${PACKAGE}/Dockerfile" ]]; then
     echo "${PACKAGE}/Dockerfile exists"
-    DOCKER_IMAGE=ghcr.io/pkegg/portmaster/${PACKAGE}:main #TODO: branch
+    if [[ "${DOCKER_PUSH}" == "true" ]]; then
+      IMAGE_CACHE_TO="--cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+    fi
+
+    DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
+    DOCKER_IMAGE_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
   
     #make lower case as docker must be lowers
     DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
@@ -78,7 +87,10 @@ function build_package() {
 
     if [[ "${USE_DOCKER}" != "false" ]]; then
       pushd "${PACKAGE}" &> /dev/null
-      docker buildx build --pull --platform ${DOCKER_PLATFORM} --tag "${DOCKER_IMAGE}" --load .
+      docker buildx build --pull --platform ${DOCKER_PLATFORM} \
+        --tag "${DOCKER_IMAGE}" --load \
+        --cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE} \
+        ${IMAGE_CACHE_TO} .
       popd &> /dev/null
     fi 
   else

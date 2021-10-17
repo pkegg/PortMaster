@@ -47,4 +47,4 @@ jobs:
         id: build
         run: |
            set -e
-           ./build-all
+           DOCKER_PUSH=true ./build-all
