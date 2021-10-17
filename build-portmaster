@@ -17,7 +17,7 @@ if [[ "${DOCKER_PUSH}" == "true" ]]; then
   IMAGE_CACHE_TO="--cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
 fi
 
-PLATFORM=linux/arm64/v8
+PLATFORM=linux/arm64/v8,linux/arm/v7,linux/amd64
 
 docker buildx build --tag ${IMAGE} \
   --cache-from=type=registry,ref=${IMAGE_CACHE} \
