@@ -26,7 +26,7 @@ fi
 PLATFORM=linux/arm64/v8
 echo "IMAGE: ${IMAGE} IMAGE_CACHE: ${IMAGE_CACHE}"
 echo "IMAGE_CACHE_TO: ${IMAGE_CACHE_TO}"
-docker buildx build --builder portmaster-builder --tag ${IMAGE} \
+docker buildx build --tag ${IMAGE} \
   --cache-from=type=registry,ref=${IMAGE_CACHE} \
   ${IMAGE_CACHE_TO} \
   --platform ${PLATFORM} .
