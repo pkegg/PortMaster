@@ -1,0 +1,7 @@
+FROM ghcr.io/pkegg/portmaster/build:main
+
+# Copy the build scripts so they can be run in the container if desired
+COPY build ../
+COPY portmaster/ ../portmaster/
+WORKDIR ../
+RUN USE_DOCKER=false ./build portmaster

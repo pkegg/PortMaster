@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+BRANCH=main
+
+DOCKERFILE_BUILD=Dockerfile.build
+
+IMAGE_BASE=ghcr.io/pkegg/portmaster
+IMAGE=${IMAGE_BASE}:${BRANCH}
+IMAGE_CACHE=${IMAGE_BASE}/cache:${BRANCH}
+
+IMAGE_BUILD_BASE=${IMAGE_BASE}/build
+IMAGE_BUILD=${IMAGE_BUILD_BASE}:${BRANCH}
+IMAGE_BUILD_CACHE=${IMAGE_BUILD_BASE}/cache:${BRANCH}
+
+if [[ "${DOCKER_PUSH}" == "true" ]]; then
+  IMAGE_CACHE_TO="--cache-to=type=registry,ref=${IMAGE_CACHE},mode=max"
+fi
+
+PLATFORM=linux/arm64/v8
+
+docker buildx build --tag ${IMAGE} \
+  --cache-from=type=registry,ref=${IMAGE_CACHE} \
+  ${IMAGE_CACHE_TO} \
+  --platform ${PLATFORM} .
+
+docker buildx build --tag ${IMAGE_BUILD} \
+  --cache-from ${IMAGE_BUILD_CACHE} \
+  ${IMAGE_CACHE_TO} \
+  --platform ${PLATFORM} -f ${DOCKERFILE_BUILD} .
+
+./build portmaster

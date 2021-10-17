@@ -184,23 +184,35 @@ PortInfoInstall() {
 }
 
 userExit() {
+  echo "removing ports.md"
   rm -f /dev/shm/portmaster/ports.md
-  $ESUDO kill -9 $(pidof oga_controls)
-  $ESUDO systemctl restart oga_events &
-  dialog --clear --stdout
+
+  echo "checking oga_controls"
+  if pidof oga_controls; then
+    echo "killing oga_controls"
+    $ESUDO kill -9 $(pidof oga_controls);
+  fi
+  echo "checking oga_events"
+  if systemctl list-units --full -all | grep -Fq "oga_events"; then
+    echo "restarting oga_events"
+    $ESUDO systemctl restart oga_events &
+  fi
+  echo "clearing dialog"
+  #dialog --clear
+  echo "clearing console"
   printf "\033c" >> ${CONSOLE}
+  echo "done"
   exit 0
 }
 
 MainMenu() {
   echo "in main menu"
 
-  echo "options: ${options}"
   local options=(
    $(cat /dev/shm/portmaster/ports.md | grep -oP '(?<=Title=").*?(?=")')
   )
 
-
+  echo "generating choices"
   while true; do
     selection=(dialog \
    	--backtitle "PortMaster v$curversion" \
@@ -210,7 +222,9 @@ MainMenu() {
 	  --cancel-label "$HOTKEY + Start to Exit" \
     --menu "Available ports for install" $HEIGHT $WIDTH 15)
 
-    choices=$("${selection[@]}" "${options[@]}") || userExit
+    echo "choice"
+    choices=$("${selection[@]}" "${options[@]}" &> /dev/null) || userExit
+    echo "choice done"
 
     for choice in $choices; do
       case $choice in
@@ -219,6 +233,7 @@ MainMenu() {
     done
   done
 }
+echo "done choice"
 
 wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
 echo_err "done with ports.md"
@@ -230,3 +245,4 @@ if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
 fi
 
 MainMenu
+

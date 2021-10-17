@@ -83,7 +83,7 @@ function build_package() {
     fi 
   else
     echo "${PACKAGE}/Dockerfile does not exist"
-    DOCKER_IMAGE=ghcr.io/pkegg/portmaster:main
+    DOCKER_IMAGE=ghcr.io/pkegg/portmaster/build:main
   fi
   if [[ -f "${PACKAGE}/Dockerfile.build" && "${USE_DOCKER}" != "false" ]]; then
     echo "${PACKAGE}/Dockerfile.build exists"
