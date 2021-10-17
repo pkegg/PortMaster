@@ -7,6 +7,7 @@ on:
     paths:
       - 'Dockerfile'
       - build
+      - build-portmaster
       - portmaster/**
   workflow_dispatch:
 env:
