@@ -4,6 +4,6 @@ set -e
 # assumptions
 # - that git/download is checked out in 'source'
 # - the current directory is source
-mkdir build && cd build
+mkdir -p bld && cd bld
 cmake ..
-make -j4 # -jN = build on N threads
+make smw -j4 # -jN = build on N threads
