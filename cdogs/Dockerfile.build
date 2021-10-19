@@ -6,4 +6,4 @@ COPY ./build ./cdogs
 COPY ./package.info ./cdogs
 COPY ./run.sh ./cdogs
 
-RUN ls -lah && USE_DOCKER=false ./build cdogs
+RUN USE_DOCKER=false ./build cdogs
