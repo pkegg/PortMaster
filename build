@@ -94,6 +94,7 @@ function build_package() {
         --cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE} \
         ${IMAGE_CACHE_TO} .
       popd &> /dev/null
+      echo "tagged: ${DOCKER_IMAGE}"
     fi 
   else
     echo "${PACKAGE}/Dockerfile does not exist"
@@ -109,7 +110,6 @@ function build_package() {
     pushd "${PACKAGE}" &> /dev/null
     docker buildx build --platform ${DOCKER_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE}" \
-        --cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE} \
         ${IMAGE_CACHE_TO} .
         .
     popd &> /dev/null

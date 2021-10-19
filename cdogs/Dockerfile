@@ -1,4 +1,4 @@
-FROM ghcr.io/pkegg/port-builder:main
+FROM ghcr.io/pkegg/portmaster/build:main
 
 RUN apt-get update \
     && apt-get install -y libgtk-3-dev \
