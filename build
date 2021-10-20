@@ -75,8 +75,11 @@ function build_package() {
     echo "${PACKAGE}/Dockerfile exists"
     if [[ "${DOCKER_PUSH}" == "true" ]]; then
       IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+      IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE}"
     else
-      IMAGE_CACHE_TO="--load"
+      IMAGE_CACHE_TO="--load --builder default"
+      IMAGE_CACHE_FROM=""
+
     fi
 
     DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
@@ -91,7 +94,7 @@ function build_package() {
       pushd "${PACKAGE}" &> /dev/null
       docker buildx build --platform ${DOCKER_PLATFORM} \
         --tag "${DOCKER_IMAGE}" \
-        --cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE} \
+        ${IMAGE_CACHE_FROM} \
         ${IMAGE_CACHE_TO} .
       popd &> /dev/null
       echo "tagged: ${DOCKER_IMAGE}"
@@ -110,10 +113,17 @@ function build_package() {
     pushd "${PACKAGE}" &> /dev/null
     docker buildx build --platform ${DOCKER_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE}" \
+        ${IMAGE_CACHE_FROM} \
         ${IMAGE_CACHE_TO} .
-        .
+
+    
+    ID=$(docker create ${DOCKER_IMAGE} ls)
+    rm -rf ./pkg
+    docker cp "${ID}:/${PACKAGE}/pkg" ./pkg
+    docker rm -f "${ID}"
+
     popd &> /dev/null
-  fi
+  else
   
   if [[ -z "${DOCKER_WORK_DIR}" ]]; then
     DOCKER_WORK_DIR=/work
@@ -150,8 +160,8 @@ function build_package() {
     ${SUDO} ${DOCKER_CMD} run --platform ${DOCKER_PLATFORM} ${PODMAN_ARGS} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PWD}/${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "${BUILD_DIR}/build"
   fi
   echo "build done"
-  popd &> /dev/null
-
+  popd &> s/dev/null
+  fi
   if [[ -d "${PACKAGE_DIR}/pkg" ]]; then
     pushd "${PACKAGE_DIR}/pkg" &> /dev/null
 

@@ -1,6 +1,5 @@
 FROM ghcr.io/pkegg/portmaster/cdogs:main
 
-
 RUN mkdir -p ./cdogs
 COPY ./build ./cdogs
 COPY ./package.info ./cdogs

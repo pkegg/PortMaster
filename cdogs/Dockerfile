@@ -6,3 +6,4 @@ RUN apt-get update \
                           protobuf-compiler \
                           libsdl2-image-dev \
                           libsdl2-mixer-dev
+
