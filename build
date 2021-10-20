@@ -2,6 +2,7 @@
 set -e
 BRANCH=main
 IMAGE_BASE=ghcr.io/pkegg/portmaster
+DIR="$(realpath $(dirname "${BASH_SOURCE[0]}"))"  # Get the directory name
 
 function build_package() {
   local PACKAGE
@@ -173,8 +174,8 @@ function build_in_docker_image() {
 
     local PACKAGE
     PACKAGE="$1"
-    echo "Copying $(realpath ${PACKAGE}/../Dockerfile.build)"
-    cp ${PACKAGE}/../Dockerfile.build.template ${PACKAGE}/Dockerfile.build
+    echo "Copying ${DIR}/Dockerfile.build.template"
+    cp "${DIR}/Dockerfile.build.template" ${DIR}/${PACKAGE}/Dockerfile.build
 
     DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build:${BRANCH}
     DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache:${BRANCH}
@@ -267,7 +268,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [[ "$USE_DOCKER_PUSH" == "true" ]]; then
     build_env_docker_image "$PACKAGE"
   fi
-  if [[ "${BUILD_IN_DOCKER_IMAGE}" ]]; then
+  if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
     build_in_docker_image "$PACKAGE"
   else
     build_package "$PACKAGE"
