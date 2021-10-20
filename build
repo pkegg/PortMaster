@@ -112,8 +112,8 @@ function build_package() {
     echo "Copying $(realpath ${PACKAGE}/../Dockerfile.build)"
     cp ${PACKAGE}/../Dockerfile.build.template ${PACKAGE}/Dockerfile.build
 
-    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build
-    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache
+    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build:${BRANCH}
+    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache:${BRANCH}
 
     #make lower case as docker must be lowers
     DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
