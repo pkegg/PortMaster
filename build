@@ -72,17 +72,17 @@ function build_package() {
   if [[ -f "${PACKAGE}/Dockerfile" ]]; then
     echo "${PACKAGE}/Dockerfile exists"
 
-    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
-      IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE}"
-    else
-      IMAGE_CACHE_TO="--load --builder default"
-      IMAGE_CACHE_FROM=""
-    fi
-
     DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
     DOCKER_IMAGE_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
   
+    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+    else
+      IMAGE_CACHE_TO="--load --builder default"
+    fi
+    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE}"
+
+
     #make lower case as docker must be lowers
     DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
 
@@ -90,6 +90,11 @@ function build_package() {
 
     if [[ "${USE_DOCKER}" != "false" ]]; then
       pushd "${PACKAGE}" &> /dev/null
+      echo docker buildx build --platform ${BUILD_PLATFORM} \
+        --tag "${DOCKER_IMAGE}" \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
+
       docker buildx build --platform ${BUILD_PLATFORM} \
         --tag "${DOCKER_IMAGE}" \
         ${IMAGE_CACHE_FROM} \
@@ -102,16 +107,30 @@ function build_package() {
     DOCKER_IMAGE=${IMAGE_BASE}:main
   fi
   rm -rf ./pkg
+
   if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
     echo "Copying $(realpath ${PACKAGE}/../Dockerfile.build)"
     cp ${PACKAGE}/../Dockerfile.build.template ${PACKAGE}/Dockerfile.build
 
-    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}.build
-  
+    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build
+    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache
+
     #make lower case as docker must be lowers
     DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
+    DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
+    fi
+    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
 
     pushd "${PACKAGE}" &> /dev/null
+    echo docker buildx build --platform ${BUILD_PLATFORM} \
+        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
+        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
+        --build-arg PACKAGE=${PACKAGE} \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
     docker buildx build --platform ${BUILD_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
         --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
