@@ -184,7 +184,7 @@ function build_package() {
   fi
   pushd "${PACKAGE_DIR}/pkg" &> /dev/null
   mkdir -p "$(realpath ${PACKAGE_DIR}/../release)"
-  zip -FS -q -r "$(realpath ${PACKAGE_DIR}/../${PKG_NAME}.zip)" .
+  zip -FS -q -r "$(realpath "${PACKAGE_DIR}/../${PKG_NAME}.zip")" .
   popd &> /dev/null
   
 }
