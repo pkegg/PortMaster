@@ -44,7 +44,7 @@ IMAGE_BASE=ghcr.io/pkegg/portmaster
 IMAGE=${IMAGE_BASE}:${BRANCH}
 IMAGE_CACHE=${IMAGE_BASE}/cache:${BRANCH}
 
-if [[ "${DOCKER_PUSH}" == "true" ]]; then
+if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
   IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
 else
   #TODO: Think about builder initialization
