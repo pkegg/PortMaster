@@ -47,4 +47,4 @@ jobs:
         id: build
         run: |
            set -e
-           DOCKER_PUSH=true ./build-all
+           ./build-all --push --docker-image
