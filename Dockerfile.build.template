@@ -13,6 +13,6 @@ COPY --from=build /build* /
 
 ARG PACKAGE=""
 
-COPY Dockerfile build* package* ./$PACKAGE/
+COPY Dockerfile.build build* package* ./$PACKAGE/
 
 RUN ./build $PACKAGE --no-docker
