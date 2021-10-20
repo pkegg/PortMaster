@@ -76,7 +76,7 @@ function build_package() {
     DOCKER_IMAGE_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
   
     if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_CACHE},mode=max --push"
     else
       IMAGE_CACHE_TO="--load --builder default"
     fi
