@@ -14,8 +14,9 @@ function parse_args() {
   
     case $key in
       --platform)
-        BUILD_PLATFORM="true"
+        BUILD_PLATFORM="$2"
         shift # past argument
+        shift # past value
         ;;
       -p|--push)
         USE_DOCKER_PUSH="true"
