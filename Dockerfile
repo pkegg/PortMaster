@@ -41,3 +41,8 @@ RUN apt-get update && apt-get -y install build-essential \
                                  libpsl5 \
                                  libpcre2-8-0 \
                                  zip 
+
+COPY ./_global/ ../_global/
+COPY ./build* ../
+
+WORKDIR ../

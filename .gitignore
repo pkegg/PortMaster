@@ -1,4 +1,5 @@
 **/source/
+**/Dockerfile.build
 .env
 **/.ccache
 **/pkg

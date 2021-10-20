@@ -1,7 +1,7 @@
-FROM ghcr.io/pkegg/portmaster:main
+#This Dockerfile will be used to encapsulate the 'build' when './build --docker-image' is set
+ARG DOCKER_IMAGE=""
+FROM ${DOCKER_IMAGE}
+ARG PACKAGE=""
 
-# Copy the build scripts so they can be run in the container if desired
-COPY build ../
-COPY portmaster/ ../portmaster/
-WORKDIR ../
-RUN USE_DOCKER=false ./build portmaster
+COPY ./ ./$PACKAGE
+RUN ./build $PACKAGE --no-docker

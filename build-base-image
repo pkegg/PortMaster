@@ -1,0 +1,62 @@
+#! /bin/bash
+
+set -e
+DIR="$(realpath $(dirname "${BASH_SOURCE[0]}"))"  # Get the directory name
+
+function parse_args() {
+  BUILD_PLATFORM="linux/arm64/v8"
+  USE_DOCKER_PUSH=false
+  
+  # Parse args
+  ARGS=()
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+  
+    case $key in
+      --platform)
+        BUILD_PLATFORM="true"
+        shift # past argument
+        ;;
+      -p|--push)
+        USE_DOCKER_PUSH="true"
+        shift # past argument
+        ;;
+      -h|--help)
+        echo "$0  [arguments]"
+        echo "  --platform - builds for specific platform.  Cannot contain multiple comma separated platforms unles --push is specified"
+        echo "  --push (-p) - pushes docker images.  Meant for build server"
+        exit 1
+        ;;
+      *)    # unknown option
+        ARGS+=("$1") # save it in an array for later
+        shift # past argument
+        ;;
+    esac
+  done
+}
+parse_args "$@"
+echo "USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
+
+BRANCH=main
+
+IMAGE_BASE=ghcr.io/pkegg/portmaster
+IMAGE=${IMAGE_BASE}:${BRANCH}
+IMAGE_CACHE=${IMAGE_BASE}/cache:${BRANCH}
+
+if [[ "${DOCKER_PUSH}" == "true" ]]; then
+  IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+else
+  #TODO: Think about builder initialization
+  IMAGE_CACHE_TO="--load --builder default"
+fi
+
+#PLATFORM=linux/arm64/v8,linux/arm/v7,linux/amd64
+PLATFORM=linux/arm64/v8
+echo "IMAGE: ${IMAGE} IMAGE_CACHE: ${IMAGE_CACHE}"
+echo "IMAGE_CACHE_TO: ${IMAGE_CACHE_TO}"
+docker buildx build --tag ${IMAGE} \
+  --cache-from=type=registry,ref=${IMAGE_CACHE} \
+  ${IMAGE_CACHE_TO} \
+  --platform ${PLATFORM} .
+
+echo "built: ${IMAGE}"
