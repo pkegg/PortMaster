@@ -1,7 +1,6 @@
-#This Dockerfile will be used to encapsulate the 'build' when './build --docker-image' is set
-ARG DOCKER_IMAGE=""
-FROM ${DOCKER_IMAGE}
-ARG PACKAGE=""
+FROM debian:buster-20211011
 
-COPY ./ ./$PACKAGE
-RUN ./build $PACKAGE --no-docker
+COPY ./_global/ /_global/
+COPY ./build* /
+
+WORKDIR /

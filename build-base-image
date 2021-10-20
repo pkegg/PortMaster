@@ -44,11 +44,16 @@ IMAGE_BASE=ghcr.io/pkegg/portmaster
 IMAGE=${IMAGE_BASE}:${BRANCH}
 IMAGE_CACHE=${IMAGE_BASE}/cache:${BRANCH}
 
+IMAGE_BUILD=${IMAGE_BASE}/build:${BRANCH}
+IMAGE_BUILD_CACHE=${IMAGE_BASE}/build/cache:${BRANCH}
+
 if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
   IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+  IMAGE_BUILD_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_BUILD_CACHE},mode=max --push"
 else
   #TODO: Think about builder initialization
   IMAGE_CACHE_TO="--load --builder default"
+  IMAGE_BUILD_CACHE_TO="${IMAGE_CACHE_TO}"
 fi
 
 #PLATFORM=linux/arm64/v8,linux/arm/v7,linux/amd64
@@ -61,3 +66,11 @@ docker buildx build --tag ${IMAGE} \
   --platform ${PLATFORM} .
 
 echo "built: ${IMAGE}"
+
+docker buildx build --tag ${IMAGE_BUILD} \
+  -f Dockerfile.build \
+  --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
+  ${IMAGE_BUILD_CACHE_TO} \
+  --platform ${PLATFORM} .
+
+echo "built: ${IMAGE_BUILD}"

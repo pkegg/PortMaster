@@ -1,0 +1,17 @@
+#This Dockerfile will be used to encapsulate the 'build' when './build --docker-image' is set
+ARG DOCKER_IMAGE=""
+FROM ${DOCKER_IMAGE} as prod
+
+# NOTE: build scripts are placed in a separate container here to avoid
+#  rebuilding the base image (and thus all ports) on build script changes
+FROM ghcr.io/pkegg/portmaster/build:main as build
+
+FROM prod
+
+COPY --from=build /_global/ /_global/
+COPY --from=build /build* /
+
+ARG PACKAGE=""
+
+COPY ./ ./$PACKAGE
+RUN ./build $PACKAGE --no-docker
