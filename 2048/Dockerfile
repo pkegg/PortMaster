@@ -1,1 +1,1 @@
-FROM ghcr.io/pkegg/portmaster/build:main
+FROM ghcr.io/pkegg/portmaster:main
