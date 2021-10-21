@@ -15,4 +15,5 @@ ARG PACKAGE=""
 
 COPY Dockerfile.build build* package* ./$PACKAGE/
 
-RUN ./build $PACKAGE --no-docker
+RUN [ -x ./build ] && ./build $PACKAGE --no-docker
+RUN [ -x ./package ] && ./package $PACKAGE
