@@ -2,18 +2,12 @@
 ARG DOCKER_IMAGE=""
 FROM ${DOCKER_IMAGE} as prod
 
-# NOTE: build scripts are placed in a separate container here to avoid
-#  rebuilding the base image (and thus all ports) on build script changes
-FROM ghcr.io/pkegg/portmaster/build:main as build
-
-FROM prod
-
-COPY --from=build /_global/ /_global/
-COPY --from=build /build* /
-
 ARG PACKAGE=""
 
+RUN mkdir -p ./$PACKAGE/
 COPY Dockerfile.build build* package* ./$PACKAGE/
+COPY source/ ./${PACKAGE}/source/
 
-RUN [ -x ./build ] && ./build $PACKAGE --no-docker || echo "no build"
-RUN [ -x ./package ] && ./package $PACKAGE || echo "no package"
+WORKDIR ./$PACKAGE/
+
+RUN [ -x ./build ] && cd source && ../build || echo "no build"
