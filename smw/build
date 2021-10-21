@@ -6,5 +6,4 @@ set -e
 # - the current directory is source
 mkdir -p bld && cd bld
 cmake ..
-#TODO: readd
-#make smw -j4 # -jN = build on N threads
+make smw -j4 # -jN = build on N threads
