@@ -70,11 +70,11 @@ function build_package() {
   rm -rf ./pkg
 
   if [[ -x "${BUILD_DIR}/build" || -x "${BUILD_DIR}/package" ]]; then
-    
+
     if [[ -z "${DOCKER_WORK_DIR}" ]]; then
       DOCKER_WORK_DIR=/work
     fi
-    
+
     GID=$(id -g)
     DOCKER_CMD=docker
   
@@ -83,13 +83,13 @@ function build_package() {
     if ! docker ps -q &> /dev/null && sudo docker ps -q &> /dev/null; then
      SUDO="sudo"
     fi
-    
+ 
     # Launch docker as interactive if this is an interactive shell (allows ctrl-c for manual and running non-interactive - aka: build server)
     INTERACTIVE=""
     if [ -t 0 ]; then
       INTERACTIVE="-it"
     fi
-    
+ 
     pushd "${SOURCE_DIR}" &> /dev/null
   
     if [[ -x "${BUILD_DIR}/build" ]]; then
@@ -116,18 +116,14 @@ function build_package() {
   mkdir -p "${PACKAGE_DIR}/pkg"
 
   if [[ -f "${PACKAGE_DIR}/run.sh" ]]; then
-    cp --no-clobber "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/${PKG_NAME}.sh"
+    cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/${PKG_NAME}.sh"
   fi
-  cp -r --no-clobber ${PACKAGE_DIR}/../_global/* "${PACKAGE_DIR}/pkg/"
+  cp -r ${PACKAGE_DIR}/../_global/* "${PACKAGE_DIR}/pkg/"
 
   if [[ -x "${PACKAGE_DIR}/package" ]]; then
     echo "Running custom package script"
     ${PACKAGE_DIR}/package
   fi
-  pushd "${PACKAGE_DIR}/pkg" &> /dev/null
-  mkdir -p "$(realpath ${PACKAGE_DIR}/../release)"
-  zip -FS -q -r "$(realpath "${PACKAGE_DIR}/../release/${PKG_NAME}.zip")" .
-  popd &> /dev/null
   
 }
 function build_env_docker_image() {
@@ -204,9 +200,11 @@ function build_in_docker_image() {
         ${IMAGE_CACHE_TO} .
 
     
-    ID=$(docker create ${DOCKER_IMAGE})
+    ID=$(docker create ${DOCKER_IMAGE_BUILD})
     rm -rf ./pkg
+    echo "copying ./pkg" 
     docker cp "${ID}:/${PACKAGE}/pkg" ./pkg || true # it is OK (at least for now) if there's not a package inside
+    echo "done"
     docker rm -f "${ID}"
 
     popd &> /dev/null
@@ -265,13 +263,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "BUILD_IN_DOCKER_IMAGE: ${BUILD_IN_DOCKER_IMAGE} USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
   DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
 
-  if [[ "$USE_DOCKER_PUSH" == "true" ]]; then
-    build_env_docker_image "$PACKAGE"
-  fi
+  build_env_docker_image "$PACKAGE"
   if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
     build_in_docker_image "$PACKAGE"
   else
     build_package "$PACKAGE"
   fi
+  pwd
+  source "${PACKAGE}/package.info"
+  pushd "${PACKAGE}/pkg" &> /dev/null
+  mkdir -p "../../release"
+  rm -rf "../../release/${PKG_NAME}.zip"
+  zip -r "../../release/${PKG_NAME}.zip" .
+  popd &> /dev/null
+
   echo "build done"
 fi
