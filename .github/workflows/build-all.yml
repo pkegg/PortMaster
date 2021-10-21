@@ -28,7 +28,7 @@ jobs:
       #  with:
       #    install: true
       - name: Initialize buildx and qemu
-        id: initialize docker
+        id: initialize-docker
         run: |
            set -e
            ./init-docker
