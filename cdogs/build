@@ -9,5 +9,4 @@ export DCMAKE_INSTALL_PREFIX
 cmake -GNinja -DCMAKE_INSTALL_PREFIX:PATH="${DCMAKE_INSTALL_PREFIX}" .
 
 mkdir -p ../pkg
-#TODO: readd
-#ninja install
+ninja install
