@@ -49,3 +49,10 @@ jobs:
            set -e
            ./build-base-image --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
            ./build-all --push --docker-image
+           ls -lah
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: ports
+          path: |
+            release/
