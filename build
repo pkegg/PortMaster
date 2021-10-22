@@ -66,7 +66,7 @@ function build_package() {
     fi
   fi
 
-  mkdir -p "${PACKAGE_DIR}/pkg"
+  mkdir -p "${PACKAGE_DIR}/pkg/${PACKAGE}"
 
   if [[ -f "${PACKAGE_DIR}/run.sh" ]]; then
     cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/${PKG_NAME}.sh"
