@@ -5,8 +5,9 @@ FROM ${DOCKER_IMAGE} as prod
 ARG PACKAGE=""
 
 RUN mkdir -p ./$PACKAGE/
-COPY Dockerfile.build build* package* ./$PACKAGE/
-COPY source/ ./${PACKAGE}/source/
+COPY build* package*  ./$PACKAGE/
+COPY clone-source ./
+RUN bash -c "source ./clone-source && clone_source $PACKAGE"
 
 WORKDIR ./$PACKAGE/
 

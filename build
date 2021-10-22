@@ -3,67 +3,8 @@ set -e
 BRANCH=main
 IMAGE_BASE=ghcr.io/pkegg/portmaster
 DIR="$(realpath $(dirname "${BASH_SOURCE[0]}"))"  # Get the directory name
+source ${DIR}/clone-source
 
-function clone_source() {
-  local PACKAGE
-  PACKAGE="$1"
-  local PACKAGE_DIR
-  PACKAGE_DIR="$(realpath "${PACKAGE}")"
-  local PACKAGE_MK="${PACKAGE}/package.info"
-  local SOURCE_DIR="${PACKAGE}/source"
-  local SOURCE_DOCKER_DIR=source
-  if [[ -z "$PACKAGE" ]]; then
-    echo "Please specify package: $0 <package>"
-    exit 1
-  elif [[ ! -d "$PACKAGE" ]]; then
-    echo "Please specify a package directory that exists.  Not: $PACKAGE"
-    exit 1
-  elif [[ ! -f "$PACKAGE_MK" ]]; then
-    echo "No package.mk found at: $PACKAGE_MK"
-    exit 1
-  fi
-  GET_HANDLER_SUPPORT=""
-  PKG_VERSION=""
-  PKG_URL=""
-  source "${PACKAGE_MK}"
-  
-  if [[ "${GET_HANDLER_SUPPORT}" == "git" ]]; then
-  
-     if [[ -a "${PKG_VERSION}" ]]; then
-       echo "${PKG_VERSION} required"
-       exit 1
-     fi
-     ALREADY_CLONED=false
-     if [[ -d "${SOURCE_DIR}" ]]; then
-        pushd "${SOURCE_DIR}" &> /dev/null
-        if [[ "$(git config --get remote.origin.url)" == "$PKG_URL" ]]; then
-          git fetch
-          ALREADY_CLONED="true"
-        fi
-        popd &> /dev/null
-     fi
-     if [[ "$ALREADY_CLONED" == "false" ]]; then
-        rm -rf "${SOURCE_DIR}"
-        git clone --recursive "${PKG_URL}" "${SOURCE_DIR}"
-     fi
-  
-     echo "Checking out: ${PKG_VERSION}"
-     pushd "${SOURCE_DIR}" &> /dev/null
-     git submodule update --init --recursive
-     git clean -f
-     git checkout "${PKG_VERSION}"
-     popd &> /dev/null
-  elif [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
-    SOURCE_DIR="${PACKAGE}"
-    SOURCE_DOCKER_DIR=""
-    BUILD_DIR="."
-    mkdir -p "${SOURCE_DIR}"
-    echo "No GET_HANDLER_SUPPORT.  Assuming all local files"
-  else
-    echo "Handler: '${GET_HANDLER_SUPPORT}' not found"
-    exit 1
-  fi
-}
 function build_package() {
   local PACKAGE
   PACKAGE="$1"
@@ -74,7 +15,6 @@ function build_package() {
   local SOURCE_DOCKER_DIR=source
   local BUILD_DIR=".."
 
-  clone_source ${PACKAGE}
   rm -rf ./pkg
 
   if [[ -x "${PACKAGE}/build" || -x "${PACKAGE}/package" ]]; then
@@ -103,19 +43,22 @@ function build_package() {
       if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
         echo "building inside docker image"
         build_in_docker_image ${PACKAGE}
-      elif [[ "${USE_DOCKER}" == "false" ]]; then
-        echo "building ${PACKAGE} without docker..."
-        pushd "${SOURCE_DIR}" &> /dev/null
-        "${BUILD_DIR}/build"
-        popd &> /dev/null
       else
-        echo "building ${PACKAGE} with docker..."
-        pushd "${SOURCE_DIR}" &> /dev/null
+        clone_source ${PACKAGE}
+        if [[ "${USE_DOCKER}" == "false" ]]; then
+          echo "building ${PACKAGE} without docker..."
+          pushd "${SOURCE_DIR}" &> /dev/null
+          "${BUILD_DIR}/build"
+          popd &> /dev/null
+        else
+          echo "building ${PACKAGE} with docker..."
+          pushd "${SOURCE_DIR}" &> /dev/null
 
-        # Get .env file ready
-        env | grep "=" > .env
-        ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${PODMAN_ARGS} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PWD}/${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "${BUILD_DIR}/build"
-        popd &> /dev/null
+          # Get .env file ready
+          env | grep "=" > .env
+          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${PODMAN_ARGS} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PWD}/${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "${BUILD_DIR}/build"
+          popd &> /dev/null
+        fi
       fi
       echo "build done"
     fi
@@ -189,6 +132,7 @@ function build_in_docker_image() {
     PACKAGE="$1"
     echo "Copying ${DIR}/Dockerfile.build.template"
     cp "${DIR}/Dockerfile.build.template" ${DIR}/${PACKAGE}/Dockerfile.build
+    cp "${DIR}/clone-source" "${DIR}/${PACKAGE}/clone-source"
 
     DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build:${BRANCH}
     DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache:${BRANCH}
