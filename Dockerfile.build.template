@@ -5,7 +5,10 @@ FROM ${DOCKER_IMAGE} as prod
 ARG PACKAGE=""
 
 RUN mkdir -p ./$PACKAGE/
-COPY build* package*  ./$PACKAGE/
+
+#NOTE: important that Dockerfile.build is copied as it *always* exists
+#      The other files are technically optional
+COPY Dockerfile.build build* package* conf* ./$PACKAGE/
 COPY clone-source ./
 RUN bash -c "source ./clone-source && clone_source $PACKAGE"
 

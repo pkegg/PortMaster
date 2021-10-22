@@ -1,0 +1,8 @@
+#! /bin/bash
+set -e
+
+mkdir -p pkg/cdogs/
+cp -r conf/ pkg/cdogs/
+mv pkg/cdogs/bin/cdogs-sdl pkg/cdogs/data/
+rm -rf pkg/cdogs/bin
+mv pkg/cdogs/oga* pkg/cdogs/data/

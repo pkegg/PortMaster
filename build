@@ -4,6 +4,7 @@ BRANCH=main
 IMAGE_BASE=ghcr.io/pkegg/portmaster
 DIR="$(realpath $(dirname "${BASH_SOURCE[0]}"))"  # Get the directory name
 source ${DIR}/clone-source
+export CCACHE_DIR="../.ccache"
 
 function build_package() {
   local PACKAGE
@@ -14,6 +15,7 @@ function build_package() {
   local SOURCE_DIR="${PACKAGE}/source"
   local SOURCE_DOCKER_DIR=source
   local BUILD_DIR=".."
+  source "${PACKAGE_MK}"
 
   rm -rf ./pkg
 
@@ -62,15 +64,6 @@ function build_package() {
       fi
       echo "build done"
     fi
-    if [[ -x "${BUILD_DIR}/package" ]]; then
-      echo "packaging ${PACKAGE}..."
-      pushd "${SOURCE_DIR}" &> /dev/null
-
-      "${BUILD_DIR}/package"
-      popd &> /dev/null
-
-      echo "package done"
-    fi
   fi
 
   mkdir -p "${PACKAGE_DIR}/pkg"
@@ -78,11 +71,13 @@ function build_package() {
   if [[ -f "${PACKAGE_DIR}/run.sh" ]]; then
     cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/${PKG_NAME}.sh"
   fi
-  cp -r ${PACKAGE_DIR}/../_global/* "${PACKAGE_DIR}/pkg/"
+  cp -r ${PACKAGE_DIR}/../_global/* "${PACKAGE_DIR}/pkg/${PACKAGE}"
 
   if [[ -x "${PACKAGE_DIR}/package" ]]; then
     echo "Running custom package script"
+    pushd "${PACKAGE_DIR}/" &> /dev/null
     ${PACKAGE_DIR}/package
+    popd
   fi
   
 }
@@ -230,7 +225,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   source "${PACKAGE}/package.info"
   pushd "${PACKAGE}/pkg" &> /dev/null
   mkdir -p "../../release"
+  rm -rf "../../release/${PKG_NAME}"
   rm -rf "../../release/${PKG_NAME}.zip"
+  cp -r ./ ../../release/${PKG_NAME}
   zip -r "../../release/${PKG_NAME}.zip" .
   popd &> /dev/null
 
