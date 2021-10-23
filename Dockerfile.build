@@ -1,6 +1,15 @@
-FROM debian:buster-20211011
+ARG BASE_IMAGE=debian:buster-20211011
+FROM $BASE_IMAGE as base
 
 COPY ./_global/ /_global/
 COPY ./build* /
-
 WORKDIR /
+
+# Test global functions
+FROM base as test
+RUN apt-get update && apt-get install -y bats
+COPY ./_global_test /_global_test
+RUN cd /_global_test && bats global-functions.bats
+
+FROM base
+

@@ -9,31 +9,37 @@
 # -----------------------------------------------------
 # Utilizing DIR instead of ./ means the script can be called from any directory
 #
+# All files in this script should suppport the $ROOT_DIR variable which will default to ''.  This allows
+# creating mock environments for testing
+#
 # Functions are designed to be called in the format:
 # DEVICE=$(get_device)
 # DEV NOTE: If debug output is needed in a function, output information with `echo_err` (stderr) as
 # anything output to stdout will be included in the returned device, etc
 
 
+ROOT_DIR=
+
 # Gets the current device:
 #  Supported devices: rg351p, rg351p (rg351m), rg351mp, oga, rk2020, ogs, chi, unknown
 function get_device() {
   local param_device="unknown"
-  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+  if [[ -e "${ROOT_DIR}/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     #anbernic rg351v and rg351p
-    if [[ -e "/dev/input/event3" ]]; then #rg351p only has "event2"
+    if [[ -e "${ROOT_DIR}/dev/input/event3" ]]; then #rg351p only has "event2"
       param_device="rg351v"
     else
       param_device="rg351p"
     fi
-  elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
-    if grep -q /etc/emulationstation/es_input.cfg "190000004b4800000010000001010000"; then
+  elif [[ -e "${ROOT_DIR}/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
+    if [[ -f "${ROOT_DIR}/etc/emulationstation/es_input.cfg" ]] \
+       && grep -q "190000004b4800000010000001010000" "${ROOT_DIR}/etc/emulationstation/es_input.cfg" &> /dev/null; then
       param_device="oga"
   	else
   	  param_device="rk2020"
   	fi
-  elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
-    if [[ -e "/dev/input/by-path/platform-rg351-keys-event" ]]; then
+  elif [[ -e "${ROOT_DIR}/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
+    if [[ -e "${ROOT_DIR}/dev/input/by-path/platform-rg351-keys-event" ]]; then
       param_device="rg351mp"
     else
       param_device="ogs"
@@ -50,13 +56,14 @@ function get_device() {
 function get_os() {
   local param_os="unknown"
 
-  if [[ -f "/boot/rk3326-rg351v-linux.dtb" || -d "/opt/system/Advanced/" ]]; then
+  if [[ -f "${ROOT_DIR}/boot/rk3326-rg351v-linux.dtb" || -d "${ROOT_DIR}/opt/system/Advanced/" ]]; then
     param_os="ArkOS"
-  elif [[ -e "/storage/.config/.OS_ARCH" ]]; then
+  elif [[ -e "${ROOT_DIR}/storage/.config/.OS_ARCH" ]]; then
     param_os="351ELEC"
-  elif [[ $(grep "title=" "/usr/share/plymouth/themes/text.plymouth") == *"TheRA"* ]]; then
+  elif [[ -e "${ROOT_DIR}/usr/share/plymouth/themes/text.plymouth" \
+          && $(grep "title=" "${ROOT_DIR}/usr/share/plymouth/themes/text.plymouth") == *"TheRA"* ]]; then
     param_os="TheRA"
-  elif grep -q "ID=ubuntu" /etc/os-release; then
+  elif grep -q "ID=ubuntu" ${ROOT_DIR}/etc/os-release &> /dev/null; then
     param_os="ubuntu"
   fi
   echo "${param_os}"
@@ -65,13 +72,13 @@ function get_os() {
 
 function get_tools_dir() {
   os=$(get_os)
-  local toolsfolderloc="/opt/tools"
+  local toolsfolderloc="${ROOT_DIR}/opt/tools"
   if [[ "351ELEC" == "${os}" ]]; then
-    toolsfolderloc="/storage/roms/tols"
+    toolsfolderloc="${ROOT_DIR}/storage/roms/tols"
   elif [[ "TheRA" == "${os}" ]]; then
-    toolsfolderloc="/opt/system/Tools"
+    toolsfolderloc="${ROOT_DIR}/opt/system/Tools"
   elif [[ "ArkOS" == "${os}" ]]; then
-    toolsfolderloc="/opt/tools"
+    toolsfolderloc="${ROOT_DIR}/opt/tools"
   fi
   echo "${toolsfolderloc}"
 }
@@ -79,13 +86,13 @@ function get_tools_dir() {
 function get_roms_dir() {
   local os
   os=$(get_os)
-  local romsfolderloc="/opt/roms"
+  local romsfolderloc="${ROOT_DIR}/opt/roms"
   if [[ "351ELEC" == "${os}" ]]; then
-    romsfolderloc="/storage/roms/"
+    romsfolderloc="${ROOT_DIR}/storage/roms/"
   elif [[ "TheRA" == "${os}" ]]; then
-    romsfolderloc="/opt/system/Roms"
+    romsfolderloc="${ROOT_DIR}/opt/system/Roms"
   elif [[ "ArkOS" == "${os}" ]]; then
-    romsfolderloc="/opt/roms"
+    romsfolderloc="${ROOT_DIR}/opt/roms"
   fi
   echo "${romsfolderloc}"
 }
@@ -126,3 +133,20 @@ function in_china() {
 function echo_err() {
   echo "$@" 1>&2;
 }
+
+#The below code only runs when this file is executed (not sourced)
+#  Ex:  Please run `bash ./global-functions` and give us the output
+# It's meant to help debugging on devices and should have output to help debug
+# each function in this file.
+#
+# Output format currently allows being sourced by bash as variables as this might
+# be useful in the future
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  echo "OS=$(get_os)"
+  echo "DEVICE=$(get_device)"
+  echo "TOOLSDIR=$(get_tools_dir)"
+  echo "ROMSDIR=$(get_roms_dir)"
+  echo "CONSOLE=$(get_console)"
+  echo "HOTKEY=$(get_hotkey)"
+  echo "IN_CHINA=$(in_china)"
+fi

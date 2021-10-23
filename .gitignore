@@ -6,3 +6,4 @@
 **/.ccache
 **/pkg
 **/bld
+**.log
