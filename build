@@ -158,8 +158,13 @@ function build_in_docker_image() {
     
     ID=$(docker create ${DOCKER_IMAGE_BUILD})
     rm -rf ./pkg
+    rm -rf ./source
     echo "copying built images (./pkg)" 
-    docker cp "${ID}:/${PACKAGE}/*" ./ || true # it is OK (at least for now) if there's not a package inside
+    docker cp "${ID}:/${PACKAGE}/pkg" ./pkg || true # it is OK (at least for now) if there's not a package inside
+    
+    echo "copying built images (./pkg)" 
+    docker cp "${ID}:/${PACKAGE}/source" ./source || true # it is OK (at least for now) if there's not a source fodler inside
+
     echo "done"
     docker rm -f "${ID}"
 
