@@ -47,7 +47,7 @@ function clone_source() {
      echo "Checking out: ${PKG_VERSION}"
      pushd "${SOURCE_DIR}" &> /dev/null
      git submodule update --init --recursive
-     git clean -f
+     git clean -fd
      git checkout "${PKG_VERSION}"
      popd &> /dev/null
   elif [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
