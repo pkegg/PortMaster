@@ -158,8 +158,8 @@ function build_in_docker_image() {
     
     ID=$(docker create ${DOCKER_IMAGE_BUILD})
     rm -rf ./pkg
-    echo "copying ./pkg" 
-    docker cp "${ID}:/${PACKAGE}/pkg" ./pkg || true # it is OK (at least for now) if there's not a package inside
+    echo "copying built images (./pkg)" 
+    docker cp "${ID}:/${PACKAGE}/*" ./ || true # it is OK (at least for now) if there's not a package inside
     echo "done"
     docker rm -f "${ID}"
 
