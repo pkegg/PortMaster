@@ -40,4 +40,4 @@ jobs:
         with:
           name: ports
           path: |
-            release/
+            release/*.zip
