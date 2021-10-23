@@ -228,7 +228,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   rm -rf "../../release/${PKG_NAME}"
   rm -rf "../../release/${PKG_NAME}.zip"
   cp -r "./" "../../release/${PKG_NAME}"
-  zip -r "../../release/${PKG_NAME}.zip" .
+  #zip -r "../../release/${PKG_NAME}.zip" .
   popd &> /dev/null
 
   echo "build done"
