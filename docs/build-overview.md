@@ -23,9 +23,17 @@ The following files can be used to build a port.
 - `package.info` (Required) - provides information about the package and it's source.
    - NOTE: this is similar to the EmuELEC package.mk format.  It is called package.info to show its not totally compatible.
   - `PKG_NAME` - The name of the package.  Can include spaces.  Will be used for name of zip and main script.
-  - `PKG_URL` - The source code url.
+  - `PKG_URL` - The source code url.  Will be cloned into `source`. Smart enough to do a `git pull` if already exists.
+  - `PKG_VERSION` - the version of source code - typically git hash or tag.  NOTE: though branch is technically allowed, it is not 'supported' as the package will not be rebuilt unless something changes in the ports directory.
+  - `HANDLER_SUPPORT` - currently only `git` is supported. Can be left off if no PKG_URL and defaults to git.
 - `Dockerfile` - provides any addition dependencies for build beyond main Dockerfile
-
+- `build` - script to run build.
+  - Will be run from `source` directory if one was created or the port directory if one does not exist.
+  - The script can output build artifacts to the `pkg` directory.  For longer builds or complex packaging logic, it is suggested to use a `package` script.  This allows faster rebuilds on packaging changes even in the cloud.
+  - NOTE: Will be run with bash if not set as executable.
+- `package` - script to package build.
+  - Will be run from the port directory.
+  - Must only utilize source, pkg and committed files.
 # Build Use Cases
 - developer needs to build
   - ./build <package>
