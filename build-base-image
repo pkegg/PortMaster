@@ -46,24 +46,25 @@ IMAGE_CACHE=${IMAGE_BASE}/cache:${BRANCH}
 
 IMAGE_BUILD=${IMAGE_BASE}/build:${BRANCH}
 IMAGE_BUILD_CACHE=${IMAGE_BASE}/build/cache:${BRANCH}
+IMAGE_TEST=${IMAGE_BASE}/test:${BRANCH}
 
 if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
   IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
   IMAGE_BUILD_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_BUILD_CACHE},mode=max --push"
+  IMAGE_TEST_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_TEST_CACHE},mode=max --push"
 else
   #TODO: Think about builder initialization
   IMAGE_CACHE_TO="--load --builder default"
   IMAGE_BUILD_CACHE_TO="${IMAGE_CACHE_TO}"
+  IMAGE_TEST_CACHE_TO="${IMAGE_CACHE_TO}"
 fi
 
-#PLATFORM=linux/arm64/v8,linux/arm/v7,linux/amd64
-PLATFORM=linux/arm64/v8
 echo "IMAGE: ${IMAGE} IMAGE_CACHE: ${IMAGE_CACHE}"
 echo "IMAGE_CACHE_TO: ${IMAGE_CACHE_TO}"
 docker buildx build --tag ${IMAGE} \
   --cache-from=type=registry,ref=${IMAGE_CACHE} \
   ${IMAGE_CACHE_TO} \
-  --platform ${PLATFORM} .
+  --platform ${BUILD_PLATFORM} .
 
 echo "built: ${IMAGE}"
 
@@ -79,16 +80,16 @@ docker buildx build --tag ${IMAGE_BUILD} \
   -f Dockerfile.build \
   --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
   ${IMAGE_BUILD_CACHE_TO} \
-  --platform ${PLATFORM} .
+  --platform ${BUILD_PLATFORM} .
 
 echo "built: ${IMAGE_BUILD}"
 
 echo "running tests: ${IMAGE_BUILD}"
 # Run tests sepatately on amd64 so they run faster
 #  NOTE: if amd64 is not the host platform in the future - we should change
-docker buildx build --tag ${IMAGE_BUILD} \
+docker buildx build --tag ${IMAGE_TEST} \
   -f Dockerfile.build \
   --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
   --target test \
-  ${IMAGE_BUILD_CACHE_TO} \
-  --platform linux/amd64 .
+  ${IMAGE_TEST_CACHE_TO} \
+  --platform ${BUILD_PLATFORM} .
