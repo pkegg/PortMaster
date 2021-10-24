@@ -1,3 +1,8 @@
+# tldr; - build a port
+- install [docker](https://docs.docker.com/get-docker/)
+- check install with: `./init-docker`
+- `./build <port name>`
+
 # Build Scripts Overview
 There are three modes which ports can be built.
 - `normal` (`./buld <port>`) - uses Dockerfiles to provide build environment via docker container.
