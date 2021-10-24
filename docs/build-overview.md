@@ -1,20 +1,26 @@
-# Build Overview
+# Build Scripts Overview
 There are three modes which ports can be built.
-- `normal` (`./buld`) - uses Dockerfiles to provide build environment via docker container.
+- `normal` (`./buld <port>`) - uses Dockerfiles to provide build environment via docker container.
   - Uses: /<port>/Dockerfile to provide environment
   - Advantages (good for users)
     - All build dependencies stored in docker.  But builds very similarly to a local build.
     - Can use CCache or other cache to speed incremental builds.
   - Disadvantages
     - Requires full build initially which is not ideal for a ephemeral build server like GitHub actions.
-- `docker-image` (`./build --docker-image`) - similar to normal, but builds inside of a docker image.  Allows caching/publishing image for build server.
+- `docker-image` (`./build <port> --docker-image`) - similar to normal, but builds inside of a docker image.  Allows caching/publishing image for build server.
   - Uses: Dockerfile.build.template which will be copied to <port>/Dockerfile.build to run build inside the Dockerfile
   - Advantages (good for cloud builds): 
     - If build has not changed, uses remote cache.
     - Does not require local build cache.  Makes it possible to run in GitHub actions and still only building new changes.
   - Disadvantages:
     - If anything changes, a full build of port is required.  CCache or other cache cannot be used to speed up rebuilds. 
-- `no docker` (`./build --no-docker`) - basically for debugging.  Does not use docker and assumes all dependencies, architecture, etc are in host.
+- `no docker` (`./build <port> --no-docker`) - basically for debugging.  Does not use docker and assumes all dependencies, architecture, etc are in host.
+
+Other build scripts:
+- `build-all` - calls `build` for all ports (folders with package.info)
+- `build-base-image` - builds the top level `Dockerfile` (build environment), `Dockerfile.build` (build env + build scripts to run build inside a Dockerfile) and runs testing on global-functions scripts.
+- `clone-source` - script used to do git clones.  This is separated as it is the only build script used inside the docker image when building with `--docker-image` (which means a change will rebuild all ports)
+
 # Port Requirements
 The following shows conventions and requirements for port builds and packaging (run on device).
 ## Build
