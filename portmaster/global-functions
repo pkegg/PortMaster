@@ -44,8 +44,8 @@ function get_device() {
     else
       param_device="ogs"
     fi
-  #else
-  #  param_device="chi"  #FIXME
+  else
+    param_device="chi"  #TODO: should probably actual identify it
   fi
   echo "${param_device}"
 }
@@ -96,6 +96,7 @@ function get_roms_dir() {
   fi
   echo "${romsfolderloc}"
 }
+
 function get_ports_dir() {
   echo "$(get_roms_dir)/ports"
 }

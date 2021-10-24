@@ -17,7 +17,7 @@ function build_package() {
   local BUILD_DIR=".."
   source "${PACKAGE_MK}"
 
-  rm -rf ./pkg
+  rm -rf "${PACKAGE_DIR}/pkg"
 
   if [[ -x "${PACKAGE}/build" || -x "${PACKAGE}/package" ]]; then
 
@@ -66,18 +66,30 @@ function build_package() {
     fi
   fi
 
-  mkdir -p "${PACKAGE_DIR}/pkg/${PACKAGE}"
+  mkdir -p "${PACKAGE_DIR}/pkg/"
 
   if [[ -f "${PACKAGE_DIR}/run.sh" ]]; then
-    cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/${PKG_NAME}.sh"
+    cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/run.sh"
   fi
-  cp -r ${PACKAGE_DIR}/../_global/* "${PACKAGE_DIR}/pkg/${PACKAGE}"
+  cp -r ${PACKAGE_DIR}/../_global/* "${PACKAGE_DIR}/pkg/"
 
   if [[ -x "${PACKAGE_DIR}/package" ]]; then
     echo "Running custom package script"
     pushd "${PACKAGE_DIR}/" &> /dev/null
     ${PACKAGE_DIR}/package
     popd
+  fi
+
+  if [[ -f "${PACKAGE_DIR}/pkg/run.sh" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run.sh"; then
+    echo "Running ${PACKAGE} run.sh using IS_TEST_MODE=true"
+    PORTS_DIR=/opt/roms/ports
+    TEST_IMAGE=ghcr.io/pkegg/portmaster/test:${BRANCH}
+    docker run -it --rm --platform ${BUILD_PLATFORM} \
+      -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
+      -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
+      bash -c "IS_TEST_MODE=true bash \"./run.sh\""
+    echo "run.sh test passed"
+    
   fi
   
 }
@@ -232,8 +244,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   mkdir -p "../../release"
   rm -rf "../../release/${PKG_NAME}"
   rm -rf "../../release/${PKG_NAME}.zip"
+
   cp -r "./" "../../release/${PKG_NAME}"
-  zip -r "../../release/${PKG_NAME}.zip" .
+  cp -r "../../_global/global-run.sh" "../../release/${PKG_NAME}.sh"
+
+  sed -i "s/__PACKAGE__/${PACKAGE}/g" "../../release/${PKG_NAME}.sh"
+  zip -qr "../../release/${PKG_NAME}.zip" .
   popd &> /dev/null
 
   echo "build done"

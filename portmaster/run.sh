@@ -29,6 +29,8 @@ ESUDO="sudo"
 if [ "${OS}" == "351ELEC" ]; then
   ESUDO=""
   export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/storage/roms/ports/PortMaster/libs"
+elif ! which sudo &> /dev/null; then
+  ESUDO=""
 elif [ "${OS}" == "unknown" ]; then
   $ESUDO mkdir -p "${ROMS_DIR}" "${TOOLS_DIR}"
 fi
@@ -38,8 +40,9 @@ export TERM=linux
 export XDG_RUNTIME_DIR=/run/user/$UID/
 
 #TODO: Does `clear` work on all systems?  If yes - use that for clarity
-printf "\033c" >> ${CONSOLE}
-dialog --clear --stdout
+if [[ "${IS_TEST_MODE}" != "true" ]]; then
+  printf "\033c" >> ${CONSOLE}
+fi
 
 HEIGHT="15"
 WIDTH="55"
@@ -59,10 +62,31 @@ elif [[ "${DEVICE}" == "chi" ]]; then
   HEIGHT="20"
   WIDTH="60"
 fi
-
+mkdir -p "${TOOLS_DIR}"
 cd "$TOOLS_DIR"
 $ESUDO "$DIR/oga_controls" PortMaster.sh "$DEVICE" &> /dev/null &
 
+if ! which curl &> /dev/null; then
+  echo "curl not found"
+  dpkg -s "curl" &>/dev/null
+  if [ "$?" != "0" ]; then
+    $ESUDO apt update && $ESUDO apt install -y curl --no-install-recommends
+  fi
+fi
+
+if ! which dialog &> /dev/null; then
+  echo "dialog not found"
+  dpkg -s "dialog" &>/dev/null
+  if [ "$?" != "0" ]; then
+    $ESUDO apt update && $ESUDO apt install -y dialog --no-install-recommends
+    temp=$(grep "title=" /usr/share/plymouth/themes/text.plymouth)
+    if [[ $temp == *"ArkOS 351P/M"* ]]; then
+  	#Make sure sdl2 wasn't impacted by the install of dialog for the 351P/M
+      $ESUDO ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0.14.1 /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0
+  	  $ESUDO ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.10.0 /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0
+    fi
+  fi
+fi
 curversion="$(curl "file://$(realpath "${DIR}")/version")"
 
 GW=$(ip route | awk '/default/ { print $3 }')
@@ -90,21 +114,10 @@ if [ ! -d "/dev/shm/portmaster" ]; then
   mkdir /dev/shm/portmaster
 fi
 
-dpkg -s "curl" &>/dev/null
-if [ "$?" != "0" ]; then
-  $ESUDO apt update && $ESUDO apt install -y curl --no-install-recommends
-fi
 
-dpkg -s "dialog" &>/dev/null
-if [ "$?" != "0" ]; then
-  $ESUDO apt update && $ESUDO apt install -y dialog --no-install-recommends
-  temp=$(grep "title=" /usr/share/plymouth/themes/text.plymouth)
-  if [[ $temp == *"ArkOS 351P/M"* ]]; then
-	#Make sure sdl2 wasn't impacted by the install of dialog for the 351P/M
-    $ESUDO ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0.14.1 /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0
-	  $ESUDO ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.10.0 /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0
-  fi
-fi
+
+dialog --clear --stdout
+
 
 function UpdateCheck() {
 
@@ -237,6 +250,11 @@ echo "done choice"
 
 wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
 echo_err "done with ports.md"
+
+if [[ "${IS_TEST_MODE}" == "true" ]]; then
+  echo "${IS_TEST_MODE}"
+  exit 0
+fi
 
 if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
           --title "$1" --yesno "\nWould you like to check for an update to the PortMaster tool?" \

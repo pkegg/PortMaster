@@ -7,7 +7,7 @@ WORKDIR /
 
 # Test global functions
 FROM base as test
-RUN apt-get update && apt-get install -y bats
+RUN apt-get update && apt-get install -y bats curl dialog wget
 COPY ./_global_test /_global_test
 RUN cd /_global_test && bats global-functions.bats
 
