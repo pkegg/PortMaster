@@ -15,6 +15,16 @@ There are three modes which ports can be built.
   - Disadvantages:
     - If anything changes, a full build of port is required.  CCache or other cache cannot be used to speed up rebuilds. 
 - `no docker` (`./build --no-docker`) - basically for debugging.  Does not use docker and assumes all dependencies, architecture, etc are in host.
+# Port Requirements
+The following shows conventions and requirements for port builds and packaging (run on device).
+## Build
+The following files can be used to build a port.
+- `<port folder>` - must be lower case and valid in a docker tag (lower case)
+- `package.info` (Required) - provides information about the package and it's source.
+   - NOTE: this is similar to the EmuELEC package.mk format.  It is called package.info to show its not totally compatible.
+  - `PKG_NAME` - The name of the package.  Can include spaces.  Will be used for name of zip and main script.
+  - `PKG_URL` - The source code url.
+- `Dockerfile` - provides any addition dependencies for build beyond main Dockerfile
 
 # Build Use Cases
 - developer needs to build
