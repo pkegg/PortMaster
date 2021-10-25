@@ -2,7 +2,7 @@
 set -e
 
 # Current directory of the script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/cdogs"
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source "${DIR}/global-functions"
 
 DEVICE="$(get_device)"

@@ -2,7 +2,7 @@
 set -e
 BRANCH=main
 IMAGE_BASE=ghcr.io/pkegg/portmaster
-DIR="$(realpath $(dirname "${BASH_SOURCE[0]}"))"  # Get the directory name
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source ${DIR}/clone-source
 export CCACHE_DIR="../.ccache"
 

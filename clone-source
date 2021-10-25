@@ -1,5 +1,5 @@
 #!/bin/bash
-DIR="$(realpath $(dirname "${BASH_SOURCE[0]}"))"  # Get the directory name
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 
 function clone_source() {
   local PACKAGE

@@ -7,7 +7,7 @@
 # using 351Elec and Ubuntu based distrOS such as ArkOS, TheRA, and RetroOZ.
 #
 set -e
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 TITLE="PortMaster"
 
 # shellcheck source=/dev/null
@@ -23,7 +23,7 @@ GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
 WEBSITE="https://raw.githubusercontent.com/${GITHUB_ORG}/PortMaster/main/"
 WEBSITE_IN_CHINA=
 
-echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR}" 
+echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR} CONSOLE: ${CONSOLE} HOTKEY: ${HOTKEY}" 
 
 ESUDO="sudo"
 if [ "${OS}" == "351ELEC" ]; then

@@ -14,7 +14,7 @@ create_rg351p() {
 create_rg351v() {
   device_common
   touch "${ROOT_DIR}/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick"
-  touch "${ROOT_DIR}/dev/input/event3"
+  touch "${ROOT_DIR}/dev/input/by-path/platform-rg351-keys-event"
 }
 
 create_rg351mp() {

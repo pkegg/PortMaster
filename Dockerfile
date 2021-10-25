@@ -1,6 +1,7 @@
 FROM debian:buster-20211011
 
-RUN apt-get update && apt-get -y install build-essential \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
+                      apt-get -y install build-essential \
                                  git \
                                  wget \
                                  libdrm-dev \
