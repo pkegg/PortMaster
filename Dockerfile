@@ -40,4 +40,5 @@ RUN apt-get update && apt-get -y install build-essential \
                                  ccache \
                                  libpsl5 \
                                  libpcre2-8-0 \
-                                 zip
+                                 zip \
+                                 && rm -rf /var/lib/apt/lists/*
