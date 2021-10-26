@@ -1,6 +1,6 @@
 **/source/
-**/Dockerfile.build
-/*/clone-source
+/ports/*/Dockerfile.build
+/ports/*/clone-source
 /release/
 .env
 **/.ccache

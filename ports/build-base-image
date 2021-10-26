@@ -66,7 +66,7 @@ echo "IMAGE_CACHE_TO: ${IMAGE_CACHE_TO}"
 docker buildx build --tag ${IMAGE} \
   --cache-from=type=registry,ref=${IMAGE_CACHE} \
   ${IMAGE_CACHE_TO} \
-  --platform ${BUILD_PLATFORM} .
+  --platform ${BUILD_PLATFORM} ${DIR}
 
 echo "built: ${IMAGE}"
 
@@ -79,10 +79,10 @@ else
   echo "Appears test submodules already initialized"
 fi
 docker buildx build --tag ${IMAGE_BUILD} \
-  -f Dockerfile.build \
+  -f ${DIR}/Dockerfile.build \
   --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
   ${IMAGE_BUILD_CACHE_TO} \
-  --platform ${BUILD_PLATFORM} .
+  --platform ${BUILD_PLATFORM} ${DIR}
 
 echo "built: ${IMAGE_BUILD}"
 
@@ -90,8 +90,8 @@ echo "running tests: ${IMAGE_TEST}"
 # Run tests sepatately on amd64 so they run faster
 #  NOTE: if amd64 is not the host platform in the future - we should change
 docker buildx build --tag ${IMAGE_TEST} \
-  -f Dockerfile.build \
+  -f ${DIR}/Dockerfile.build \
   --cache-from=type=registry,ref=${IMAGE_TEST_CACHE} \
   --target test \
   ${IMAGE_TEST_CACHE_TO} \
-  --platform ${BUILD_PLATFORM} .
+  --platform ${BUILD_PLATFORM} ${DIR}
