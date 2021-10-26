@@ -1,0 +1,65 @@
+#!/bin/bash
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
+
+function clone_source() {
+  local PACKAGE
+  PACKAGE="$1"
+  local PACKAGE_DIR
+  PACKAGE_DIR="$2"
+  local PACKAGE_MK="${PACKAGE_DIR}/package.info"
+  local SOURCE_DIR_NAME=source
+  local SOURCE_DIR="${PACKAGE_DIR}/${SOURCE_DIR_NAME}"
+  if [[ -z "$PACKAGE_DIR" ]]; then
+    echo "Please specify package: $0 <package>"
+    exit 1
+  elif [[ ! -d "$PACKAGE_DIR" ]]; then
+    echo "Please specify a package directory that exists.  Not: $PACKAGE"
+    exit 1
+  elif [[ ! -f "$PACKAGE_MK" ]]; then
+    echo "No package.mk found at: $PACKAGE_MK"
+    exit 1
+  fi
+  GET_HANDLER_SUPPORT=""
+  PKG_VERSION=""
+  PKG_URL=""
+  source "${PACKAGE_MK}"
+  
+  if [[ "${GET_HANDLER_SUPPORT}" == "git" ]]; then
+  
+     if [[ -a "${PKG_VERSION}" ]]; then
+       echo "${PKG_VERSION} required"
+       exit 1
+     fi
+     ALREADY_CLONED=false
+     if [[ -d "${SOURCE_DIR}" ]]; then
+        pushd "${SOURCE_DIR}" &> /dev/null
+        if [[ "$(git config --get remote.origin.url)" == "$PKG_URL" ]]; then
+          git fetch
+          ALREADY_CLONED="true"
+        fi
+        popd &> /dev/null
+     fi
+     echo "source dir: ${SOURCE_DIR}"
+     if [[ "$ALREADY_CLONED" == "false" ]]; then
+        rm -rf "${SOURCE_DIR}"]
+        pushd "${PACKAGE_DIR}" &> /dev/null
+        git clone --recursive "${PKG_URL}" "${SOURCE_DIR_NAME}"
+        popd &> /dev/null
+     fi
+  
+     echo "chaning to: ${SOURCE_DIR}"
+     pushd "${SOURCE_DIR}" &> /dev/null
+     echo "Updating any submodules..."
+     git submodule update --init --recursive
+     echo "Cleaning ($(pwd))..."
+     git clean -fd
+     echo "Checking out: ${PKG_VERSION}"
+     git checkout "${PKG_VERSION}"
+     popd &> /dev/null || return
+  elif [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
+    echo "No GET_HANDLER_SUPPORT.  Assuming all local files"
+  else
+    echo "Handler: '${GET_HANDLER_SUPPORT}' not found"
+    exit 1
+  fi
+}

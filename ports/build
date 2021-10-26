@@ -1,0 +1,274 @@
+#!/bin/bash
+set -e
+BRANCH=main
+IMAGE_BASE=ghcr.io/pkegg/portmaster
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
+source ${DIR}/clone-source
+export CCACHE_DIR="../.ccache"
+
+function build_package() {
+  local PACKAGE
+  PACKAGE="$1"
+  local PACKAGE_DIR
+  PACKAGE_DIR="$2"
+  local PACKAGE_MK="${PACKAGE_DIR}/package.info"
+  local SOURCE_DIR="${PACKAGE_DIR}/source"
+  local SOURCE_DOCKER_DIR="${PACKAGE}/source"
+  local BUILD_DIR
+  BUILD_DIR="$(realpath ${PACKAGE_DIR}/..)"
+  source "${PACKAGE_MK}"
+
+  rm -rf "${PACKAGE_DIR}/pkg"
+  mkdir -p "${PACKAGE_DIR}/pkg/"
+
+  if [[ -x "${PACKAGE_DIR}/build" || -x "${PACKAGE_DIR}/package" ]]; then
+
+    if [[ -z "${DOCKER_WORK_DIR}" ]]; then
+      DOCKER_WORK_DIR=/work
+    fi
+
+    GID=$(id -g)
+    DOCKER_CMD=docker
+  
+    # Use 'sudo' if docker ps doesn't work.  In theory, other things than missing sudo could cause this.  But sudo needed is a common issue and easy to fix.
+    SUDO=""
+    if ! docker ps -q &> /dev/null && sudo docker ps -q &> /dev/null; then
+     SUDO="sudo"
+    fi
+ 
+    # Launch docker as interactive if this is an interactive shell (allows ctrl-c for manual and running non-interactive - aka: build server)
+    INTERACTIVE=""
+    if [ -t 0 ]; then
+      INTERACTIVE="-it"
+    fi
+ 
+  
+    if [[ -x "${PACKAGE_DIR}/build" ]]; then
+      if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
+        echo "building inside docker image"
+        build_in_docker_image ${PACKAGE}
+      else
+        clone_source ${PACKAGE} "${PACKAGE_DIR}"
+        if [[ ! -d "${SOURCE_DIR}" ]]; then
+          SOURCE_DIR="${PACKAGE_DIR}"
+          SOURCE_DOCKER_DIR=""
+          BUILD_DIR="."
+          mkdir -p "${SOURCE_DIR}"
+        fi
+        if [[ "${USE_DOCKER}" == "false" ]]; then
+          echo "building ${PACKAGE} without docker..."
+          pushd "${SOURCE_DIR}" &> /dev/null
+          "${BUILD_DIR}/build"
+          popd &> /dev/null
+        else
+          echo "building ${PACKAGE} with docker..."
+          pushd "${SOURCE_DIR}" &> /dev/null
+
+          # Get .env file ready
+          env | grep "=" > .env
+          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "../build"
+          popd &> /dev/null
+        fi
+      fi
+      echo "build done"
+    fi
+  fi
+
+  mkdir -p "${PACKAGE_DIR}/pkg/"
+
+  if [[ -f "${PACKAGE_DIR}/run.sh" ]]; then
+    cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/run.sh"
+  fi
+  cp ${PACKAGE_DIR}/../_global/global-functions "${PACKAGE_DIR}/pkg/"
+  cp ${PACKAGE_DIR}/../_global/oga_controls "${PACKAGE_DIR}/pkg/"
+
+  if [[ -x "${PACKAGE_DIR}/package" ]]; then
+    echo "Running custom package script"
+    pushd "${PACKAGE_DIR}/" &> /dev/null
+    ${PACKAGE_DIR}/package
+    popd
+  fi
+
+  if [[ -f "${PACKAGE_DIR}/pkg/run.sh" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run.sh"; then
+    echo "Running ${PACKAGE} run.sh using IS_TEST_MODE=true"
+    PORTS_DIR=/opt/roms/ports
+    TEST_IMAGE=ghcr.io/pkegg/portmaster/test:${BRANCH}
+    docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
+      -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
+      -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
+      bash -c "IS_TEST_MODE=true bash \"./run.sh\""
+    echo "run.sh test passed"
+    
+  fi
+  
+}
+function build_env_docker_image() {
+  local PACKAGE
+  PACKAGE="$1"
+  local PACKAGE_DIR
+  PACKAGE_DIR="$2"
+  if [[ -f "${PACKAGE_DIR}/Dockerfile" ]]; then
+    echo "${PACKAGE_DIR}/Dockerfile exists"
+
+    DOCKER_IMAGE_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
+  
+    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_CACHE},mode=max --push"
+    else
+      IMAGE_CACHE_TO="--load --builder default"
+    fi
+    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE}"
+
+
+    #make lower case as docker must be lowers
+    #DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
+
+    echo "docker image: ${DOCKER_IMAGE}"
+
+    if [[ "${USE_DOCKER}" != "false" ]]; then
+      pushd "${PACKAGE_DIR}" &> /dev/null
+      echo docker buildx build --platform ${BUILD_PLATFORM} \
+        --tag "${DOCKER_IMAGE}" \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
+
+      docker buildx build --platform ${BUILD_PLATFORM} \
+        --tag "${DOCKER_IMAGE}" \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
+      popd &> /dev/null
+      echo "tagged: ${DOCKER_IMAGE}"
+    fi 
+  else
+    echo "${PACKAGE_DIR}/Dockerfile does not exist"
+    DOCKER_IMAGE=${IMAGE_BASE}:main
+  fi
+}
+function build_in_docker_image() {
+
+    local PACKAGE
+    PACKAGE="$1"
+    echo "Copying ${DIR}/Dockerfile.build.template"
+    cp "${DIR}/Dockerfile.build.template" ${DIR}/${PACKAGE}/Dockerfile.build
+    cp "${DIR}/clone-source" "${DIR}/${PACKAGE}/clone-source"
+
+    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build:${BRANCH}
+    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache:${BRANCH}
+
+    #make lower case as docker must be lowers
+    DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
+    DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
+    fi
+    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
+    pushd "${PACKAGE_DIR}" &> /dev/null
+    echo docker buildx build --platform ${BUILD_PLATFORM} \
+        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
+        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
+        --build-arg PACKAGE=${PACKAGE} \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
+
+    docker buildx build --platform ${BUILD_PLATFORM} \
+        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
+        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
+        --build-arg PACKAGE=${PACKAGE} \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
+
+    
+    ID=$(docker create ${DOCKER_IMAGE_BUILD})
+    rm -rf ./pkg
+    rm -rf ./source
+    echo "copying built images (./pkg)" 
+    docker cp "${ID}:/${PACKAGE}/pkg" ./pkg || true # it is OK (at least for now) if there's not a package inside
+    
+    echo "copying built images (./pkg)" 
+    docker cp "${ID}:/${PACKAGE}/source" ./source || true # it is OK (at least for now) if there's not a source fodler inside
+
+    echo "done"
+    docker rm -f "${ID}"
+
+    popd &> /dev/null
+
+
+}
+function parse_args() {
+  BUILD_IN_DOCKER_IMAGE=false
+  USE_DOCKER=true
+  USE_DOCKER_PUSH=false
+  
+  # Parse args
+  ARGS=()
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+  
+    case $key in
+      -i|--docker-image)
+        BUILD_IN_DOCKER_IMAGE="true"
+        shift # past argument
+        ;;
+      -n|--no-docker)
+        USE_DOCKER="false"
+        shift # past argument
+        ;;
+      -p|--push)
+        USE_DOCKER_PUSH="true"
+        shift # past argument
+        ;;
+      -h|--help)
+        echo "$0 <package> [arguments]"
+        echo "  --docker-image (-i) - builds ports in a Dockerfile (./build).  Allows caching.  Used for build server and troubleshooting build server"
+        echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
+        echo "  --push (-p) - pushes docker images.  Meant for build server"
+        exit 1
+        ;;
+      *)    # unknown option
+        ARGS+=("$1") # save it in an array for later
+        shift # past argument
+        ;;
+    esac
+  done
+}
+
+# don't run anything if being sourced
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  PACKAGE=$1
+  echo "building package: $PACKAGE"
+  shift
+  parse_args "$@"
+  
+    
+  if [[ -z "$BUILD_PLATFORM" ]]; then
+    BUILD_PLATFORM="linux/arm64/v8"
+  fi
+  echo "BUILD_IN_DOCKER_IMAGE: ${BUILD_IN_DOCKER_IMAGE} USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
+  DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
+
+  PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
+  build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
+  build_package "$PACKAGE" "$PACKAGE_DIR"
+  
+  source "${PACKAGE_DIR}/package.info"
+  RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
+  GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../_global)"
+  pushd "${PACKAGE_DIR}/pkg" &> /dev/null
+
+  echo "Release dir: ${RELEASE_DIR}"
+  ZIP_FILE="${RELEASE_DIR}/${PKG_NAME}.zip"
+  mkdir -p "${RELEASE_DIR}"
+  rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
+  rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
+
+  cp -r "./" "${RELEASE_DIR}/${PKG_NAME}"
+  cp -r "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}.sh"
+
+  sed -i "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}.sh"
+  zip -qr "${ZIP_FILE}" .
+  popd &> /dev/null
+  echo "========================================="
+  echo "Build done: ${PACKAGE}.  Zip: ${ZIP_FILE}"
+  echo ""
+fi

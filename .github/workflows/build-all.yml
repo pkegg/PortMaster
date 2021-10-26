@@ -35,11 +35,11 @@ jobs:
            set -e
            ./init-docker
            docker buildx create --name multi-platform --driver docker-container --use
-           ./build-base-image --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
-           ./build-all --push --docker-image
+           ./ports/build-base-image --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
+           ./ports/build-all --push --docker-image
       - name: Archive
         uses: actions/upload-artifact@v2
         with:
-          name: ports
+          name: all-ports
           path: |
             release/*.zip
