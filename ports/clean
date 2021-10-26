@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+BRANCH=main
+IMAGE_BASE=ghcr.io/pkegg/portmaster
+DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
+
+PACKAGE="$1"
+if [[ -z "${PACKAGE}" ]]; then
+  echo "No package to clean!  Please pass one in.  Ex: $0 2048"
+  exit 1
+fi
+rm -rf "${DIR}/${PACKAGE}/source"
+rm -rf "${DIR}/${PACKAGE}/pkg"
+rm -rf "${DIR}/${PACKAGE}/clone-source"
+rm -rf "${DIR}/${PACKAGE}/Dockerfile.build"
+echo "done"
