@@ -4,8 +4,8 @@ FROM ${DOCKER_IMAGE} as prod
 
 ARG PACKAGE=""
 
-RUN mkdir -p ./$PACKAGE/pkg
-WORKDIR ./$PACKAGE/
+RUN mkdir -p /work/$PACKAGE/pkg
+WORKDIR /work/$PACKAGE/
 
 COPY clone-source package.info* ./
 RUN bash -c "source ./clone-source && clone_source $PACKAGE ./"
