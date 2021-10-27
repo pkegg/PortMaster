@@ -8,7 +8,7 @@ RUN mkdir -p ./$PACKAGE/pkg
 WORKDIR ./$PACKAGE/
 
 COPY clone-source package.info* ./
-RUN bash -c "source ./clone-source && ls -lah && clone_source $PACKAGE ./"
+RUN bash -c "source ./clone-source && clone_source $PACKAGE ./"
 
 #NOTE: important that Dockerfile.build is copied as it *always* exists
 #      The other files are technically optional
