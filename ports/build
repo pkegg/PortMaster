@@ -261,12 +261,25 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
   rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
 
-  cp -r "./" "${RELEASE_DIR}/${PKG_NAME}"
-  cp -r "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}.sh"
+  echo "Preparing release zip..."
 
-  sed -i "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}.sh"
-  zip -qr "${ZIP_FILE}" .
+  mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
+
+  if [[ -f "${PACKAGE_DIR}/run-legacy.sh" ]]; then
+    cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+  else
+    cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+    sed -i "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+  fi
+
+  cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PACKAGE}"
   popd &> /dev/null
+
+  pushd "${RELEASE_DIR}/${PKG_NAME}" &> /dev/null || exit 1
+  echo "Zipping..."
+  zip -FSqr "${ZIP_FILE}" .
+  popd &> /dev/null
+
   echo "========================================="
   echo "Build done: ${PACKAGE}.  Zip: ${ZIP_FILE}"
   echo ""
