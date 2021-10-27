@@ -4,17 +4,14 @@ FROM ${DOCKER_IMAGE} as prod
 
 ARG PACKAGE=""
 
-RUN mkdir -p ./$PACKAGE/
-
-COPY clone-source ./
-RUN bash -c "source ./clone-source && clone_source $PACKAGE ./$PACKAGE"
-
+RUN mkdir -p ./$PACKAGE/pkg
 WORKDIR ./$PACKAGE/
+
+COPY clone-source package.info* ./
+RUN bash -c "source ./clone-source && ls -lah && clone_source $PACKAGE ./"
 
 #NOTE: important that Dockerfile.build is copied as it *always* exists
 #      The other files are technically optional
-COPY Dockerfile.build build*./
+COPY Dockerfile.build build* ./
 
 RUN [ -x ./build ] && cd source && ../build || echo "no build"
-
-COPY Dockerfile.build package* conf* ./$PACKAGE/
