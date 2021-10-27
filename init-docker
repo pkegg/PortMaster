@@ -29,3 +29,8 @@ fi
 if [[ ! -f /proc/sys/fs/binfmt_misc/qemu-aarch64 || ! -f /proc/sys/fs/binfmt_misc/qemu-arm ]]; then
   docker run --rm --privileged tonistiigi/binfmt:latest --install all
 fi 
+
+if ! docker buildx ls | grep -q portmaster-remote-builder; then
+  docker buildx create --name portmaster-remote-builder --driver docker-container
+fi
+
