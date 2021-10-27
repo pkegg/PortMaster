@@ -41,20 +41,19 @@ function build_package() {
     if [ -t 0 ]; then
       INTERACTIVE="-it"
     fi
- 
   
-    if [[ -x "${PACKAGE_DIR}/build" ]]; then
-      if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
-        echo "building inside docker image"
-        build_in_docker_image ${PACKAGE}
-      else
-        clone_source ${PACKAGE} "${PACKAGE_DIR}"
-        if [[ ! -d "${SOURCE_DIR}" ]]; then
-          SOURCE_DIR="${PACKAGE_DIR}"
-          SOURCE_DOCKER_DIR=""
-          BUILD_DIR="."
-          mkdir -p "${SOURCE_DIR}"
-        fi
+    if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
+      echo "building inside docker image"
+      build_in_docker_image ${PACKAGE}
+    else
+      clone_source ${PACKAGE} "${PACKAGE_DIR}"
+      if [[ ! -d "${SOURCE_DIR}" ]]; then
+        SOURCE_DIR="${PACKAGE_DIR}"
+        SOURCE_DOCKER_DIR=""
+        BUILD_DIR="."
+        mkdir -p "${SOURCE_DIR}"
+      fi
+      if [[ -x "${PACKAGE_DIR}/build" ]]; then
         if [[ "${USE_DOCKER}" == "false" ]]; then
           echo "building ${PACKAGE} without docker..."
           pushd "${SOURCE_DIR}" &> /dev/null
@@ -69,8 +68,8 @@ function build_package() {
           ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "../build"
           popd &> /dev/null
         fi
+        echo "build done"
       fi
-      echo "build done"
     fi
   fi
 

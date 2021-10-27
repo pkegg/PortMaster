@@ -1,0 +1,6 @@
+#! /bin/bash
+set -e
+PACKAGE=am2r
+source package.info
+mkdir -p pkg/
+cp -r source/${PACKAGE}/* pkg/

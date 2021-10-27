@@ -7,3 +7,5 @@
 **/pkg
 **/bld
 **.log
+**/pkg.zip
+**/pkg.zip.sha256

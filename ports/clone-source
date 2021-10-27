@@ -56,10 +56,109 @@ function clone_source() {
      echo "Checking out: ${PKG_VERSION}"
      git checkout "${PKG_VERSION}"
      popd &> /dev/null || return
+  elif [[ "${GET_HANDLER_SUPPORT}" == "archive" ]]; then
+    echo "Checking archive..."
+
+    if [[ -z "${PKG_URL}" ]]; then
+      echo "Package URL (PKG_URL) required in package.info with GET_HANDLER_SUPPORT==archive"
+      exit 1
+    elif [[ -z "${PKG_SHA256}" ]]; then
+      echo "Package SHA256 is also required to ensure download is repeatable.  Set it to something like 'wrong' and the build can tell you the right value"
+      exit 1
+    fi
+
+    if [[ -z "${PKG_TYPE}" ]]; then
+      local url_file_name="${PKG_URL##*/}"
+      PKG_TYPE="${url_file_name##*.}"
+    fi
+
+    if [[ "$PKG_TYPE" != "zip" ]]; then
+      echo "PKG_TYPE other than zip: (${PKG_TYPE}) is not currently supported"
+    fi
+    local DOWNLOAD_FILE="${PACKAGE_DIR}/pkg.${PKG_TYPE}"
+    local DOWNLOAD_FILE_SHA256="${DOWNLOAD_FILE}.sha256"
+  
+    if already_downloaded "${PKG_SHA256}" "${DOWNLOAD_FILE}" "${DOWNLOAD_FILE_SHA256}"; then
+      echo "File: ${DOWNLOAD_FILE} already downloaded and matching sha256"
+    else
+      echo "Downloading file: ${PKG_URL}"
+      if download_file "${PKG_URL}" "${DOWNLOAD_FILE}" "${DOWNLOAD_FILE_SHA256}"; then
+        echo "File downloaded successfully"
+        calculated_sha256=$(get_sha "${DOWNLOAD_FILE}")
+        if [[ "${PKG_SHA256}" == "${calculated_sha256}" ]]; then
+          echo "SHA256 check successful"
+          echo "${calculated_sha256}" > "${DOWNLOAD_FILE_SHA256}"
+        else
+          echo "Expected SHA: '${PKG_SHA256}' did not match calculated SHA: '${calculated_sha256}'"
+          exit 1
+        fi
+      else
+        echo "Could not download file: ${PKG_URL} to: ${DOWNLOAD_FILE}"
+        exit 1
+      fi
+    fi
+    
+    if unpack "${DOWNLOAD_FILE}" "${SOURCE_DIR}" "${PKG_TYPE}"; then
+      echo "Unpacked: ${DOWNLOAD_FILE} to ${SOURCE_DIR}"
+    else
+      echo "Could not unpack ${DOWNLOAD_FILE} to ${SOURCE_DIR}"
+      exit 1
+    fi
   elif [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
     echo "No GET_HANDLER_SUPPORT.  Assuming all local files"
   else
     echo "Handler: '${GET_HANDLER_SUPPORT}' not found"
     exit 1
   fi
+}
+function unpack() {
+  local unpack_file="$1"
+  local unpack_dir="$2"
+  local unpack_type="$3"
+          
+  if [[ "${unpack_type}"  == "zip" ]]; then
+    echo "Removing existing directory: ${unpack_dir}"
+    rm -rf "${unpack_dir}"
+    echo "Unzipping into: ${unpack_dir}"
+    unzip "${unpack_file}" -d "${unpack_dir}"
+  fi
+
+}
+function get_sha() {
+  local downloaded_file="$1"
+
+  local calculated_sha256
+  calculated_sha256=$(sha256sum "${downloaded_file}" 2> /dev/null | cut -d" " -f1)
+  echo "${calculated_sha256}"
+
+}
+function download_file() {
+  local download_url="$1"
+  local download_file_location="$2"
+  local download_file_sha256_location="$3"
+
+  rm -rf "${download_file_location}"
+  rm -rf "${download_file_sha256_location}"
+
+  WGET_OPT="-q" #Could make configurable in future
+  if wget --output-file=- --timeout=30 --tries=3 --passive-ftp --no-check-certificate -c ${WGET_OPT} --progress=bar:force --show-progress -O "${download_file_location}" "${download_url}"; then
+    return 0
+  fi
+
+  return 1
+}
+function already_downloaded() {
+  local filename="$1"
+  local sha256="$2"
+  local existing_sha256_file="$3"
+
+  if [[ -f "${filename}" && -f ${existing_sha256_file} && -n "${sha256}" ]]; then
+    existing_sha256="$(cat "${existing_sha256_file}" 2> /dev/null)"
+    if [[ -n "${existing_sha256}" && "${existing_sha256}" == "${sha256}" ]]; then
+      return 0
+    fi
+  fi
+
+  return 1
+
 }
