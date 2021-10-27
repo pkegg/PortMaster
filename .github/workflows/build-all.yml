@@ -34,7 +34,7 @@ jobs:
         run: |
            set -e
            ./init-docker
-           docker buildx create --name multi-platform --driver docker-container --use
+           docker buildx use portmaster-remote-builder
            ./ports/build-base-image --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
            ./ports/build-all --push --docker-image
       - name: Archive
