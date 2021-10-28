@@ -2,9 +2,10 @@ name: release-ports
 on:
   #keep manual for now
   workflow_dispatch:
-    release_tag:
-      required: true
-      description: "The tag to create for this release"
+    inputs:
+      release_tag:
+        required: true
+        description: "The git tag to create for this release"
        
 env:
   REGISTRY: ghcr.io
