@@ -38,7 +38,7 @@ jobs:
            docker buildx use portmaster-remote-builder
            #./ports/build-all --docker-image
 
-      - name: Publish release
+      - name: "Publish release: ${{github.event.inputs.release_tag}}"
         uses: ncipollo/release-action@v1
         with:
           tag:  "${{github.event.inputs.release_tag}}-test"
@@ -46,7 +46,7 @@ jobs:
             # Release Notes
               TBD
             
-          artifacts: "*.zip"
+          artifacts: "version"
           token: ${{ secrets.GITHUB_TOKEN }}
           
 
