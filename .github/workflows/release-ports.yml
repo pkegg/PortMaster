@@ -39,14 +39,16 @@ jobs:
            #./ports/build-all --docker-image
 
       - name: "Publish release: ${{github.event.inputs.release_tag}}"
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v1
         with:
-          tag:  "${{github.event.inputs.release_tag}}-test"
+          tag_name:  "${{github.event.inputs.release_tag}}"
+          name: "TBD"
           body: |
             # Release Notes
-              TBD
-            
-          artifacts: "version"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          
-
+            TBD
+          files: |
+            *.zip
+          prerelease: false
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
