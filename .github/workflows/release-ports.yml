@@ -46,8 +46,8 @@ jobs:
           body: |
             # Release Notes
             TBD
-          files: |
-            *.zip
+          #files: |
+          #  *.zip
           prerelease: false
           draft: false
         env:
