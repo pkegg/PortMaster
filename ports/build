@@ -11,17 +11,19 @@ function build_package() {
   PACKAGE="$1"
   local PACKAGE_DIR
   PACKAGE_DIR="$2"
-  local PACKAGE_MK="${PACKAGE_DIR}/package.info"
   local SOURCE_DIR="${PACKAGE_DIR}/source"
   local SOURCE_DOCKER_DIR="${PACKAGE}/source"
   local BUILD_DIR
   BUILD_DIR="$(realpath ${PACKAGE_DIR}/..)"
-  source "${PACKAGE_MK}"
 
   rm -rf "${PACKAGE_DIR}/pkg"
   mkdir -p "${PACKAGE_DIR}/pkg/"
+  PACKAGE_SCRIPT="${PACKAGE_DIR}/package"
+  if [[ ! -x "$PACKAGE_SCRIPT" && -x "$PACKAGE_SCRIPT.tmp" ]]; then
+    PACKAGE_SCRIPT="$PACKAGE_SCRIPT.tmp"
+  fi
 
-  if [[ -x "${PACKAGE_DIR}/build" || -x "${PACKAGE_DIR}/package" ]]; then
+  if [[ -x "${PACKAGE_DIR}/build" || -x "${PACKAGE_SCRIPT}" ]]; then
 
     if [[ -z "${DOCKER_WORK_DIR}" ]]; then
       DOCKER_WORK_DIR=/work
@@ -81,10 +83,10 @@ function build_package() {
   cp ${PACKAGE_DIR}/../_global/global-functions "${PACKAGE_DIR}/pkg/"
   cp ${PACKAGE_DIR}/../_global/oga_controls "${PACKAGE_DIR}/pkg/"
 
-  if [[ -x "${PACKAGE_DIR}/package" ]]; then
+  if [[ -x "${PACKAGE_SCRIPT}" ]]; then
     echo "Running custom package script"
     pushd "${PACKAGE_DIR}/" &> /dev/null
-    ${PACKAGE_DIR}/package
+    ${PACKAGE_SCRIPT}
     popd
   fi
 
@@ -231,6 +233,7 @@ function parse_args() {
     esac
   done
 }
+ 
 
 # don't run anything if being sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
@@ -239,18 +242,42 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   shift
   parse_args "$@"
   
-    
+  PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
+
+  source "${PACKAGE_DIR}/package.info"
+
+  if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
+    source "${PACKAGE_DIR}/../ports.info"
+    PACKAGE_INFO_TMP="${PACKAGE_DIR}/package.info.tmp"
+
+    echo "Legacy Portmaster Build - Getting info from legacy URLS"
+    echo curl "https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1" -q 2> /dev/null 
+
+    PKG_GIT_SHA=$(curl -L "https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1" -q 2> /dev/null | grep "${PKG_NAME}" -A 2 | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+    PKG_VERSION=$(wget -O- "https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/commits?sha=${LEGACY_PORTMASTER_BRANCH}&path=${PKG_NAME}.zip&page=1&per_page=1" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+
+    PKG_URL="https://github.com/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/raw/${PKG_VERSION}/${PKG_NAME}.zip"
+    GET_HANDLER_SUPPORT="archive"
+    echo "PKG_GIT_SHA: ${PKG_GIT_SHA} PKG_VERSION: ${PKG_VERSION} PKG_URL: ${PKG_URL}"
+
+    rm -rf "${PACKAGE_INFO_TMP}"
+    echo "PKG_GIT_SHA=\"${PKG_GIT_SHA}\"" >> "${PACKAGE_INFO_TMP}"
+    echo "PKG_VERSION=\"${PKG_VERSION}\"" >> "${PACKAGE_INFO_TMP}"
+    echo "PKG_URL=\"${PKG_URL}\"" >> "${PACKAGE_INFO_TMP}"
+    echo "GET_HANDLER_SUPPORT=\"${GET_HANDLER_SUPPORT}\"" >> "${PACKAGE_INFO_TMP}"
+
+    cp "${PACKAGE_DIR}/../package.legacy.template" "${PACKAGE_DIR}/package.tmp"
+  fi
+
   if [[ -z "$BUILD_PLATFORM" ]]; then
     BUILD_PLATFORM="linux/arm64/v8"
   fi
   echo "BUILD_IN_DOCKER_IMAGE: ${BUILD_IN_DOCKER_IMAGE} USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
   DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
 
-  PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
   build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
   build_package "$PACKAGE" "$PACKAGE_DIR"
   
-  source "${PACKAGE_DIR}/package.info"
   RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
   GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../_global)"
   pushd "${PACKAGE_DIR}/pkg" &> /dev/null
@@ -264,15 +291,20 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "Preparing release zip..."
 
   mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
-
+  PKG_DIRECTORY="${PACKAGE}"
+  if [[ -n "${PKG_DIRECTORY_OVERRIDE}" ]]; then
+    PKG_DIRECTORY="$PKG_DIRECTORY_OVERRIDE"
+  fi
   if [[ -f "${PACKAGE_DIR}/run-legacy.sh" ]]; then
     cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+  elif [[ "${LEGACY_PORTMASTER}"  == "true" && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" ]]; then
+    cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   else
     cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
     sed -i "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   fi
 
-  cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PACKAGE}"
+  cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
   popd &> /dev/null
 
   pushd "${RELEASE_DIR}/${PKG_NAME}" &> /dev/null || exit 1

@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2021 pkegg, Portmaster
+
+PKG_NAME="Blood"
+PKG_DIRECTORY_OVERRIDE="Blood"
+LEGACY_PORTMASTER="true"
