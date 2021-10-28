@@ -36,7 +36,7 @@ jobs:
            set -e
            ./init-docker
            docker buildx use portmaster-remote-builder
-           ./ports/build-all --docker-image
+           #./ports/build-all --docker-image
 
       - name: Publish release
         uses: ncipollo/release-action@v1
@@ -47,5 +47,6 @@ jobs:
             TBD
             
           artifacts: "release/*.zip"
-          token: ${{ secrets.TRIGGER_BUILD_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
 
