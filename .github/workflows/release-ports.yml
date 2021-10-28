@@ -41,10 +41,10 @@ jobs:
       - name: Publish release
         uses: ncipollo/release-action@v1
         with:
-          tag:  "${{github.event.inputs.release_tag}}"
+          tag:  "${{github.event.inputs.release_tag}}-test"
           body: |
             # Release Notes
-            TBD
+              TBD
             
           artifacts: "*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
