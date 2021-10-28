@@ -1,0 +1,51 @@
+name: release-ports
+on:
+  #keep manual for now
+  workflow_dispatch:
+    release_tag:
+      required: true
+      description: "The tag to create for this release"
+       
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.event.repository.name }}/portmaster
+
+jobs:
+  buildx:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: build
+        run: |
+           set -e
+           ./init-docker
+           docker buildx use portmaster-remote-builder
+           ./ports/build-all --docker-image
+
+      - name: Create pre-release as draft at first to hide during uploads
+        if: github.event.action == 'release-beta'
+        uses: ncipollo/release-action@v1
+        with:
+          tag:  "${{github.event.inputs.release_tag}}"
+          body: |
+            # Release Notes
+            TBD
+            
+          artifacts: "release/*.zip"
+          token: ${{ secrets.TRIGGER_BUILD_TOKEN }}
+
