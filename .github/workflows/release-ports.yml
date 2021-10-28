@@ -38,8 +38,7 @@ jobs:
            docker buildx use portmaster-remote-builder
            ./ports/build-all --docker-image
 
-      - name: Create pre-release as draft at first to hide during uploads
-        if: github.event.action == 'release-beta'
+      - name: Publish release
         uses: ncipollo/release-action@v1
         with:
           tag:  "${{github.event.inputs.release_tag}}"
