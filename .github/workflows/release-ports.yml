@@ -43,9 +43,6 @@ jobs:
         with:
           tag_name:  "${{github.event.inputs.release_tag}}"
           name: "TBD"
-          body: |
-            # Release Notes
-            TBD
           #files: |
           #  *.zip
           token: ${{ secrets.GITHUB_TOKEN }}
