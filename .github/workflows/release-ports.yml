@@ -46,7 +46,7 @@ jobs:
             # Release Notes
             TBD
             
-          artifacts: "release/*.zip"
+          artifacts: "*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
           
 
