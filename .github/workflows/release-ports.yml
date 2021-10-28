@@ -20,15 +20,15 @@ jobs:
         id: build
         run: |
            set -e
-           #./init-docker
-           #docker buildx use portmaster-remote-builder
-           #./ports/build-all --docker-image
+           ./init-docker
+           docker buildx use portmaster-remote-builder
+           ./ports/build-all --docker-image
 
       - name: "Publish release: ${{github.event.inputs.release_tag}}"
         uses: softprops/action-gh-release@v1
         with:
           tag_name:  "${{github.event.inputs.release_tag}}"
           name: "TBD"
-          #files: |
-          #  *.zip
+          files: |
+            release/*.zip
           token: ${{ secrets.GITHUB_TOKEN }}
