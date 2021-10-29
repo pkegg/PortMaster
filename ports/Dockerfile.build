@@ -2,8 +2,7 @@ ARG BASE_IMAGE=debian:buster-20211011
 FROM $BASE_IMAGE as base
 
 COPY ./_global/global* /_global/
-COPY ./_global/oga_controls /_global/
-COPY ./build* /
+
 WORKDIR /
 
 # Test global functions
@@ -13,4 +12,5 @@ COPY ./_global/test /_global/test
 RUN cd /_global/test && bats global-functions.bats
 
 FROM base
-
+COPY ./_global/oga_controls /_global/
+COPY ./build* /
