@@ -74,7 +74,7 @@ function get_tools_dir() {
   os=$(get_os)
   local toolsfolderloc="${ROOT_DIR}/opt/tools"
   if [[ "351ELEC" == "${os}" ]]; then
-    toolsfolderloc="${ROOT_DIR}/storage/roms/tools"
+    toolsfolderloc="${ROOT_DIR}/roms/tools"
   elif [[ "TheRA" == "${os}" ]]; then
     toolsfolderloc="${ROOT_DIR}/opt/system/Tools"
   elif [[ "ArkOS" == "${os}" ]]; then
@@ -88,7 +88,7 @@ function get_roms_dir() {
   os=$(get_os)
   local romsfolderloc="${ROOT_DIR}/roms"
   if [[ "351ELEC" == "${os}" ]]; then
-    romsfolderloc="${ROOT_DIR}/storage/roms/"
+    romsfolderloc="${ROOT_DIR}/roms/"
   elif [[ "TheRA" == "${os}" ]]; then
     romsfolderloc="${ROOT_DIR}/opt/system/Roms"
   elif [[ "ArkOS" == "${os}" ]]; then
