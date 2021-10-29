@@ -23,7 +23,8 @@ jobs:
            ./init-docker
            docker buildx use portmaster-remote-builder
            ./ports/build-all --docker-image
-
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish release: ${{github.event.inputs.release_tag}}"
         uses: softprops/action-gh-release@v1
         with:
@@ -32,3 +33,4 @@ jobs:
           files: |
             release/*.zip
           token: ${{ secrets.GITHUB_TOKEN }}
+
