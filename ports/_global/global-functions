@@ -116,7 +116,7 @@ function get_tools_dir() {
   os=$(get_os)
   local toolsfolderloc="${ROOT_DIR}/opt/tools"
   if [[ "351ELEC" == "${os}" ]]; then
-    toolsfolderloc="${ROOT_DIR}/storage/roms/tols"
+    toolsfolderloc="${ROOT_DIR}/storage/roms/tools"
   elif [[ "TheRA" == "${os}" ]]; then
     toolsfolderloc="${ROOT_DIR}/opt/system/Tools"
   elif [[ "ArkOS" == "${os}" ]]; then
