@@ -264,7 +264,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Github SHA URL: ${GITHUB_SHA_URL}"
     PKG_GIT_SHA=$(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q 2> /dev/null | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
     if [[ -z "${PKG_GIT_SHA}" ]]; then
+      echo "debug info: $(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q)"
       echo "Could not find ${PKG_NAME}.zip in ${GITHUB_SHA_URL}"
+      
       exit 1
     fi
     echo "Package Version URL: ${PKG_VERSION_URL}"
