@@ -249,13 +249,15 @@ MainMenu() {
 }
 echo "done choice"
 
-wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
-echo_err "done with ports.md"
-
 if [[ "${IS_TEST_MODE}" == "true" ]]; then
   echo "${IS_TEST_MODE}"
   exit 0
 fi
+
+wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
+echo_err "done with ports.md"
+
+
 
 if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
           --title "$1" --yesno "\nWould you like to check for an update to the PortMaster tool?" \
