@@ -20,7 +20,8 @@ TOOLS_DIR=$(get_tools_dir)
 HOTKEY=$(get_hotkey)
 CONSOLE=$(get_console)
 GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
-WEBSITE="https://raw.githubusercontent.com/${GITHUB_ORG}/PortMaster/main/"
+RELEASE_VERSION=2020-10-29
+WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/download/${RELEASE_VERSION}"
 WEBSITE_IN_CHINA=
 
 echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR} CONSOLE: ${CONSOLE} HOTKEY: ${HOTKEY}" 
@@ -156,11 +157,11 @@ PortInfoInstall() {
 
   local portmaster_tmp=/dev/shm/portmaster
   local ports_file=/dev/shm/portmaster/ports.md
-  local port_url="${website}${installloc}"
   
   msgtxt=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=Desc=").*?(?=")')
   installloc=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=locat=").*?(?=")')
   porter=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=porter=").*?(?=")')
+  local port_url="${website}${installloc}"
 
   if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
             --title "$choice" \
@@ -236,7 +237,7 @@ MainMenu() {
     --menu "Available ports for install" $HEIGHT $WIDTH 15)
 
     echo "choice"
-    choices=$("${selection[@]}" "${options[@]}" &> /dev/null) || userExit
+    choices=$("${selection[@]}" "${options[@]}" 2> /dev/null) || userExit
     echo "choice done"
 
     for choice in $choices; do
