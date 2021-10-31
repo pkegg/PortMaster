@@ -21,7 +21,7 @@ HOTKEY=$(get_hotkey)
 CONSOLE=$(get_console)
 GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
 RELEASE_VERSION=2020-10-29
-WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/download/${RELEASE_VERSION}"
+WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/download/${RELEASE_VERSION}/"
 WEBSITE_IN_CHINA=
 
 echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR} CONSOLE: ${CONSOLE} HOTKEY: ${HOTKEY}" 
