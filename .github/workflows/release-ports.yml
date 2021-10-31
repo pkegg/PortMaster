@@ -32,5 +32,6 @@ jobs:
           name: "TBD"
           files: |
             release/*.zip
+            ports.md
           token: ${{ secrets.GITHUB_TOKEN }}
 
