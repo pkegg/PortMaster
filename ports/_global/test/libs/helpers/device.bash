@@ -42,5 +42,6 @@ create_ogs() {
 
 create_chi() {
   device_common
-  #TODO: something
+  touch "${ROOT_DIR}/dev/input/by-path/platform-gameforce-gamepad-joystick"
+  #TODO: verify this is same on ArkOS and EmuELEC
 }

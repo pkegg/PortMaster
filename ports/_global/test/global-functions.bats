@@ -74,9 +74,8 @@ setup() {
   assert_output "rk2020"
 }
 
-#FIXME
-#@test "get device - Gameforce Chi" {
-#  create_chi
-#  run get_device
-#  assert_output "chi"
-#}
+@test "get device - Gameforce Chi" {
+  create_chi
+  run get_device
+  assert_output "chi"
+}

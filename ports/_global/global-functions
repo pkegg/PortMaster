@@ -44,6 +44,8 @@ function get_device() {
     else
       param_device="ogs"
     fi
+  elif [[ -e "${ROOT_DIR}/dev/input/by-path/platform-gameforce-gamepad-joystick" ]]; then
+    param_device="chi"
   fi
   echo "${param_device}"
 }
@@ -57,8 +59,6 @@ function get_oga_device() {
     device="anbernic"
   elif [[ "${device}" == "rg351mp" ]]; then
     device="ogs"  #TODO: validate this works as 351mp uses same controller - I think this is true
-  elif [[ "${device}" == "unknown" ]]; then
-    device="chi"  #FIXME - ideally we don't want to default to chi and should identify chi in 'get_device'
   fi
   echo "${device}"
 }
