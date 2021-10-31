@@ -1,1 +1,0 @@
-FROM ghcr.io/pkegg/portmaster:main

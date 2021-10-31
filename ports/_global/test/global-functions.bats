@@ -2,9 +2,9 @@
 load 'libs/bats-support/load'
 load 'libs/bats-assert/load'
 load 'libs/bats-file/load'
-load libs/helpers/log
-load libs/helpers/os
-load libs/helpers/device
+load helpers/log
+load helpers/os
+load helpers/device
 
 source ../global-functions
 

@@ -4,7 +4,7 @@
 #
 # The suggested way to source this file from run.sh is:
 # -----------------------------------------------------
-# DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 # source "${DIR}/global-functions"
 # -----------------------------------------------------
 # Utilizing DIR instead of ./ means the script can be called from any directory
