@@ -20,7 +20,7 @@ TOOLS_DIR=$(get_tools_dir)
 HOTKEY=$(get_hotkey)
 CONSOLE=$(get_console)
 GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
-RELEASE_VERSION=2020-10-29
+RELEASE_VERSION=2021-11-01
 WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/download/${RELEASE_VERSION}/"
 WEBSITE_IN_CHINA=
 
