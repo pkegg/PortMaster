@@ -77,8 +77,8 @@ function build_package() {
 
   mkdir -p "${PACKAGE_DIR}/pkg/"
 
-  if [[ -f "${PACKAGE_DIR}/run.sh" ]]; then
-    cp "${PACKAGE_DIR}/run.sh" "${PACKAGE_DIR}/pkg/run.sh"
+  if [[ -f "${PACKAGE_DIR}/run" ]]; then
+    cp "${PACKAGE_DIR}/run" "${PACKAGE_DIR}/pkg/run"
   fi
   cp ${PACKAGE_DIR}/../_global/global-functions "${PACKAGE_DIR}/pkg/"
   cp ${PACKAGE_DIR}/../_global/oga_controls "${PACKAGE_DIR}/pkg/"
@@ -90,15 +90,15 @@ function build_package() {
     popd
   fi
 
-  if [[ -f "${PACKAGE_DIR}/pkg/run.sh" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run.sh"; then
-    echo "Running ${PACKAGE} run.sh using IS_TEST_MODE=true"
+  if [[ -f "${PACKAGE_DIR}/pkg/run" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run"; then
+    echo "Running ${PACKAGE} run using IS_TEST_MODE=true"
     PORTS_DIR=/opt/roms/ports
     TEST_IMAGE=ghcr.io/pkegg/portmaster/test:${BRANCH}
     docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
       -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
       -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
-      bash -c "IS_TEST_MODE=true bash \"./run.sh\""
-    echo "run.sh test passed"
+      bash -c "IS_TEST_MODE=true bash \"./run\""
+    echo "run test passed"
     
   fi
   
@@ -319,7 +319,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   elif [[ "${LEGACY_PORTMASTER}"  == "true" \
          && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" \
-         && -f "${PACKAGE_DIR}/run.sh" ]]; then
+         && -f "${PACKAGE_DIR}/run" ]]; then
     cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   else
     cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
