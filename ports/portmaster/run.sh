@@ -20,8 +20,7 @@ TOOLS_DIR=$(get_tools_dir)
 HOTKEY=$(get_hotkey)
 CONSOLE=$(get_console)
 GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
-RELEASE_VERSION=2021-11-01
-WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/download/${RELEASE_VERSION}/"
+WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/latest/download/"
 WEBSITE_IN_CHINA=
 
 echo "OS: ${OS} DEVICE: ${DEVICE} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR} CONSOLE: ${CONSOLE} HOTKEY: ${HOTKEY}" 
@@ -167,8 +166,8 @@ PortInfoInstall() {
             --title "$choice" \
             --yesno "\n$msgtxt \n\nPorted By: $porter\n\nWould you like to continue to install this port?" \
             $HEIGHT $WIDTH &> ${CONSOLE}; then
-  
-    wget -t 3 -T 60 -q --show-progress ${port_url} -O \
+
+    $ESUDO wget -t 3 -T 60 -q --show-progress ${port_url} -O \
 	    $portmaster_tmp/$installloc 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox \
 		"Downloading ${1} package..." $HEIGHT $WIDTH
 

@@ -2,7 +2,4 @@
 # Copyright (C) 2021 pkegg, Portmaster
 
 PKG_NAME="AM2R"
-PKG_VERSION="3647d7f7bb43ead92428c04fb7aaf78f6c4293e7"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/${PKG_VERSION}/AM2R.zip"
-PKG_SHA256="a555f3eab175891580504fc723bb01fcb174afa61bb663306397397aae21895f"
-GET_HANDLER_SUPPORT="archive"
+LEGACY_PORTMASTER="true"
