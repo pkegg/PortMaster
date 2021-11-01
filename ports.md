@@ -6,6 +6,8 @@ Title="Blood ." Desc="Blood port based on EDuke32.  You'll need to add your own 
 
 Title="Blues_Brothers ." Desc="A rewrite of the Blues Brothers game engine developed by Titus Interactive.  Includes the demo files.  You can add your own full game Amiga or Dos files to the ports/bluesbrothers/gamedata folder." porter="Jetup13" locat="Blues%20Brothers.zip"
 
+Title="Cannonball ." Desc="This is the libretro port of the OutRun game engine recreation written by Chris White in 2014.  Add the OutRun Revision B ROMs into /ports/cannonball/gamedata folder. " porter="Christian_Haitian" locat="Cannonball.zip"
+
 Title="Cave_Story_lr ." Desc="Cave Story using the Libretro Retroarch Nxengine core." porter="Christian_Haitian" locat="Cave%20Story.zip"
 
 Title="Cave_Story_(Evo) ." Desc="Cave Story using the Nxengine-evo engine from https://github.com/nxengine/nxengine-evo" porter="Christian_Haitian" locat="Cave%20Story-evo.zip"
@@ -22,9 +24,13 @@ Title="Duke_Nukem_3D ." Desc="Duke Nukem 3D using the rednukem build open source
 
 Title="Exhumed ." Desc=" A port of the PC version of Exhumed based on EDuke32.  You'll need to add your own full version STUFF.DAT, DEMO.VCR and BOOK.MOV files to the ports/Exhumed folder." porter="Romadu" locat="Exhumed.zip"
 
+Title="Free_Heroes_of_Might_and_Magic_II ." Desc="A a recreation of Heroes of Might and Magic 2 game engine by Ihar Hubchyk.  Just add the data and maps folders from your full version GOG HOMM2 to the ports/fheroes2 folder or just launch Fheroes2 to download the demo files." porter="romadu" locat="Fheroes2.zip"
+
 Title="Freedom_Planet ." Desc="A combat-based platform adventure.  You must have a copy of Freedom Planet for Linux copied to the ports/freedomplanet/gamedata folder." porter="Johnny on Flame" locat="Freedom%20Planet.zip"
 
 Title="Heart_of_Darkness ." Desc="Heart of Darkness using the hode reimplementation of the engine developed by Amazing Studio.  Just add your own Heart of Darkness game files to the ports/hode/gamedata folder." porter="Jetup13" locat="Heart%20of%20Darkness.zip"
+
+Title="Hurrican ." Desc="Turrican port by Thrimbor.  Just add the data and lang folders from here to the ports/hurrican folder or just launch Hurrican from the ports menu in Emulationstation and it will download the files and install them automatically." porter="romadu" locat="Hurrican.zip"
 
 Title="Hydra_Castle_Labyrinth ." Desc="Hydra Castle Labyrinth is a platform game with some old school action. It's also reminiscent of games of the 16 bit era." porter="Christian_Haitian" locat="Hydra%20Castle%20Labyrinth.zip"
 
@@ -56,6 +62,8 @@ Title="Return_to_Castle_Wolfenstein ." Desc="Return to Castle Wolfenstein using 
 
 Title="Rick_Dangerous ." Desc="An open source implementation of the legendary game "Rick Dangerous" using the xrick libretro retroarch core.  All necessary files are already included." porter="Christian_Haitian" locat="Rick%20Dangerous.zip"
 
+Title="Rise_Of_The_Triad ." Desc="An open source port of Rise of the Triad by icculus.  The demo files are already included." porter="romadu" locat="ROTT.zip"
+
 Title="Rocks_N_Diamonds ." Desc="A Boulderdash type game by Holger Schemel with many unique features, such as the ability to play remade levels from Boulderdash, Emerald Mine and Supaplex and many more levels." porter="Christian_Haitian" locat="rocksndiamonds.zip"
 
 Title="Shadow_Warrior ." Desc="Shadow Warrior open source port by Jonathan Fowler.  You'll need to add your own full version SW.GRP and SW.RTS Shadow Warrior files to the ports/shadow-warrior folder." porter="Romadu" locat="Shadow%20Warrior.zip"
@@ -71,6 +79,8 @@ Title="Sonic_2 ." Desc="Sonic the Hedgehog 2 decompilation by Rubberduckycooly. 
 Title="Sonic_CD ." Desc="Sonic the Hedgehog CD decompilation by Rubberduckycooly.  Just add your own android Data.rsdk file to the ports/soniccd folder.  See the wiki for more info on this" porter="Christian_Haitian" locat="Sonic%20CD.zip"
 
 Title="SorR ." Desc="Streets of Rage Remake.  Just add your own sorr.dat file, mod folder, and palettes folder into the ports/sorr folder.  See the wiki for more info on this" porter="Christian_Haitian" locat="SorR.zip"
+
+Title="Space_Cadet_Pinball ." Desc="A reversed engineered version Space Cadet Pinball.  Just add your own Space Cadet Pinball PINBALL.DAT files and sound files to the spacecadetpinball folder." porter="Jetup and Romadu" locat="Space%20Cadet%20Pinball.zip"
 
 Title="Spelunky ." Desc="Spelunky Classic HD.  A modified version of Derek Yu's game Spelunky Classic. Based on the source code published in Humble Weekly Bundle: Play and Create with GameMaker (not original 1.1 release)." porter="Christian_Haitian" locat="Spelunky.zip"
 
