@@ -326,7 +326,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   elif [[ "${LEGACY_PORTMASTER}"  == "true" \
          && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" \
-         && -f "${PACKAGE_DIR}/run" ]]; then
+         && ! -f "${PACKAGE_DIR}/run" ]]; then
     cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   else
     cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
