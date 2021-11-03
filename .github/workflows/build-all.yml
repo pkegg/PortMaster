@@ -28,7 +28,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+      
+      - name: Get date for artifacts
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
+  
       - name: Build and push Docker image
         id: build
         run: |
@@ -39,10 +43,13 @@ jobs:
            ./ports/build-all --push --docker-image
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Archive
-        uses: actions/upload-artifact@v2
+      
+      - name: "Publish pre-release: ${{github.event.inputs.release_tag}}"
+        uses: softprops/action-gh-release@v1
         with:
-          name: all-ports
-          path: |
+          tag_name:  "${{steps.date.outputs.date}}"
+          name: "${{steps.date.outputs.date}}"
+          files: |
             release/*.zip
+            ports.md
+          token: ${{ secrets.GITHUB_TOKEN }}
