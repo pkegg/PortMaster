@@ -87,16 +87,16 @@ function clone_source() {
     local DOWNLOAD_FILE="${PACKAGE_DIR}/pkg.${PKG_TYPE}"
     local DOWNLOAD_FILE_SHA="${DOWNLOAD_FILE}.${SHA_TYPE}"
   
-    if already_downloaded "${PKG_SHA}" "${DOWNLOAD_FILE}" "${DOWNLOAD_FILE_SHA}"; then
+    if already_downloaded "${DOWNLOAD_FILE}" "${PKG_SHA}" "${DOWNLOAD_FILE_SHA}"; then
       echo "File: ${DOWNLOAD_FILE} already downloaded and matching ${SHA_TYPE}"
     else
       echo "Downloading file: ${PKG_URL}"
       if download_file "${PKG_URL}" "${DOWNLOAD_FILE}" "${DOWNLOAD_FILE_SHA}"; then
         echo "File downloaded successfully"
         calculated_sha=$(get_sha "${DOWNLOAD_FILE}" "${SHA_TYPE}")
+        echo "${calculated_sha}" > "${DOWNLOAD_FILE_SHA}"
         if [[ "${PKG_SHA}" == "${calculated_sha}" ]]; then
           echo "${SHA_TYPE} check successful"
-          echo "${calculated_sha}" > "${DOWNLOAD_FILE_SHA}"
         else
           echo "Expected SHA: '${PKG_SHA}' did not match calculated SHA: '${calculated_sha}'"
           exit 1
@@ -164,10 +164,12 @@ function already_downloaded() {
   local filename="$1"
   local sha256="$2"
   local existing_sha256_file="$3"
-
+  echo "filename: ${filename} existing_sha256_file: ${existing_sha256_file} sha256: ${sha256}"
   if [[ -f "${filename}" && -f ${existing_sha256_file} && -n "${sha256}" ]]; then
     existing_sha256="$(cat "${existing_sha256_file}" 2> /dev/null)"
+    echo "existing sha: $existing_sha256"
     if [[ -n "${existing_sha256}" && "${existing_sha256}" == "${sha256}" ]]; then
+      echo "matches!"
       return 0
     fi
   fi

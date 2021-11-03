@@ -259,24 +259,31 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [[ -n "${GITHUB_TOKEN}" ]]; then
       GITHUB_AUTH="Authorization: token ${GITHUB_TOKEN}"
     fi
-    GITHUB_SHA_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
-    PKG_VERSION_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/commits?sha=${LEGACY_PORTMASTER_BRANCH}&path=${PKG_DOWNLOAD_NAME}.zip&page=1&per_page=1"
-    echo "Github SHA URL: ${GITHUB_SHA_URL}"
-    PKG_GIT_SHA=$(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q 2> /dev/null | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
-    if [[ -z "${PKG_GIT_SHA}" ]]; then
-      echo "debug info: $(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q)"
-      echo "Could not find ${PKG_NAME}.zip in ${GITHUB_SHA_URL}"
-      
-      exit 1
-    fi
-    echo "Package Version URL: ${PKG_VERSION_URL}"
+    
+    if [[ -z "$LEGACY_URL_OVERRIDE" ]]; then
 
-    PKG_VERSION=$(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
-    if [[ -z "${PKG_VERSION}" ]]; then
-      echo "Could not find a sha in: ${GITHUB_SHA_URL}"
-      exit 1
+      GITHUB_SHA_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
+      PKG_VERSION_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/commits?sha=${LEGACY_PORTMASTER_BRANCH}&path=${PKG_DOWNLOAD_NAME}.zip&page=1&per_page=1"
+      echo "Github SHA URL: ${GITHUB_SHA_URL}"
+      PKG_GIT_SHA=$(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q 2> /dev/null | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+      if [[ -z "${PKG_GIT_SHA}" ]]; then
+        echo "debug info: $(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q)"
+        echo "Could not find ${PKG_NAME}.zip in ${GITHUB_SHA_URL}"
+        
+        exit 1
+      fi
+      echo "Package Version URL: ${PKG_VERSION_URL}"
+  
+      PKG_VERSION=$(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+      if [[ -z "${PKG_VERSION}" ]]; then
+        echo "Could not find a sha in: ${GITHUB_SHA_URL}"
+        exit 1
+      fi
+      PKG_URL="https://github.com/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/raw/${PKG_VERSION}/${PKG_DOWNLOAD_NAME}.zip"
+  
+    else
+      PKG_URL="${LEGACY_URL_OVERRIDE}"
     fi
-    PKG_URL="https://github.com/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/raw/${PKG_VERSION}/${PKG_DOWNLOAD_NAME}.zip"
     GET_HANDLER_SUPPORT="archive"
     echo "PKG_GIT_SHA: ${PKG_GIT_SHA} PKG_VERSION: ${PKG_VERSION} PKG_URL: ${PKG_URL}"
 
