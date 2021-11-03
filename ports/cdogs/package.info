@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (C) 2021 pkegg, Portmaster
 
 PKG_NAME="C-Dogs"
 PKG_VERSION="34e7e89750ba12c7fcd728c17548c0c92bb162ea"
