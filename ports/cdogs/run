@@ -5,6 +5,7 @@ set -e
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source "${DIR}/global-functions"
 OGA_DEVICE="$(get_oga_device)"
+ESUDO="$(get_sudo)"
 
 DEVICE="$(get_device)"
 CONSOLE="$(get_console)"
@@ -20,13 +21,13 @@ if [[ ! -f "${DIR}/conf/cdogs-sdl/options.cnf" ]]; then
   rm -f ${DIR}/conf/cdogs-sdl/options.cnf.*
 fi
 
-sudo chmod 666 "${CONSOLE}"
+$ESUDO chmod 666 "${CONSOLE}"
 
-sudo rm -rf ~/.config/cdogs-sdl
+$ESUDO  rm -rf ~/.config/cdogs-sdl
 ln -sfv "${DIR}/conf/cdogs-sdl/" ~/.config/
-cd "${DIR}/cdogs/data"
-sudo ./oga_controls cdogs-sdl "${DEVICE}" &
+cd "${DIR}/data"
+$ESUDO ./oga_controls cdogs-sdl "${DEVICE}" &
 ./cdogs-sdl
-sudo kill -9 "$(pidof oga_controls)"
-sudo systemctl restart oga_events &
+$ESUDO kill -9 "$(pidof oga_controls)"
+$ESUDO systemctl restart oga_events &
 printf "\033c" > "${CONSOLE}"
