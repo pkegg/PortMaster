@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (C) 2021 pkegg, Portmaster
 
 PKG_NAME="Moonlight"
 LEGACY_PORTMASTER="true"

@@ -1,5 +1,0 @@
-#! /bin/bash
-set -e
-
-cp -r source/data pkg/
-cp source/bld/Binaries/Release/smw pkg/
