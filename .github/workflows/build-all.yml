@@ -47,6 +47,7 @@ jobs:
       - name: "Publish pre-release: ${{github.event.inputs.release_tag}}"
         uses: softprops/action-gh-release@v1
         with:
+          prerelease: true
           tag_name:  "${{steps.date.outputs.date}}"
           name: "${{steps.date.outputs.date}}"
           files: |
