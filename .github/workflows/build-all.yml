@@ -10,6 +10,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.event.repository.name }}/portmaster
 
+concurrency: 
+  group: main
+
 jobs:
   buildx:
     runs-on: ubuntu-latest
