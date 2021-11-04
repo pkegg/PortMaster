@@ -15,6 +15,7 @@ source "${DIR}/global-functions"
 
 OS=$(get_os)
 DEVICE=$(get_device)
+OGA_DEVICE=$(get_oga_device)
 ROMS_DIR=$(get_roms_dir)
 TOOLS_DIR=$(get_tools_dir)
 HOTKEY=$(get_hotkey)
@@ -68,7 +69,7 @@ elif [[ "${DEVICE}" == "chi" ]]; then
 fi
 mkdir -p "${TOOLS_DIR}"
 cd "$TOOLS_DIR"
-$ESUDO "$DIR/oga_controls" PortMaster.sh "$DEVICE" &> /dev/null &
+$ESUDO "$DIR/oga_controls" PortMaster.sh "$OGA_DEVICE" &> /dev/null &
 
 if ! which curl &> /dev/null; then
   echo "curl not found"
@@ -97,7 +98,7 @@ GW=$(ip route | awk '/default/ { print $3 }')
 if [ -z "$GW" ]; then
   dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "${TITLE}" \
   --msgbox "\n\nYour network connection doesn't seem to be working. \
-  \nDid you make sure to configure your wifi connection?" $HEIGHT $WIDTH
+  \nDid you make sure to configure your wifi connection?" $HEIGHT $WIDTH &> ${CONSOLE}
   $ESUDO kill -9 "$(pidof oga_controls)"
   $ESUDO systemctl restart oga_events &
   exit 0
@@ -131,13 +132,13 @@ function UpdateCheck() {
 
   if [[ "$gitversion" != "$curversion" ]]; then
     wget -t 3 -T 60 -q --show-progress "${WEBSITE}PortMaster.zip" -O ${portmaster_download_zip} 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog \
-          --progressbox "Downloading and installing PortMaster update..." "$HEIGHT" "$WIDTH"
+          --progressbox "Downloading and installing PortMaster update..." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	if [ "${PIPESTATUS[0]}" -eq 0 ]; then
          unzip -X -o ${portmaster_download_zip} -d "${TOOLS_DIR}/"
    	  if [[ "TheRA" == "${OS}" ]]; then
    		  $ESUDO chmod -R 777 "$TOOLS_DIR/PortMaster"
    	  fi
-   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH"
+   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  
        oga_pid="$(pidof oga_controls)"
        if [[ -n "${oga_pid}" ]];then
@@ -147,11 +148,11 @@ function UpdateCheck() {
    	  $ESUDO systemctl restart oga_events &
    	  exit 0
    	else
-   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH"
+   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  $ESUDO rm -f ${portmaster_download_zip}
    	fi
   else
-    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH"
+    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
   fi
 }
 
@@ -173,7 +174,7 @@ PortInfoInstall() {
 
     $ESUDO wget -t 3 -T 60 -q --show-progress ${port_url} -O \
 	    $portmaster_tmp/$installloc 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox \
-		"Downloading ${1} package..." $HEIGHT $WIDTH
+		"Downloading ${1} package..." $HEIGHT $WIDTH &> ${CONSOLE}
 
 		if [ ${PIPESTATUS[0]} -eq 0 ] ; then
           
@@ -185,16 +186,16 @@ PortInfoInstall() {
   			  sed -i 's/sudo //g' ${ROMS_DIR}/ports/*.sh
   			fi
   		    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice installed successfully. \
-  		    \n\nMake sure to restart EmulationStation in order to see it in the ports menu." $HEIGHT $WIDTH
+  		    \n\nMake sure to restart EmulationStation in order to see it in the ports menu." $HEIGHT $WIDTH &> $CONSOLE
   		  else
   		    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice"--msgbox "\n\n$choice did NOT install. \
-  		    \n\nYour roms partition seems to be full." $HEIGHT $WIDTH
+  		    \n\nYour roms partition seems to be full." $HEIGHT $WIDTH &> $CONSOLE
   		  fi
       else
-        dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH
+        dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH &> $CONSOLE
       fi
   	else
-  		  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH
+  		  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH &> $CONSOLE
   	fi
     $ESUDO rm -f $portmaster_tmp/$installloc
 
@@ -239,9 +240,7 @@ MainMenu() {
 	  --cancel-label "$HOTKEY + Start to Exit" \
     --menu "Available ports for install" $HEIGHT $WIDTH 15)
 
-    echo "choice"
-    choices=$("${selection[@]}" "${options[@]}" 2> /dev/null) || userExit
-    echo "choice done"
+    choices=$("${selection[@]}" "${options[@]}" 2> /dev/null > ${CONSOLE}) || userExit
 
     for choice in $choices; do
       case $choice in
@@ -264,7 +263,7 @@ echo_err "done with ports.md"
 
 if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
           --title "$1" --yesno "\nWould you like to check for an update to the PortMaster tool?" \
-          $HEIGHT $WIDTH; then
+          $HEIGHT $WIDTH &> ${CONSOLE}; then
    UpdateCheck
 fi
 

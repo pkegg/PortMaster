@@ -6,4 +6,4 @@ DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 PACKAGE=__PACKAGE__
 
 pushd "${DIR}/${PACKAGE}" &> /dev/null
-bash ./run
+bash -x ./run
