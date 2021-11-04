@@ -5,7 +5,20 @@ IMAGE_BASE=ghcr.io/pkegg/portmaster
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source ${DIR}/clone-source
 export CCACHE_DIR="../.ccache"
+function get_linux_platform() {
+  local raw_linux_platform
+  raw_linux_platform="$(uname -m)"
+  if [[ "${raw_linux_platform}" == "x86_64" ]]; then
+    echo "linux/amd64"
+  elif [[ "${raw_linux_platform}" == "aarch64" ]]; then
+    echo "linux/arm64/v8"
+  elif  [[ "${raw_linux_platform}" == "armv7l" ]]; then
+    echo "linux/arm/v7"
+  else
+    echo "unknown"
+  fi
 
+}
 function build_package() {
   local PACKAGE
   PACKAGE="$1"
@@ -19,11 +32,11 @@ function build_package() {
   rm -rf "${PACKAGE_DIR}/pkg"
   mkdir -p "${PACKAGE_DIR}/pkg/"
   PACKAGE_SCRIPT="${PACKAGE_DIR}/package"
-  if [[ ! -x "$PACKAGE_SCRIPT" && -x "$PACKAGE_SCRIPT.tmp" ]]; then
+  if [[ ! -f "$PACKAGE_SCRIPT" && -f "$PACKAGE_SCRIPT.tmp" ]]; then
     PACKAGE_SCRIPT="$PACKAGE_SCRIPT.tmp"
   fi
 
-  if [[ -x "${PACKAGE_DIR}/build" || -x "${PACKAGE_SCRIPT}" ]]; then
+  if [[ -f "${PACKAGE_DIR}/build" || -f "${PACKAGE_SCRIPT}" ]]; then
 
     if [[ -z "${DOCKER_WORK_DIR}" ]]; then
       DOCKER_WORK_DIR=/work
@@ -55,11 +68,30 @@ function build_package() {
         BUILD_DIR="."
         mkdir -p "${SOURCE_DIR}"
       fi
-      if [[ -x "${PACKAGE_DIR}/build" ]]; then
+      if [[ "$INSTALL_DEPS" == "true" && -f "${PACKAGE_DIR}/install-deps" ]]; then
         if [[ "${USE_DOCKER}" == "false" ]]; then
+          echo "Installing dependencies for ${PACKAGE} without docker..."
+          pushd "${PACKAGE_DIR}" &> /dev/null
+          ESUDO="sudo"
+          if ! which sudo &> /dev/null || [[ "$UID" == "0" ]]; then
+            ESUDO=""
+          fi
+          $ESUDO bash "${PACKAGE_DIR}/install-deps"
+          popd &> /dev/null
+        fi
+      fi
+      if [[ -f "${PACKAGE_DIR}/build" ]]; then
+        if [[ "${USE_DOCKER}" == "false" ]]; then
+          linux_platform=$(get_linux_platform)
+          if [[ "${BUILD_PLATFORM}" != "${linux_platform}" ]]; then
+            echo "--------------------------------------------------------------------------------------------------"
+            echo "ERROR: BUILD_PLATFORM is set to ${BUILD_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
+            echo "  If you are attempting to cross-compile or this is in error, etc.  Please update BUILD_PLATFORM in package.info to: ${linux_platform}"
+            exit 1
+          fi
           echo "building ${PACKAGE} without docker..."
           pushd "${SOURCE_DIR}" &> /dev/null
-          "${BUILD_DIR}/build"
+          bash "../build"
           popd &> /dev/null
         else
           echo "building ${PACKAGE} with docker..."
@@ -83,10 +115,10 @@ function build_package() {
   cp ${PACKAGE_DIR}/../_global/global-functions "${PACKAGE_DIR}/pkg/"
   cp ${PACKAGE_DIR}/../_global/oga_controls "${PACKAGE_DIR}/pkg/"
 
-  if [[ -x "${PACKAGE_SCRIPT}" ]]; then
+  if [[ -f "${PACKAGE_SCRIPT}" ]]; then
     echo "Running custom package script"
     pushd "${PACKAGE_DIR}/" &> /dev/null
-    ${PACKAGE_SCRIPT}
+    bash ${PACKAGE_SCRIPT}
     popd
   fi
 
@@ -108,8 +140,14 @@ function build_env_docker_image() {
   PACKAGE="$1"
   local PACKAGE_DIR
   PACKAGE_DIR="$2"
-  if [[ -f "${PACKAGE_DIR}/Dockerfile" ]]; then
-    echo "${PACKAGE_DIR}/Dockerfile exists"
+  local DOCKERFILE
+  DOCKERFILE="${PACKAGE_DIR}/Dockerfile"
+  if [[ ! -f "${DOCKERFILE}" && -f "${PACKAGE_DIR}/install-deps" ]]; then
+    DOCKERFILE="${PACKAGE_DIR}/Dockerfile.deps"
+    cp "${PACKAGE_DIR}/../Dockerfile.deps.template" "${DOCKERFILE}"
+  fi
+  if [[ -f "${DOCKERFILE}" ]]; then
+    echo "${DOCKERFILE} exists"
 
     DOCKER_IMAGE_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
   
@@ -128,13 +166,10 @@ function build_env_docker_image() {
 
     if [[ "${USE_DOCKER}" != "false" ]]; then
       pushd "${PACKAGE_DIR}" &> /dev/null
-      echo docker buildx build --platform ${BUILD_PLATFORM} \
-        --tag "${DOCKER_IMAGE}" \
-        ${IMAGE_CACHE_FROM} \
-        ${IMAGE_CACHE_TO} .
 
       docker buildx build --platform ${BUILD_PLATFORM} \
         --tag "${DOCKER_IMAGE}" \
+        -f "${DOCKERFILE}" \
         ${IMAGE_CACHE_FROM} \
         ${IMAGE_CACHE_TO} .
       popd &> /dev/null
@@ -200,6 +235,7 @@ function parse_args() {
   BUILD_IN_DOCKER_IMAGE=false
   USE_DOCKER=true
   USE_DOCKER_PUSH=false
+  INSTALL_DEPS=false
   
   # Parse args
   ARGS=()
@@ -215,6 +251,10 @@ function parse_args() {
         USE_DOCKER="false"
         shift # past argument
         ;;
+      -d|--install-deps)
+        INSTALL_DEPS="true"
+        shift # past argument
+        ;;
       -p|--push)
         USE_DOCKER_PUSH="true"
         shift # past argument
@@ -223,6 +263,7 @@ function parse_args() {
         echo "$0 <package> [arguments]"
         echo "  --docker-image (-i) - builds ports in a Dockerfile (./build).  Allows caching.  Used for build server and troubleshooting build server"
         echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
+        echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
         exit 1
         ;;
@@ -232,6 +273,12 @@ function parse_args() {
         ;;
     esac
   done
+
+  if [[ "$USE_DOCKER" == "true" ]] && ! which docker &> /dev/null; then
+    echo "WARNING: docker not found.  Assuming: --no-docker which means you must manually run in a chroot or only run cross-compile builds"
+    sleep 1
+    USE_DOCKER=false
+  fi 
 }
  
 
@@ -243,11 +290,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   parse_args "$@"
   
   PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
+  BUILD_PLATFORM=""
 
   source "${PACKAGE_DIR}/package.info"
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
     source "${PACKAGE_DIR}/../ports.info"
+    
+    # LEGACY_PORTMASTER doesn't 'build' anything (as build files are in legacy zips), so just use the current
+    # platform for max speed in packaging, etc.
+    BUILD_PLATFORM="$(get_linux_platform)"
+
     PACKAGE_INFO_TMP="${PACKAGE_DIR}/package.info.tmp"
 
     if [[ -z "${PKG_DOWNLOAD_NAME}" ]]; then
@@ -296,9 +349,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     cp "${PACKAGE_DIR}/../package.legacy.template" "${PACKAGE_DIR}/package.tmp"
   fi
 
+  # Default BUILD_PLATFORM to arm64 unless set in package.info or by LEGACY_PORTMASTER
   if [[ -z "$BUILD_PLATFORM" ]]; then
     BUILD_PLATFORM="linux/arm64/v8"
   fi
+
   echo "BUILD_IN_DOCKER_IMAGE: ${BUILD_IN_DOCKER_IMAGE} USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
   DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
 

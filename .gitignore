@@ -1,4 +1,5 @@
 **/source/
+/ports/*/Dockerfile.deps
 /ports/*/Dockerfile.build
 /ports/*/clone-source
 /release/

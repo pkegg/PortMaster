@@ -42,7 +42,7 @@ jobs:
            set -e
            ./init-docker
            docker buildx use portmaster-remote-builder
-           ./ports/build-base-image --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
+           ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
            ./ports/build-all --push --docker-image
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
