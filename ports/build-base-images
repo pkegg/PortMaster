@@ -65,7 +65,7 @@ echo "IMAGE: ${IMAGE} IMAGE_CACHE: ${IMAGE_CACHE}"
 echo "IMAGE_CACHE_TO: ${IMAGE_CACHE_TO}"
 docker buildx build --tag ${IMAGE} \
   --cache-from=type=registry,ref=${IMAGE_CACHE} \
-  -f "Dockerfile.deps" \
+  -f "${DIR}/Dockerfile.deps" \
   ${IMAGE_CACHE_TO} \
   --platform ${BUILD_PLATFORM} ${DIR}
 
