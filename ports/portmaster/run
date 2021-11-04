@@ -29,9 +29,13 @@ ESUDO="sudo"
 if [ "${OS}" == "351ELEC" ]; then
   ESUDO=""
   export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/storage/roms/ports/PortMaster/libs"
-elif ! which sudo &> /dev/null; then
+  LANG="" #Ensures lines are drawn properly even when ES sets LANG
+
+elif ! which sudo &> /dev/null; then #This handles ubuntu container for testing w/o sudo
   ESUDO=""
-elif [ "${OS}" == "unknown" ]; then
+fi
+
+if [ "${OS}" == "unknown" ]; then
   $ESUDO mkdir -p "${ROMS_DIR}" "${TOOLS_DIR}"
 fi
 
