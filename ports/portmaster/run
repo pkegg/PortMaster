@@ -242,7 +242,6 @@ MainMenu() {
         --cancel-label "$HOTKEY + Start to Exit" \
         --menu "Available ports for install" $HEIGHT $WIDTH 15 ${options[@]} 2> $tmp_file 1> ${CONSOLE}                                                                                                                                                  
     selection="$(cat $tmp_file)"                                                                                                                                                                                                                         
-    echo "selection: ${selection}" >> /tmp/logs/out                                                                                                                                                                                                      
     if [[ -n "$selection" ]]; then                                                                                                                                                                                                                       
        PortInfoInstall "$selection"                                                                                                                                                                                                                      
     else                                                                                                                                                                                                                                                 
