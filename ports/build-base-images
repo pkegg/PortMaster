@@ -6,6 +6,7 @@ source "${DIR}/build"
 
 function parse_args() {
   BUILD_PLATFORM="linux/arm64/v8"
+  TEST_BUILD_PLATFORM="$(get_linux_platform)"
   USE_DOCKER_PUSH=false
   
   # Parse args
@@ -16,6 +17,7 @@ function parse_args() {
     case $key in
       --platform)
         BUILD_PLATFORM="$2"
+        TEST_BUILD_PLATFORM="$2"
         shift # past argument
         shift # past value
         ;;
@@ -75,7 +77,6 @@ echo "built: ${IMAGE}"
 
 echo "pulling submodules"
 
-TEST_BUILD_PLATFORM="$(get_linux_platform)"
 
 if [[ ! -d "ports/_global/test/libs/bats-assert/src" ]]; then
   echo "Updating testing git submodules"

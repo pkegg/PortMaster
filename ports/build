@@ -127,7 +127,7 @@ function build_package() {
   if [[ -f "${PACKAGE_DIR}/pkg/run" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run"; then
     echo "Running ${PACKAGE} run using IS_TEST_MODE=true"
     PORTS_DIR=/opt/roms/ports
-    TEST_IMAGE=ghcr.io/pkegg/portmaster/test:${BRANCH}
+    TEST_IMAGE=ghcr.io/${GITHUB_ORG}/portmaster/test:${BRANCH}
     docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
       -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
       -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
