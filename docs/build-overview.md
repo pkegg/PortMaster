@@ -1,23 +1,36 @@
-# tldr; build/package a port - docker
+# tldr;
+Try this on linux:
+- Clone this repo
+- install [docker](https://docs.docker.com/get-docker/)
+  - check install with: `./init-docker`
+- Build a port with: `./build <port name>`
+- Commit something and watch GitHub Actions build automatically.
+
+# What is this 'build/package' stuff about?
+- Commit a change and all ports and portmaster will be automatically built/packaged/published via GitHub Actions/Docker.
+- Lean into this automation to: reuse code across ports, standardize build and packaging of ports.
+- Ensure devs can still easily manually build/tweak ports without Docker/GitHub actions.
+
+## build/package a port - docker
 - install [docker](https://docs.docker.com/get-docker/)
 - check install with: `./init-docker`
 - `./build <port name>`
 
-# tldr; build/package a port - using ARM chroot - no docker
+## build/package a port - using ARM chroot - no docker
 Though using docker is recommended, many have been building in a debian arm chroot.  This is still supported.  Just run:
 - `./build <port name>` or `./build <port name> --install-deps` (uses apt-get to install depedencies if they are needed for a package).
   - `./ports/install-deps` - will install global depedencies initially
   - If a port/package does not have a `build` script (as it downloads precompiled/legacy binaries, etc), any architecture is supported.
   - Docker can be explicitly disabled with `--no-docker`, ex: `./build <package> --no-docker`.  It will use this mode (with a warning) if no docker binary is found.
 
-# tldr; can I cross compile for faster builds and no gross qemu?
+# Can I cross compile for faster builds and no gross qemu?
 Yes.  Though there's not a package that does this yet, and it will be setup on a package by package basic.  To cross-compile, just setup the `BUILD_PLATFORM=linux/amd64` in `package.info` and ensure the `ports/<package>/build` script is setup to cross-compile using CMake or however the package is built.  Then `./build <package>` and everything should work.
 
 # Overview
 Below find the design around expanding PortMaster to include the ability to build, package and automatically publish ports.
 
 ## Problem Statements
-Initially, portmaster left the build and packaging entirely up to the port maintainer and committed zips directly into GitHub.  Though this is simple and can work well given a limited number of port maintainers, it has a few drawbacks which we aim to address:
+Initially, PortMaster left the build and packaging entirely up to the port maintainer and committed zips directly into GitHub.  Though this is simple and can work well given a limited number of port maintainers, it has a few drawbacks which we aim to address:
 - **No start script reuse** - PortMaster aims to support many different devices, but when device specific code is needed to launch a script, that code gets duplicated across all ports.  Bugs in a given bit of code need to be fixed in 50+ port zips.  
   - Even for code that is bug-free, code is often not clear due to lack of function reuse.  For example: `if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then` really means `if anbernic rg351v or rg351p"`, but unless you are familiar with the kernel layout of anbernic devices, you are unlikely to know that.
   - `Fix`: Provide a `global-functions.sh` file which will be copied automatically into every port with common functions.  Ensure it's automatically tested.  
@@ -27,6 +40,8 @@ Initially, portmaster left the build and packaging entirely up to the port maint
   - `Fix`: Use docker + github actions to run the builds on commit. Cache builds in github's docker registry so only changed ports are fully 'rebuilt'.
 - **GitHub binary size limitations** - The ports are currently checked into GitHub.  This is simple, but has the disadvantage that ports over 100MB are not supported and much be hosted somewhere else.
   - `Fix`: Move to using GitHub releases to host port zips.  There is no size limitation.
+- **No off device testing** - PortMaster is simple to manually test and update on a supported device.  However, it is painful to do all development that way and makes automated testing almost impossible.
+  - `Fix`: Use `global-function` refactoring to simplify the main portmaster script and add 'console' detection that can output `dialog` to stdout for testing off device and automated testing.
 
 ## Enhancements to PortMaster
 This change introduces a /ports directory to the PortMaster repo.  Each port should be a lower case folder name for consistency.  
