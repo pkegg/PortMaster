@@ -154,7 +154,7 @@ function download_file() {
   rm -rf "${download_file_sha256_location}"
 
   WGET_OPT="-q" #Could make configurable in future
-  if curl -H "${GITHUB_AUTH}" -L -K --connect-timeout 10 --retry 3 "${download_url}" > "${download_file_location}" ; then
+  if wget --output-file=- --timeout=30 --tries=3 --passive-ftp --no-check-certificate -c ${WGET_OPT} --progress=bar:force --show-progress -O "${download_file_location}" "${download_url}"; then
     return 0
   fi
 
