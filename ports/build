@@ -170,14 +170,19 @@ function build_env_docker_image() {
     if [[ "${USE_DOCKER}" != "false" ]]; then
       pushd "${PACKAGE_DIR}" &> /dev/null
 
-      docker buildx build --platform ${BUILD_PLATFORM} \
-        --tag "${DOCKER_IMAGE}" \
-        --build-arg "DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}" \
-        -f "${DOCKERFILE}" \
-        ${IMAGE_CACHE_FROM} \
-        ${IMAGE_CACHE_TO} .
+      if [[ "${DOCKER_REMOTE}" == "true" ]]; then
+        echo "Skipping local docker environment build as --remote is set"
+      else
+        docker buildx build --platform ${BUILD_PLATFORM} \
+          --tag "${DOCKER_IMAGE}" \
+          --build-arg "DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}" \
+          -f "${DOCKERFILE}" \
+          ${IMAGE_CACHE_FROM} \
+          ${IMAGE_CACHE_TO} .
+        echo "tagged: ${DOCKER_IMAGE}"
+
+      fi
       popd &> /dev/null
-      echo "tagged: ${DOCKER_IMAGE}"
     fi 
   else
     echo "${PACKAGE_DIR}/Dockerfile does not exist"
@@ -201,6 +206,8 @@ function build_in_docker_image() {
 
     if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
       IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
+    elif [[ "$DOCKER_REMOTE" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder"
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
     pushd "${PACKAGE_DIR}" &> /dev/null
@@ -253,6 +260,10 @@ function parse_args() {
         INSTALL_DEPS="true"
         shift # past argument
         ;;
+      -r|--remote)
+        DOCKER_REMOTE="true"
+        shift # past argument
+        ;;
       -p|--push)
         USE_DOCKER_PUSH="true"
         shift # past argument
@@ -263,6 +274,7 @@ function parse_args() {
         echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
         echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
+        echo "  --remote - indicates to pull docker images and not use docker image cache."
         exit 1
         ;;
       *)    # unknown option
@@ -280,7 +292,7 @@ function parse_args() {
 }
  
 
-# don't run anything if being sourced
+# only run code if we are not being sourced.  This allows other scripts to source this script for function reuse
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   PACKAGE=$1
   echo "building package: $PACKAGE"
