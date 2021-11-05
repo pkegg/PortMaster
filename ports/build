@@ -174,7 +174,7 @@ function build_env_docker_image() {
     fi 
   else
     echo "${PACKAGE_DIR}/Dockerfile does not exist"
-    DOCKER_IMAGE=${IMAGE_BASE}:main
+    DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}
   fi
 }
 function build_in_docker_image() {
