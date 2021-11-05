@@ -142,6 +142,9 @@ function build_env_docker_image() {
   PACKAGE_DIR="$2"
   local DOCKERFILE
   DOCKERFILE="${PACKAGE_DIR}/Dockerfile"
+
+  DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
+
   if [[ ! -f "${DOCKERFILE}" && -f "${PACKAGE_DIR}/install-deps" ]]; then
     DOCKERFILE="${PACKAGE_DIR}/Dockerfile.deps"
     cp "${PACKAGE_DIR}/../Dockerfile.deps.template" "${DOCKERFILE}"
@@ -158,10 +161,6 @@ function build_env_docker_image() {
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_CACHE}"
 
-
-    #make lower case as docker must be lowers
-    #DOCKER_IMAGE=$(echo "$DOCKER_IMAGE" | tr '[:upper:]' '[:lower:]')
-
     echo "docker image: ${DOCKER_IMAGE}"
 
     if [[ "${USE_DOCKER}" != "false" ]]; then
@@ -169,6 +168,7 @@ function build_env_docker_image() {
 
       docker buildx build --platform ${BUILD_PLATFORM} \
         --tag "${DOCKER_IMAGE}" \
+        --build-arg "DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}" \
         -f "${DOCKERFILE}" \
         ${IMAGE_CACHE_FROM} \
         ${IMAGE_CACHE_TO} .
@@ -177,7 +177,7 @@ function build_env_docker_image() {
     fi 
   else
     echo "${PACKAGE_DIR}/Dockerfile does not exist"
-    DOCKER_IMAGE=${IMAGE_BASE}:main
+    DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}
   fi
 }
 function build_in_docker_image() {
@@ -200,12 +200,6 @@ function build_in_docker_image() {
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
     pushd "${PACKAGE_DIR}" &> /dev/null
-    echo docker buildx build --platform ${BUILD_PLATFORM} \
-        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
-        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
-        --build-arg PACKAGE=${PACKAGE} \
-        ${IMAGE_CACHE_FROM} \
-        ${IMAGE_CACHE_TO} .
 
     docker buildx build --platform ${BUILD_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
@@ -359,7 +353,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
 
   echo "BUILD_IN_DOCKER_IMAGE: ${BUILD_IN_DOCKER_IMAGE} USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
-  DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
 
   build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
   build_package "$PACKAGE" "$PACKAGE_DIR"
