@@ -2,6 +2,7 @@
 
 set -e
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
+source "${DIR}/build"
 
 function parse_args() {
   BUILD_PLATFORM="linux/arm64/v8"
@@ -74,6 +75,8 @@ echo "built: ${IMAGE}"
 
 echo "pulling submodules"
 
+TEST_BUILD_PLATFORM="$(get_linux_platform)"
+
 if [[ ! -d "ports/_global/test/libs/bats-assert/src" ]]; then
   echo "Updating testing git submodules"
   git submodule update --init
@@ -85,11 +88,11 @@ docker buildx build --tag ${IMAGE_BUILD} \
   --build-arg BASE_IMAGE="${IMAGE}" \
   --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
   ${IMAGE_BUILD_CACHE_TO} \
-  --platform ${BUILD_PLATFORM} ${DIR}
+  --platform ${TEST_BUILD_PLATFORM} ${DIR}
 
 echo "built: ${IMAGE_BUILD}"
 
-echo "running tests: ${IMAGE_TEST}"
+echo "running tests: ${IMAGE_TEST} platform: ${TEST_BUILD_PLATFORM}"
 # Run tests sepatately on amd64 so they run faster
 #  NOTE: if amd64 is not the host platform in the future - we should change
 docker buildx build --tag ${IMAGE_TEST} \
@@ -98,4 +101,4 @@ docker buildx build --tag ${IMAGE_TEST} \
   --cache-from=type=registry,ref=${IMAGE_TEST_CACHE} \
   --target test \
   ${IMAGE_TEST_CACHE_TO} \
-  --platform ${BUILD_PLATFORM} ${DIR}
+  --platform ${TEST_BUILD_PLATFORM} ${DIR}

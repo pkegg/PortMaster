@@ -14,6 +14,8 @@ function get_linux_platform() {
     echo "linux/arm64/v8"
   elif  [[ "${raw_linux_platform}" == "armv7l" ]]; then
     echo "linux/arm/v7"
+  elif [[ "${raw_linux_platform}" == "arm64" ]]; then  #M1 mac
+    echo "linux/arm64/v8"
   else
     echo "unknown"
   fi
