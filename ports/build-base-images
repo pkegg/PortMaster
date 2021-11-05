@@ -82,6 +82,7 @@ else
 fi
 docker buildx build --tag ${IMAGE_BUILD} \
   -f ${DIR}/Dockerfile.build \
+  --build-arg BASE_IMAGE="${IMAGE}" \
   --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
   ${IMAGE_BUILD_CACHE_TO} \
   --platform ${BUILD_PLATFORM} ${DIR}
@@ -93,6 +94,7 @@ echo "running tests: ${IMAGE_TEST}"
 #  NOTE: if amd64 is not the host platform in the future - we should change
 docker buildx build --tag ${IMAGE_TEST} \
   -f ${DIR}/Dockerfile.build \
+  --build-arg BASE_IMAGE="${IMAGE}" \
   --cache-from=type=registry,ref=${IMAGE_TEST_CACHE} \
   --target test \
   ${IMAGE_TEST_CACHE_TO} \
