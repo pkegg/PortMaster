@@ -96,7 +96,7 @@ curversion="$(curl "file://$(realpath "${DIR}")/version")"
 
 GW=$(ip route | awk '/default/ { print $3 }')
 if [ -z "$GW" ]; then
-  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "${TITLE}" \
+  dialog --clear --backtitle "PortMaster v$curversion" --title "${TITLE}" \
   --msgbox "\n\nYour network connection doesn't seem to be working. \
   \nDid you make sure to configure your wifi connection?" $HEIGHT $WIDTH &> ${CONSOLE}
   $ESUDO kill -9 "$(pidof oga_controls)"
@@ -138,7 +138,7 @@ function UpdateCheck() {
    	  if [[ "TheRA" == "${OS}" ]]; then
    		  $ESUDO chmod -R 777 "$TOOLS_DIR/PortMaster"
    	  fi
-   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
+   	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  
        oga_pid="$(pidof oga_controls)"
        if [[ -n "${oga_pid}" ]];then
@@ -148,11 +148,11 @@ function UpdateCheck() {
    	  $ESUDO systemctl restart oga_events &
    	  exit 0
    	else
-   	  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
+   	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  $ESUDO rm -f ${portmaster_download_zip}
    	fi
   else
-    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
+    dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
   fi
 }
 
@@ -167,7 +167,7 @@ PortInfoInstall() {
   porter=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=porter=").*?(?=")')
   local port_url="${website}${installloc}"
 
-  if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
+  if dialog --clear --backtitle "PortMaster v$curversion" \
             --title "$choice" \
             --yesno "\n$msgtxt \n\nPorted By: $porter\n\nWould you like to continue to install this port?" \
             $HEIGHT $WIDTH &> ${CONSOLE}; then
@@ -185,23 +185,24 @@ PortInfoInstall() {
   			if [[ "${OS}" == "351ELEC" ]]; then
   			  sed -i 's/sudo //g' ${ROMS_DIR}/ports/*.sh
   			fi
-  		    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice installed successfully. \
+  		    dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice installed successfully. \
   		    \n\nMake sure to restart EmulationStation in order to see it in the ports menu." $HEIGHT $WIDTH &> $CONSOLE
   		  else
-  		    dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice"--msgbox "\n\n$choice did NOT install. \
+  		    dialog --clear --backtitle "PortMaster v$curversion" --title "$choice"--msgbox "\n\n$choice did NOT install. \
   		    \n\nYour roms partition seems to be full." $HEIGHT $WIDTH &> $CONSOLE
   		  fi
       else
-        dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH &> $CONSOLE
+        dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH &> $CONSOLE
       fi
   	else
-  		  dialog --clear --stdout --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH &> $CONSOLE
+  		  dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH &> $CONSOLE
   	fi
     $ESUDO rm -f $portmaster_tmp/$installloc
 
 }
 
 userExit() {
+  set +e
   echo "removing ports.md"
   rm -f /dev/shm/portmaster/ports.md
 
@@ -216,7 +217,7 @@ userExit() {
     $ESUDO systemctl restart oga_events &
   fi
   echo "clearing dialog"
-  #dialog --clear
+  dialog --clear
   echo "clearing console"
   printf "\033c" >> ${CONSOLE}
   echo "done"
@@ -230,24 +231,24 @@ MainMenu() {
    $(cat /dev/shm/portmaster/ports.md | grep -oP '(?<=Title=").*?(?=")')
   )
 
-  echo "generating choices"
-  while true; do
-    selection=(dialog \
-   	--backtitle "PortMaster v$curversion" \
-   	--title "[ Main Menu ]" \
-   	--no-collapse \
-   	--clear --stdout \
-	  --cancel-label "$HOTKEY + Start to Exit" \
-    --menu "Available ports for install" $HEIGHT $WIDTH 15)
-
-    choices=$("${selection[@]}" "${options[@]}" 2> /dev/null > ${CONSOLE}) || userExit
-
-    for choice in $choices; do
-      case $choice in
-        *) PortInfoInstall $choice ;;
-      esac
-    done
-  done
+  tmp_file=$(mktemp 2>/dev/null) || tmp_file=/tmp/test$$                                                                                                              
+  trap "rm -f $tmp_file" EXIT                                                                                                                                  
+  while true; do                                                                                                                                                                                                                                         
+    dialog \
+        --backtitle "PortMaster v$curversion" \
+        --title "[ Main Menu ]" \
+        --no-collapse \
+        --clear \
+        --cancel-label "$HOTKEY + Start to Exit" \
+        --menu "Available ports for install" $HEIGHT $WIDTH 15 ${options[@]} 2> $tmp_file 1> ${CONSOLE}                                                                                                                                                  
+    selection="$(cat $tmp_file)"                                                                                                                                                                                                                         
+    echo "selection: ${selection}" >> /tmp/logs/out                                                                                                                                                                                                      
+    if [[ -n "$selection" ]]; then                                                                                                                                                                                                                       
+       PortInfoInstall "$selection"                                                                                                                                                                                                                      
+    else                                                                                                                                                                                                                                                 
+       userExit                                                                                                                                                                                                                                          
+    fi                                                                                                                                                                                                                                                   
+  done              
 }
 echo "done choice"
 
@@ -259,9 +260,9 @@ fi
 wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
 echo_err "done with ports.md"
 
+trap userExit EXIT
 
-
-if dialog --clear --stdout --backtitle "PortMaster v$curversion" \
+if dialog --clear --backtitle "PortMaster v$curversion" \
           --title "$1" --yesno "\nWould you like to check for an update to the PortMaster tool?" \
           $HEIGHT $WIDTH &> ${CONSOLE}; then
    UpdateCheck

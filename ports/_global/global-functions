@@ -147,7 +147,7 @@ function get_console() {
   os=$(get_os)
   local console="/dev/tty0"
   if [[ "ubuntu" == "${os}" || "unknown" == "${os}" ]]; then
-    console="/dev/stderr"
+    console="/dev/stdout"
   fi
   echo "${console}"
 }
