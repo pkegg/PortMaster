@@ -1,18 +1,57 @@
-# tldr; - build a port
+# tldr; build/package a port - docker
 - install [docker](https://docs.docker.com/get-docker/)
 - check install with: `./init-docker`
 - `./build <port name>`
 
+# tldr; build/package a port - using ARM chroot - no docker
+Though using docker is recommended, many have been building in a debian arm chroot.  This is still supported.  Just run:
+- `./build <port name>` or `./build <port name> --install-deps` (uses apt-get to install depedencies if they are needed for a package).
+  - `./ports/install-deps` - will install global depedencies initially
+  - If a port/package does not have a `build` script (as it downloads precompiled/legacy binaries, etc), any architecture is supported.
+  - Docker can be explicitly disabled with `--no-docker`, ex: `./build <package> --no-docker`.  It will use this mode (with a warning) if no docker binary is found.
+
+# tldr; can I cross compile for faster builds and no gross qemu?
+Yes.  Though there's not a package that does this yet, and it will be setup on a package by package basic.  To cross-compile, just setup the `BUILD_PLATFORM=linux/amd64` in `package.info` and ensure the `ports/<package>/build` script is setup to cross-compile using CMake or however the package is built.  Then `./build <package>` and everything should work.
+
+# Overview
+Below find the design around expanding PortMaster to include the ability to build, package and automatically publish ports.
+
+## Problem Statements
+Initially, portmaster left the build and packaging entirely up to the port maintainer and committed zips directly into GitHub.  Though this is simple and can work well given a limited number of port maintainers, it has a few drawbacks which we aim to address:
+- **No start script reuse** - PortMaster aims to support many different devices, but when device specific code is needed to launch a script, that code gets duplicated across all ports.  Bugs in a given bit of code need to be fixed in 50+ port zips.  
+  - Even for code that is bug-free, code is often not clear due to lack of function reuse.  For example: `if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then` really means `if anbernic rg351v or rg351p"`, but unless you are familiar with the kernel layout of anbernic devices, you are unlikely to know that.
+  - `Fix`: Provide a `global-functions.sh` file which will be copied automatically into every port with common functions.  Ensure it's automatically tested.  
+- **No record of how to build/package** - If a port maintainer stops contributing (or forgets how they built), there is no easy way to recreate build artifacts.  At a minimum, this can make it difficult to upgrade ports.
+  - `Fix`: Create a `package.info` key/value file with info about where to download the port sources.  Allow each port to provide a: `build` script that knows how to build the downloaded sources. 
+- **No Automation** - Though christian tirelessly updates the ports, it takes some of his time.  Ideally, ports could be published automatically or with just a click
+  - `Fix`: Use docker + github actions to run the builds on commit. Cache builds in github's docker registry so only changed ports are fully 'rebuilt'.
+- **GitHub binary size limitations** - The ports are currently checked into GitHub.  This is simple, but has the disadvantage that ports over 100MB are not supported and much be hosted somewhere else.
+  - `Fix`: Move to using GitHub releases to host port zips.  There is no size limitation.
+
+## Enhancements to PortMaster
+This change introduces a /ports directory to the PortMaster repo.  Each port should be a lower case folder name for consistency.  
+
+### Backwards Compatibility
+The simplest version of a port just downloads the old PortMaster zip for that port and repackages it.  This results in an **identical** zip (with the additional of global-functions and updated oga_controls) but the zip can be built/cached/published using the new approach.
+
+Ex: `/ports/cannonball/package.info`
+
+```
+PKG_NAME="Cannonball"
+LEGACY_PORTMASTER="true"
+```
+
+
 # Build Scripts Overview
 There are three modes which ports can be built.
-- `normal` (`./buld <port>`) - uses Dockerfiles to provide build environment via docker container.
-  - Uses: /<port>/Dockerfile to provide environment
-  - Advantages (good for users)
+- `normal/docker container` (`./buld <port>`) - uses Dockerfiles to provide build environment and runs the actual build via a docker container.
+  - Uses: /<port>/install-deps to provide environment
+  - Advantages (good for most users)
     - All build dependencies stored in docker.  But builds very similarly to a local build.
     - Can use CCache or other cache to speed incremental builds.
   - Disadvantages
-    - Requires full build initially which is not ideal for a ephemeral build server like GitHub actions.
-- `docker-image` (`./build <port> --docker-image`) - similar to normal, but builds inside of a docker image.  Allows caching/publishing image for build server.
+    - Requires full build on initial checkout - which is not ideal for a ephemeral build server like GitHub actions.
+- `docker-image` (`./build <port> --docker-image`) - similar to normal, but builds inside of a docker image (Dockerfile) instead of a docker container.  This allows caching/publishing the full build caching/reuse by the build server.
   - Uses: Dockerfile.build.template which will be copied to <port>/Dockerfile.build to run build inside the Dockerfile
   - Advantages (good for cloud builds): 
     - If build has not changed, uses remote cache.
