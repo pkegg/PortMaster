@@ -1,5 +1,5 @@
 # tldr;
-Try this on linux:
+Try this on linux / mac / wsl2 (mac requires `wget` installed - install with [brew](https://brew.sh/)) :
 - Clone this repo
 - install [docker](https://docs.docker.com/get-docker/)
   - check install with: `./init-docker`
@@ -23,7 +23,7 @@ Though using docker is recommended, many have been building in a debian arm chro
   - If a port/package does not have a `build` script (as it downloads precompiled/legacy binaries, etc), any architecture is supported.
   - Docker can be explicitly disabled with `--no-docker`, ex: `./build <package> --no-docker`.  It will use this mode (with a warning) if no docker binary is found.
 
-# Can I cross compile for faster builds and no gross qemu?
+### Can I cross compile for faster builds and no gross qemu?
 Yes.  Though there's not a package that does this yet, and it will be setup on a package by package basic.  To cross-compile, just setup the `BUILD_PLATFORM=linux/amd64` in `package.info` and ensure the `ports/<package>/build` script is setup to cross-compile using CMake or however the package is built.  Then `./build <package>` and everything should work.
 
 # Overview
@@ -46,8 +46,8 @@ Initially, PortMaster left the build and packaging entirely up to the port maint
 ## Enhancements to PortMaster
 This change introduces a /ports directory to the PortMaster repo.  Each port should be a lower case folder name for consistency.  
 
-### Backwards Compatibility
-The simplest version of a port just downloads the old PortMaster zip for that port and repackages it.  This results in an **identical** zip (with the additional of global-functions and updated oga_controls) but the zip can be built/cached/published using the new approach.
+### Step 1 - Backwards Compatibility
+The simplest version of package/build just downloads the old PortMaster zip for that port and repackages it.  This results in an **identical** zip (with the additional of global-functions and updated oga_controls) but the zip can be built/cached/packaged/published using the new approach and gradually updated.
 
 Ex: `/ports/cannonball/package.info`
 
@@ -55,6 +55,14 @@ Ex: `/ports/cannonball/package.info`
 PKG_NAME="Cannonball"
 LEGACY_PORTMASTER="true"
 ```
+
+### Step 2 - Utilize Scripts
+Now it is possible to refactor the 'run' portion of the scripts to easily make enhancments to use `global-functions.sh` and make install scripts better without recompiling
+
+Add a `run` script.
+
+### Step 3 - Utilize Build
+Add a `build` script (and maybe a `package` script) to start building the port binaries.
 
 
 # Build Scripts Overview
