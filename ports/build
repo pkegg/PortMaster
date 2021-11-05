@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+BRANCH=main
+IMAGE_BASE=ghcr.io/pkegg/portmaster
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source ${DIR}/clone-source
 export CCACHE_DIR="../.ccache"
@@ -123,6 +125,7 @@ function build_package() {
   if [[ -f "${PACKAGE_DIR}/pkg/run" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run"; then
     echo "Running ${PACKAGE} run using IS_TEST_MODE=true"
     PORTS_DIR=/opt/roms/ports
+    TEST_IMAGE=ghcr.io/pkegg/portmaster/test:${BRANCH}
     docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
       -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
       -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
@@ -174,7 +177,7 @@ function build_env_docker_image() {
     fi 
   else
     echo "${PACKAGE_DIR}/Dockerfile does not exist"
-    DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}
+    DOCKER_IMAGE=${IMAGE_BASE}:main
   fi
 }
 function build_in_docker_image() {
@@ -197,6 +200,12 @@ function build_in_docker_image() {
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
     pushd "${PACKAGE_DIR}" &> /dev/null
+    echo docker buildx build --platform ${BUILD_PLATFORM} \
+        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
+        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
+        --build-arg PACKAGE=${PACKAGE} \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
 
     docker buildx build --platform ${BUILD_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
@@ -284,12 +293,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   BUILD_PLATFORM=""
 
   source "${PACKAGE_DIR}/package.info"
-  source "${DIR}/ports.info"
-  BRANCH="$GITHUB_BRANCH"
-  IMAGE_BASE=ghcr.io/${GITHUB_ORG}/portmaster
-  TEST_IMAGE=ghcr.io/${GITHUB_ORG}/portmaster/test:${BRANCH}
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
+    source "${PACKAGE_DIR}/../ports.info"
     
     # LEGACY_PORTMASTER doesn't 'build' anything (as build files are in legacy zips), so just use the current
     # platform for max speed in packaging, etc.
@@ -310,20 +316,23 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [[ -z "$LEGACY_URL_OVERRIDE" ]]; then
 
       GITHUB_SHA_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
-      PKG_VERSION_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/commits?sha=${LEGACY_PORTMASTER_BRANCH}&page=1&per_page=1"
-      echo "Github SHA URL: ${GITHUB_SHA_URL} PKG_DOWNLOAD_NAME: ${PKG_DOWNLOAD_NAME}"
+      PKG_VERSION_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/commits?sha=${LEGACY_PORTMASTER_BRANCH}&path=${PKG_DOWNLOAD_NAME}.zip&page=1&per_page=1"
+      echo "Github SHA URL: ${GITHUB_SHA_URL}"
       PKG_GIT_SHA=$(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q 2> /dev/null | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
       if [[ -z "${PKG_GIT_SHA}" ]]; then
-        echo "debug info: curl -H '${GITHUB_AUTH}' -L '${GITHUB_SHA_URL}'' -q"
+        echo "debug info: $(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q)"
         echo "Could not find ${PKG_NAME}.zip in ${GITHUB_SHA_URL}"
         
         exit 1
       fi
       echo "Package Version URL: ${PKG_VERSION_URL}"
-
+      if ! which wget &> /dev/null; then
+        echo "ERROR: wget not found!  Please install wget."
+        exit
+      fi
       PKG_VERSION=$(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
       if [[ -z "${PKG_VERSION}" ]]; then
-        echo "debug info: wget --header='$GITHUB_AUTH' -O- '${PKG_VERSION_URL}' -q 2>&1 )"
+        echo "debug info: $(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}")"
         echo "Could not find a sha in: ${GITHUB_SHA_URL}"
         exit 1
       fi
