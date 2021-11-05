@@ -326,9 +326,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         exit 1
       fi
       echo "Package Version URL: ${PKG_VERSION_URL}"
-  
-      PKG_VERSION=$(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+      #if ! which wget &> /dev/null; then
+      #  echo "ERROR: wget not found!  Please install wget."
+      #  exit 1
+      #fi
+      PKG_VERSION=$(curl -H "${GITHUB_AUTH}" -L "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
       if [[ -z "${PKG_VERSION}" ]]; then
+        echo "debug info: $(curl -H "${GITHUB_AUTH}" -L "${PKG_VERSION_URL}" -q &2>1 )"
         echo "Could not find a sha in: ${GITHUB_SHA_URL}"
         exit 1
       fi
@@ -385,7 +389,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   else
     cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
-    sed -i "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+    sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
   fi
 
   cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
