@@ -38,9 +38,10 @@ function parse_args() {
 parse_args "$@"
 echo "USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
 
-BRANCH=main
+source "${DIR}/ports.info"
 
-IMAGE_BASE=ghcr.io/pkegg/portmaster
+BRANCH="$GITHUB_BRANCH"
+IMAGE_BASE=ghcr.io/${GITHUB_ORG}/portmaster
 IMAGE=${IMAGE_BASE}:${BRANCH}
 IMAGE_CACHE=${IMAGE_BASE}/cache:${BRANCH}
 

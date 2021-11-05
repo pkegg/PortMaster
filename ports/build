@@ -1,7 +1,5 @@
 #!/bin/bash
 set -e
-BRANCH=main
-IMAGE_BASE=ghcr.io/pkegg/portmaster
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source ${DIR}/clone-source
 export CCACHE_DIR="../.ccache"
@@ -125,7 +123,6 @@ function build_package() {
   if [[ -f "${PACKAGE_DIR}/pkg/run" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run"; then
     echo "Running ${PACKAGE} run using IS_TEST_MODE=true"
     PORTS_DIR=/opt/roms/ports
-    TEST_IMAGE=ghcr.io/pkegg/portmaster/test:${BRANCH}
     docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
       -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
       -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
@@ -200,12 +197,6 @@ function build_in_docker_image() {
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
     pushd "${PACKAGE_DIR}" &> /dev/null
-    echo docker buildx build --platform ${BUILD_PLATFORM} \
-        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
-        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
-        --build-arg PACKAGE=${PACKAGE} \
-        ${IMAGE_CACHE_FROM} \
-        ${IMAGE_CACHE_TO} .
 
     docker buildx build --platform ${BUILD_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
@@ -293,9 +284,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   BUILD_PLATFORM=""
 
   source "${PACKAGE_DIR}/package.info"
+  source "${DIR}/ports.info"
+  BRANCH="$GITHUB_BRANCH"
+  IMAGE_BASE=ghcr.io/${GITHUB_ORG}/portmaster
+  TEST_IMAGE=ghcr.io/${GITHUB_ORG}/portmaster/test:${BRANCH}
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
-    source "${PACKAGE_DIR}/../ports.info"
     
     # LEGACY_PORTMASTER doesn't 'build' anything (as build files are in legacy zips), so just use the current
     # platform for max speed in packaging, etc.
