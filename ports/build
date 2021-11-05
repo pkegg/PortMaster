@@ -327,9 +327,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       fi
       echo "Package Version URL: ${PKG_VERSION_URL}"
 
-      PKG_VERSION=$(curl -G -H "${GITHUB_AUTH}" -L "${PKG_VERSION_URL}" --data-urlencode "path=${PKG_DOWNLOAD_NAME}.zip" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+      PKG_VERSION=$(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
       if [[ -z "${PKG_VERSION}" ]]; then
-        echo "debug info: curl -H '${GITHUB_AUTH}' -L '${PKG_VERSION_URL}' --data-urlencode 'path=${PKG_DOWNLOAD_NAME}.zip' -q 2>&1 )"
+        echo "debug info: wget --header='$GITHUB_AUTH' -O- '${PKG_VERSION_URL}' -q 2>&1 )"
         echo "Could not find a sha in: ${GITHUB_SHA_URL}"
         exit 1
       fi
