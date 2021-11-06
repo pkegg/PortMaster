@@ -1,5 +1,10 @@
 #! /bin/bash
+mkdir -p native
+cp /usr/lib/arm-linux-gnueabihf/libGL.so.1 native
+
 mkdir bld
 cd bld
-cmake .. -DODROID=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo
+CCACHE_DIR=../../.ccache
+
+cmake .. -DODROID=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_CCACHE=1
 make -j$(nproc)
