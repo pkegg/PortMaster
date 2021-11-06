@@ -15,10 +15,4 @@ else
   raloc="/usr/local/bin"
 fi
 
-if [ -f "/opt/system/Advanced/Switch to main SD for Roms.sh" ]; then
-  GAMEDIR="/roms2/ports/2048"
-else
-  GAMEDIR="/roms/ports/2048"
-fi
-
-$raloc/retroarch -L $GAMEDIR/2048_libretro.so
+$raloc/retroarch -L $DIR/2048_libretro.so
