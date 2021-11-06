@@ -6,6 +6,7 @@ for directory in ${DIR}/*/; do
   directory=${directory%/}
   echo "directory: $directory"
   if [ -f "${directory}/package.info" ]; then
+    source "${directory}/package.info"
     TO_BUILD="$(basename ${directory})"
     echo "build-all: building: ${TO_BUILD}"
     ${DIR}/build "${TO_BUILD}" "$@"

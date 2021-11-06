@@ -101,7 +101,7 @@ function build_package() {
 
           # Get .env file ready
           env | grep "=" > .env
-          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -c "../build"
+          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash ../build
           popd &> /dev/null
         fi
         echo "build done"
@@ -114,8 +114,15 @@ function build_package() {
   if [[ -f "${PACKAGE_DIR}/run" ]]; then
     cp "${PACKAGE_DIR}/run" "${PACKAGE_DIR}/pkg/run"
   fi
-  cp ${PACKAGE_DIR}/../_global/global-functions "${PACKAGE_DIR}/pkg/"
-  cp ${PACKAGE_DIR}/../_global/oga_controls "${PACKAGE_DIR}/pkg/"
+  if [[ "${PACKAGE}" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
+    PKG_DEPENDS="global, $PKG_DEPENDS"
+  fi
+
+  for dep in ${PKG_DEPENDS//,/ }
+  do
+    echo "copying dep: $dep"
+    cp -r ${PACKAGE_DIR}/../$dep/pkg/* ${PACKAGE_DIR}/pkg/
+  done
 
   if [[ -f "${PACKAGE_SCRIPT}" ]]; then
     echo "Running custom package script"
@@ -241,6 +248,7 @@ function parse_args() {
   USE_DOCKER=true
   USE_DOCKER_PUSH=false
   INSTALL_DEPS=false
+  ALWAYS_BUILD_DEPENDS=false
   
   # Parse args
   ARGS=()
@@ -260,6 +268,10 @@ function parse_args() {
         INSTALL_DEPS="true"
         shift # past argument
         ;;
+      -b|--build-deps)
+        ALWAYS_BUILD_DEPENDS="true"
+        shift # past argument
+        ;;
       -r|--remote)
         DOCKER_REMOTE="true"
         shift # past argument
@@ -275,6 +287,7 @@ function parse_args() {
         echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
         echo "  --remote - indicates to pull docker images and not use docker image cache."
+        echo "  --always-build-depends - always build PKG_DEPENDS before package.  If not set, dependent package will only be built if /pkg folder does not exist"
         exit 1
         ;;
       *)    # unknown option
@@ -294,16 +307,30 @@ function parse_args() {
 
 # only run code if we are not being sourced.  This allows other scripts to source this script for function reuse
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  PACKAGE=$1
-  echo "building package: $PACKAGE"
-  shift
-  parse_args "$@"
   
+  PACKAGE=$1
   PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
-  BUILD_PLATFORM=""
 
   source "${PACKAGE_DIR}/package.info"
   source "${PACKAGE_DIR}/../ports.info"
+  ARGS_COPY=("$@")
+
+  shift
+  parse_args "$@"
+  if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
+    PKG_DEPENDS="global, $PKG_DEPENDS"
+  fi
+  for dep in ${PKG_DEPENDS//,/ }
+  do
+    if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
+      echo "building dependent package: $0 $dep"
+      $0 "$dep" "${ARGS_COPY[@]}"
+    fi
+  done
+
+  echo "building package: $PACKAGE"
+
+  BUILD_PLATFORM=""
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
     
@@ -373,43 +400,49 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
   build_package "$PACKAGE" "$PACKAGE_DIR"
   
-  RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
-  GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../_global)"
-  pushd "${PACKAGE_DIR}/pkg" &> /dev/null
+  if [[ "$PKG_LIBRARY" == "true" ]]; then
+    echo "Package: $PACKAGE is a library (PKG_LIBRARY=true) - not building release zip"
+  else 
+  
+    RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
+    GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../global)"
+    pushd "${PACKAGE_DIR}/pkg" &> /dev/null
+  
+    echo "Release dir: ${RELEASE_DIR}"
+    ZIP_FILE="${RELEASE_DIR}/${PKG_NAME}.zip"
+    mkdir -p "${RELEASE_DIR}"
+    rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
+    rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
+  
+    echo "Preparing release zip..."
+  
+    mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
+    PKG_DIRECTORY="${PACKAGE}"
+    if [[ -n "${PKG_DIRECTORY_OVERRIDE}" ]]; then
+      PKG_DIRECTORY="$PKG_DIRECTORY_OVERRIDE"
+    fi
+    if [[ -f "${PACKAGE_DIR}/run-legacy.sh" ]]; then
+      cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+    elif [[ "${LEGACY_PORTMASTER}"  == "true" \
+           && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" \
+           && ! -f "${PACKAGE_DIR}/run" ]]; then
+      cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+    else
+      cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+      sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+    fi
+  
+    cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
+    popd &> /dev/null
+  
+    pushd "${RELEASE_DIR}/${PKG_NAME}" &> /dev/null || exit 1
+    echo "Zipping..."
+    zip -FSqr "${ZIP_FILE}" .
+    popd &> /dev/null
+    fi
 
-  echo "Release dir: ${RELEASE_DIR}"
-  ZIP_FILE="${RELEASE_DIR}/${PKG_NAME}.zip"
-  mkdir -p "${RELEASE_DIR}"
-  rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
-  rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
+    echo "========================================="
+    echo "Build done: ${PACKAGE}"
+    echo ""
 
-  echo "Preparing release zip..."
-
-  mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
-  PKG_DIRECTORY="${PACKAGE}"
-  if [[ -n "${PKG_DIRECTORY_OVERRIDE}" ]]; then
-    PKG_DIRECTORY="$PKG_DIRECTORY_OVERRIDE"
-  fi
-  if [[ -f "${PACKAGE_DIR}/run-legacy.sh" ]]; then
-    cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
-  elif [[ "${LEGACY_PORTMASTER}"  == "true" \
-         && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" \
-         && ! -f "${PACKAGE_DIR}/run" ]]; then
-    cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
-  else
-    cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
-    sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
-  fi
-
-  cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
-  popd &> /dev/null
-
-  pushd "${RELEASE_DIR}/${PKG_NAME}" &> /dev/null || exit 1
-  echo "Zipping..."
-  zip -FSqr "${ZIP_FILE}" .
-  popd &> /dev/null
-
-  echo "========================================="
-  echo "Build done: ${PACKAGE}.  Zip: ${ZIP_FILE}"
-  echo ""
 fi
