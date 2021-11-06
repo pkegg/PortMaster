@@ -1,0 +1,4 @@
+PKG_NAME="Blake Stone - Aliens of Gold"
+PKG_DIRECTORY_OVERRIDE="bstone"
+PKG_DOWNLOAD_NAME="bstone-aog"
+LEGACY_PORTMASTER="true"
