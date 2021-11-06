@@ -20,6 +20,7 @@ ROMS_DIR=$(get_roms_dir)
 TOOLS_DIR=$(get_tools_dir)
 HOTKEY=$(get_hotkey)
 CONSOLE=$(get_console)
+#Todo: github_org=$(get_github_org)
 GITHUB_ORG=pkegg  #just for testing - should be: christianhaitian or derived
 WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/latest/download/"
 WEBSITE_IN_CHINA=
@@ -36,6 +37,7 @@ elif ! which sudo &> /dev/null; then #This handles ubuntu container for testing 
   ESUDO=""
 fi
 
+#TODO: move to initialize
 if [ "${OS}" == "unknown" ]; then
   $ESUDO mkdir -p "${ROMS_DIR}" "${TOOLS_DIR}"
 fi
@@ -44,11 +46,13 @@ $ESUDO chmod 666 ${CONSOLE}
 export TERM=linux
 export XDG_RUNTIME_DIR=/run/user/$UID/
 
-#TODO: Does `clear` work on all systems?  If yes - use that for clarity
+
+#TODO: make 'clear' function - Does `clear` work on all systems?  If yes - use that for clarity
 if [[ "${IS_TEST_MODE}" != "true" ]]; then
   printf "\033c" >> ${CONSOLE}
 fi
 
+#todo: init_dialog
 HEIGHT="15"
 WIDTH="55"
 
@@ -69,8 +73,11 @@ elif [[ "${DEVICE}" == "chi" ]]; then
 fi
 mkdir -p "${TOOLS_DIR}"
 cd "$TOOLS_DIR"
+
+# launch oga controls
 $ESUDO "$DIR/oga_controls" PortMaster.sh "$OGA_DEVICE" &> /dev/null &
 
+# check_install curl
 if ! which curl &> /dev/null; then
   echo "curl not found"
   dpkg -s "curl" &>/dev/null
@@ -79,6 +86,7 @@ if ! which curl &> /dev/null; then
   fi
 fi
 
+# check_install dialog
 if ! which dialog &> /dev/null; then
   echo "dialog not found"
   dpkg -s "dialog" &>/dev/null
@@ -94,6 +102,10 @@ if ! which dialog &> /dev/null; then
 fi
 curversion="$(curl "file://$(realpath "${DIR}")/version")"
 
+# if is_network_connected; then
+#  dialog_msg "You're network connection..."
+#  exit 1
+# fi
 GW=$(ip route | awk '/default/ { print $3 }')
 if [ -z "$GW" ]; then
   dialog --clear --backtitle "PortMaster v$curversion" --title "${TITLE}" \
@@ -120,7 +132,7 @@ if [ ! -d "/dev/shm/portmaster" ]; then
 fi
 
 
-
+#dialog_clear
 dialog --clear --stdout
 
 
@@ -131,6 +143,8 @@ function UpdateCheck() {
   portmaster_download_zip=/dev/shm/portmaster/PortMaster.zip
 
   if [[ "$gitversion" != "$curversion" ]]; then
+    # if dialog_download url message;  then
+    #
     wget -t 3 -T 60 -q --show-progress "${WEBSITE}PortMaster.zip" -O ${portmaster_download_zip} 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog \
           --progressbox "Downloading and installing PortMaster update..." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	if [ "${PIPESTATUS[0]}" -eq 0 ]; then
@@ -138,6 +152,7 @@ function UpdateCheck() {
    	  if [[ "TheRA" == "${OS}" ]]; then
    		  $ESUDO chmod -R 777 "$TOOLS_DIR/PortMaster"
    	  fi
+          #dialog_message
    	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  
        oga_pid="$(pidof oga_controls)"
@@ -148,10 +163,12 @@ function UpdateCheck() {
    	  $ESUDO systemctl restart oga_events &
    	  exit 0
    	else
+          #dialog_error
    	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster failed to update." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  $ESUDO rm -f ${portmaster_download_zip}
    	fi
   else
+    #dialog_msg
     dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nNo update needed." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
   fi
 }
@@ -167,11 +184,12 @@ PortInfoInstall() {
   porter=$(cat "$ports_file" | grep "$choice" | grep -oP '(?<=porter=").*?(?=")')
   local port_url="${website}${installloc}"
 
+  #dialog_choice
   if dialog --clear --backtitle "PortMaster v$curversion" \
             --title "$choice" \
             --yesno "\n$msgtxt \n\nPorted By: $porter\n\nWould you like to continue to install this port?" \
             $HEIGHT $WIDTH &> ${CONSOLE}; then
-
+    #dialog_download
     $ESUDO wget -t 3 -T 60 -q --show-progress ${port_url} -O \
 	    $portmaster_tmp/$installloc 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox \
 		"Downloading ${1} package..." $HEIGHT $WIDTH &> ${CONSOLE}
@@ -185,16 +203,20 @@ PortInfoInstall() {
   			if [[ "${OS}" == "351ELEC" ]]; then
   			  sed -i 's/sudo //g' ${ROMS_DIR}/ports/*.sh
   			fi
+                    #dialog_msg
   		    dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice installed successfully. \
   		    \n\nMake sure to restart EmulationStation in order to see it in the ports menu." $HEIGHT $WIDTH &> $CONSOLE
   		  else
+                    #dialog_msg
   		    dialog --clear --backtitle "PortMaster v$curversion" --title "$choice"--msgbox "\n\n$choice did NOT install. \
   		    \n\nYour roms partition seems to be full." $HEIGHT $WIDTH &> $CONSOLE
   		  fi
       else
+        #dialog_error
         dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to install successfully." $HEIGHT $WIDTH &> $CONSOLE
       fi
   	else
+        #dialog_error
   		  dialog --clear --backtitle "PortMaster v$curversion" --title "$choice" --msgbox "\n\n$choice failed to download successfully.  The PortMaster server maybe busy or check your internet connection." $HEIGHT $WIDTH &> $CONSOLE
   	fi
     $ESUDO rm -f $portmaster_tmp/$installloc
@@ -231,9 +253,11 @@ MainMenu() {
    $(cat /dev/shm/portmaster/ports.md | grep -oP '(?<=Title=").*?(?=")')
   )
 
+  #get_tempfile
   tmp_file=$(mktemp 2>/dev/null) || tmp_file=/tmp/test$$                                                                                                              
   trap "rm -f $tmp_file" EXIT                                                                                                                                  
-  while true; do                                                                                                                                                                                                                                         
+  while true; do
+    #dialog_menu                                                                                                                                                                                                                                  
     dialog \
         --backtitle "PortMaster v$curversion" \
         --title "[ Main Menu ]" \
