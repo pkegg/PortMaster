@@ -78,7 +78,7 @@ echo "built: ${IMAGE}"
 echo "pulling submodules"
 
 
-if [[ ! -d "ports/_global/test/libs/bats-assert/src" ]]; then
+if [[ ! -d "ports/global/test/libs/bats-assert/src" ]]; then
   echo "Updating testing git submodules"
   git submodule update --init
 else

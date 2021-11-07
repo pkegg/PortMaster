@@ -1,15 +1,15 @@
 ARG BASE_IMAGE=""
 FROM $BASE_IMAGE as base
 
-#COPY ./_global/global* /_global/
+COPY ./global/global* /global/
 
 WORKDIR /
 
 # Test global functions
 FROM base as test
 RUN apt-get update && apt-get install -y bats curl dialog wget && rm -rf /var/lib/apt/lists/*
-COPY ./_global/test /_global/test
-RUN cd /_global/test && bats global-functions.bats
+COPY ./global/test /global/test
+RUN cd /global/test && bats global-functions.bats
 
 FROM base
 COPY ./build* /
