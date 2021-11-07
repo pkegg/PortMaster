@@ -75,15 +75,6 @@ docker buildx build --tag ${IMAGE} \
 
 echo "built: ${IMAGE}"
 
-echo "pulling submodules"
-
-
-if [[ ! -d "ports/global/test/libs/bats-assert/src" ]]; then
-  echo "Updating testing git submodules"
-  git submodule update --init
-else
-  echo "Appears test submodules already initialized"
-fi
 docker buildx build --tag ${IMAGE_BUILD} \
   -f ${DIR}/Dockerfile.build \
   --build-arg BASE_IMAGE="${IMAGE}" \
