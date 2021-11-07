@@ -12,5 +12,4 @@ COPY ./_global/test /_global/test
 RUN cd /_global/test && bats global-functions.bats
 
 FROM base
-COPY ./_global/oga_controls /_global/
 COPY ./build* /
