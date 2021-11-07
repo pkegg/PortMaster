@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=""
 FROM $BASE_IMAGE as base
 
-COPY ./_global/global* /_global/
+#COPY ./_global/global* /_global/
 
 WORKDIR /
 
