@@ -423,8 +423,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [[ -n "${PKG_DIRECTORY_OVERRIDE}" ]]; then
       PKG_DIRECTORY="$PKG_DIRECTORY_OVERRIDE"
     fi
-    if [[ -f "${PACKAGE_DIR}/run-legacy.sh" ]]; then
-      cp "${PACKAGE_DIR}/run-legacy.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+    if [[ -f "${PACKAGE_DIR}/run-legacy" ]]; then
+      cp "${PACKAGE_DIR}/run-legacy" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
     elif [[ "${LEGACY_PORTMASTER}"  == "true" \
            && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" \
            && ! -f "${PACKAGE_DIR}/run" ]]; then
