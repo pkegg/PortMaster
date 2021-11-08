@@ -14,4 +14,4 @@ RUN bash -c "source ./clone-source && clone_source $PACKAGE ./"
 #      The other files are technically optional
 COPY Dockerfile.build build* ./
 
-RUN [ -f ./build ] && cd source && bash ../build || echo "no build"
+RUN [ -f ./build ] && cd source && bash ../build

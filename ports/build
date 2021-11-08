@@ -125,7 +125,7 @@ function build_package() {
   done
 
   if [[ -f "${PACKAGE_SCRIPT}" ]]; then
-    echo "Running custom package script"
+    echo "Running custom package script: ${PACKAGE_SCRIPT}"
     pushd "${PACKAGE_DIR}/" &> /dev/null
     bash ${PACKAGE_SCRIPT}
     popd
@@ -215,10 +215,12 @@ function build_in_docker_image() {
       IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
     elif [[ "$DOCKER_REMOTE" == "true" ]]; then
       IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder"
+    else
+     IMAGE_CACHE_TO="--load --builder=default"
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
     pushd "${PACKAGE_DIR}" &> /dev/null
-
+    echo "Build platform: ${BUILD_PLATFORM}"
     docker buildx build --platform ${BUILD_PLATFORM} \
         -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
         --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
@@ -330,13 +332,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   echo "building package: $PACKAGE"
 
-  BUILD_PLATFORM=""
-
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
     
     # LEGACY_PORTMASTER doesn't 'build' anything (as build files are in legacy zips), so just use the current
     # platform for max speed in packaging, etc.
-    BUILD_PLATFORM="$(get_linux_platform)"
+    if [[ -z "${BUILD_PLATFORM}" ]]; then
+      BUILD_PLATFORM="$(get_linux_platform)"
+    fi
 
     PACKAGE_INFO_TMP="${PACKAGE_DIR}/package.info.tmp"
 
