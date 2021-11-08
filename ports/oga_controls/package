@@ -1,3 +1,4 @@
 #! /bin/bash
 
 cp source/oga* pkg
+cp oga_* pkg
