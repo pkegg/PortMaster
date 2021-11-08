@@ -111,8 +111,7 @@ if [ -z "$GW" ]; then
   dialog --clear --backtitle "PortMaster v$curversion" --title "${TITLE}" \
   --msgbox "\n\nYour network connection doesn't seem to be working. \
   \nDid you make sure to configure your wifi connection?" $HEIGHT $WIDTH &> ${CONSOLE}
-  $ESUDO kill -9 "$(pidof oga_controls)"
-  $ESUDO systemctl restart oga_events &
+
   exit 0
 fi
 
@@ -155,12 +154,7 @@ function UpdateCheck() {
           #dialog_message
    	  dialog --clear --backtitle "PortMaster v$curversion" --title "$TITLE" --msgbox "\n\nPortMaster updated successfully." "$HEIGHT" "$WIDTH" &> ${CONSOLE}
    	  
-       oga_pid="$(pidof oga_controls)"
-       if [[ -n "${oga_pid}" ]];then
-         $ESUDO kill -9 "${oga_pid}"
-       fi
    	  $ESUDO rm -f ${portmaster_download_zip} 
-   	  $ESUDO systemctl restart oga_events &
    	  exit 0
    	else
           #dialog_error
@@ -225,6 +219,10 @@ PortInfoInstall() {
 
 userExit() {
   set +e
+  if [[ -f "$tmp_file" ]]; then
+    rm -f "$tmp_file"
+  fi
+
   echo "removing ports.md"
   rm -f /dev/shm/portmaster/ports.md
 
@@ -255,7 +253,6 @@ MainMenu() {
 
   #get_tempfile
   tmp_file=$(mktemp 2>/dev/null) || tmp_file=/tmp/test$$                                                                                                              
-  trap "rm -f $tmp_file" EXIT                                                                                                                                  
   while true; do
     #dialog_menu                                                                                                                                                                                                                                  
     dialog \
@@ -269,7 +266,7 @@ MainMenu() {
     if [[ -n "$selection" ]]; then                                                                                                                                                                                                                       
        PortInfoInstall "$selection"                                                                                                                                                                                                                      
     else                                                                                                                                                                                                                                                 
-       userExit                                                                                                                                                                                                                                          
+       exit 0                                                                                                                                                                                                                                          
     fi                                                                                                                                                                                                                                                   
   done              
 }
@@ -283,6 +280,7 @@ fi
 wget -t 3 -T 60 --no-check-certificate "$website"ports.md -O /dev/shm/portmaster/ports.md
 echo_err "done with ports.md"
 
+#This ensures we cleanup oga_controls and restart oga_events exit
 trap userExit EXIT
 
 if dialog --clear --backtitle "PortMaster v$curversion" \
