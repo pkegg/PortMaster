@@ -1,5 +1,4 @@
 # tldr;
-Try this on linux / mac / wsl2 (mac requires `wget` installed - install with [brew](https://brew.sh/)) :
 - Clone this repo
 - install [docker](https://docs.docker.com/get-docker/)
   - check install with: `./init-docker`
@@ -12,7 +11,7 @@ Try this on linux / mac / wsl2 (mac requires `wget` installed - install with [br
 - Ensure devs can still easily manually build/tweak ports without Docker/GitHub actions.
 
 ## build/package a port - docker
-- install [docker](https://docs.docker.com/get-docker/)
+- install [docker](https://docs.docker.com/get-docker/).  This *should* work on linux / mac / wsl2 (mac requires `wget` and `coreutils` installed - install with [brew](https://brew.sh/)).  Most testing is done on linux.
 - check install with: `./init-docker`
 - `./build <port name>`
 
