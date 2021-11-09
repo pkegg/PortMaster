@@ -4,7 +4,13 @@ Title="Abuse ." Desc="A fork of the original Abuse SDL port from http://abuse.zo
 
 Title="AM2R ." Desc="Another Metroid 2 Remake.  An action-adventure game developed by Argentinian programmer Milton Guasti (also known as DoctorM64).  You'll need to provide your own am2r android apk into the ports/am2r/gamedata folder.  Make sure it is named am2r.apk.  The name is case sensitive." porter="Johnny on Flame" locat="AM2R.zip"
 
+Title="Blake_Stone_Aliens_of_Gold ." Desc="The unofficial source port for Blake Stone Aliens of Gold.  Includes the shareware files.  You can also add your own full version Blake Stone Aliens of Gold files to the ports/bstone-aog/gamedata/alien_of_gold folder." porter="Cebion and romadu" locat="bstone-aog.zip"
+
+Title="Blake_Stone_Planet_Strike ." Desc="The unofficial source port for Blake Stone Planet Strike.  You'll need to add your own full version Blake Stone Planet Strike files to the ports/bstone-ps/gamedata/planet_strike folder." porter="Cebion and romadu" locat="bstone-ps.zip"
+
 Title="Blobby_Volley_2 ." Desc="A head-to-head multiplayer ball game." porter="Cebion and romadu" locat="Blobby%20Volley2.zip"
+
+Title="Block_Attack ." Desc="A Tetris Attack Clone." porter="Cebion" locat="Block%20Attack.zip"
 
 Title="Blood ." Desc="Blood port based on EDuke32.  You'll need to add your own full version Blood 1.21 files to the ports/Blood folder." porter="romadu" locat="Blood.zip"
 
@@ -51,6 +57,8 @@ Title="NAM ." Desc="NAM using the rednukem build open source port by Alexey Khok
 Title="nKaruga ." Desc="A cool 2D bullet hell shooter.  Just download and play." porter="Jetup" locat="nKaruga.zip"
 
 Title="OpenJazz ." Desc="A free, open-source version of the classic Jazz Jackrabbit games by Alister Thomson.  Includes the Jazz Jackrabiit shareware files.  You can add your own full game Dos files to the ports/openjazz/gamedata folder." porter="Jetup" locat="OpenJazz.zip"
+
+Title="OpenOMF ." Desc="a Open Source remake of "One Must Fall 2097" by Diversions Entertainment." porter="Cebion" locat="Openomf.zip"
 
 Title="OpenTyrian ." Desc="OpenTyrian is an open-source port of the DOS game Tyrian.  OpenTyrian 2.1 files are already included as they were made freeware sometime ago." porter="Christian_Haitian" locat="OpenTyrian.zip"
 
