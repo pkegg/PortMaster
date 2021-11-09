@@ -1,24 +1,15 @@
 #!/bin/bash
-
+set -e
 
 # Current directory of the script
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
+
 source "${DIR}/global-functions"
-
-ESUDO="$(get_sudo)"
-
-sdl_controllerconfig=$(get_sdl_controller_config)
-param_device=$(get_oga_device)
-
-cd $DIR/
-
-$ESUDO chmod 666 /dev/uinput
 
 $ESUDO rm -rf ~/.local/share/blockattack
 ln -sfv $DIR/ ~/.local/share
 
-$ESUDO ./oga_controls blockattack $param_device &
-LD_LIBRARY_PATH="$PWD/libs" SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig" ./blockattack 2>&1 | tee -a ./log.txt
-$ESUDO kill -9 $(pidof oga_controls)
-$ESUDO systemctl restart oga_events &
-printf "\033c" >> /dev/tty1
+export LD_LIBRARY_PATH="$DIR/libs"
+export SDL_GAMECONTROLLERCONFIG="$(get_sdl_controller_config)"
+
+launch_with_oga_controls blockattack
