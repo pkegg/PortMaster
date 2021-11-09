@@ -432,6 +432,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     else
       cp "${GLOBAL_DIR}/global-run.sh" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
       sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
+      rm -f "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh.bak"
     fi
   
     cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
