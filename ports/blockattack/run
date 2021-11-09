@@ -5,7 +5,7 @@ set -e
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 
 source "${DIR}/global-functions"
-
+ESUDO=$(get_sudo)
 $ESUDO rm -rf ~/.local/share/blockattack
 ln -sfv $DIR/ ~/.local/share
 
