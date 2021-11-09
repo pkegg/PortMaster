@@ -179,6 +179,35 @@ function echo_err() {
   echo "$@" 1>&2;
 }
 
+# does any cleanup that may be needed when launching
+function user_exit() {
+  set +e
+
+  local esudo
+  esudo=$(get_sudo)
+  local console
+  console=$(get_console)
+  $esudo kill -9 $(pidof oga_controls)
+  $esudo systemctl restart oga_events &
+  printf "\033c" >> $console
+}
+
+#This function makes it easier to launch (and cleanup) with oga_controls
+# NOTE: Current directory **must contain oga_controls and the executable to launch
+function launch_with_oga_controls() {
+
+  local to_launch="$1"
+
+  local esudo
+  esudo="$(get_sudo)"
+
+  $esudo chmod 666 /dev/uinput
+
+  $esudo ./oga_controls $to_launch $param_device &
+  $esudo ./$to_launch 2>&1 | tee -a ./log.txt
+  trap user_exit EXIT
+}
+
 #The below code only runs when this file is executed (not sourced)
 #  Ex:  Please run `bash ./global-functions` and give us the output
 # It's meant to help debugging on devices and should have output to help debug
