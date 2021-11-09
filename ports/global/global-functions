@@ -62,24 +62,37 @@ function get_oga_device() {
   fi
   echo "${device}"
 }
-
-function get_sdl_controller_config() {
+function get_sdl_device_id() {
   local oga_device
-  local sdl_controllerconfig
+  local device_id=unknown
   oga_device="$(get_oga_device)"
-  if [[ "${oga_device}" == "anbernic" ]]; then
-    sdl_controllerconfig="03000000091200000031000011010000,OpenSimHardware OSH PB Controller,a:b1,b:b0,x:b3,y:b2,leftshoulder:b4,rightshoulder:b5,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftx:a0~,lefty:a1~,leftstick:b8,lefttrigger:b10,rightstick:b9,back:b7,start:b6,rightx:a2,righty:a3,righttrigger:b11,platform:Linux,"
-  elif [[ "${oga_device}" == "oga" ]]; then
-    sdl_controllerconfig="190000004b4800000010000001010000,GO-Advance Gamepad (rev 1.1),a:b1,b:b0,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,dpdown:b9,dpleft:b10,dpright:b11,dpup:b8,leftx:a0,lefty:a1,back:b12,leftstick:b13,lefttrigger:b14,rightstick:b16,righttrigger:b15,start:b17,platform:Linux,"
-  elif [[ "${oga_device}" == "rk2020" ]]; then
-    sdl_controllerconfig="190000004b4800000010000000010000,GO-Advance Gamepad,a:b1,b:b0,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,dpdown:b7,dpleft:b8,dpright:b9,dpup:b6,leftx:a0,lefty:a1,back:b10,lefttrigger:b12,righttrigger:b13,start:b15,platform:Linux,"
-  elif [[ "${oga_device}" == "ogs" ]]; then
-    sdl_controllerconfig="190000004b4800000011000000010000,GO-Super Gamepad,platform:Linux,x:b2,a:b1,b:b0,y:b3,back:b12,guide:b14,start:b13,dpleft:b10,dpdown:b9,dpright:b11,dpup:b8,leftshoulder:b4,lefttrigger:b6,rightshoulder:b5,righttrigger:b7,leftstick:b15,rightstick:b16,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,"
-  elif [[ "${oga_device}" == "chi" ]]; then
-    sdl_controllerconfig="19000000030000000300000002030000,gameforce_gamepad,leftstick:b14,rightx:a3,leftshoulder:b4,start:b9,lefty:a0,dpup:b10,righty:a2,a:b1,b:b0,guide:b16,dpdown:b11,rightshoulder:b5,righttrigger:b7,rightstick:b15,dpright:b13,x:b2,back:b8,leftx:a1,y:b3,dpleft:b12,lefttrigger:b6,platform:Linux,"
-  fi
-  echo "${sdl_controllerconfig}"
 
+  if [[ "${oga_device}" == "anbernic" ]]; then
+    device_id="03000000091200000031000011010000"
+  elif [[ "${oga_device}" == "oga" ]]; then
+    device_id="190000004b4800000010000001010000"
+  elif [[ "${oga_device}" == "rk2020" ]]; then
+    device_id="190000004b4800000010000000010000"
+  elif [[ "${oga_device}" == "ogs" ]]; then
+    device_id="190000004b4800000011000000010000"
+  elif [[ "${oga_device}" == "chi" ]]; then
+    device_id="19000000030000000300000002030000"
+  fi
+  echo "$device_id"
+}
+
+function get_controls() {
+  local device_id
+  local controls
+  local sdldbuserfile="${HOME}/.config/SDL-GameControllerDB/gamecontrollerdb.txt"
+  local sdldbfile="$DIR/gamecontrollerdb.txt"
+  device_id=$(get_sdl_device_id)
+
+  controls=$(grep "${sdldbuserfile}" -e "${device_id}")
+  if [[ -z "${controls}" ]]; then
+    controls=$(grep "${sdldbfile}" -e "${device_id}")
+  fi
+  echo "${controls}"
 }
 
 # Gets the current OS
@@ -223,4 +236,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "CONSOLE=$(get_console)"
   echo "HOTKEY=$(get_hotkey)"
   echo "IN_CHINA=$(in_china)"
+  echo "OGA_DEVICE=$(get_oga_device)"
+  echo "SDL_DEVICE_ID=$(get_sdl_device_id)"
 fi

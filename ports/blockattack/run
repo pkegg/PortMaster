@@ -10,6 +10,7 @@ $ESUDO rm -rf ~/.local/share/blockattack
 ln -sfv $DIR/ ~/.local/share
 
 export LD_LIBRARY_PATH="$DIR/libs"
-export SDL_GAMECONTROLLERCONFIG="$(get_sdl_controller_config)"
+export SDL_GAMECONTROLLERCONFIG
+SDL_GAMECONTROLLERCONFIG="$(get_controls)"
 
 launch_with_oga_controls blockattack
