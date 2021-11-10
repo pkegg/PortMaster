@@ -25,6 +25,10 @@ jobs:
             echo -ne '::set-output name=matrix::{"package":['
             echo -ne $(find ./ports -name package.info | sed -E 's|./ports/(.*)/package.info|"\1"|' | sort | tr '\n' ',')
             echo ']}'
+      - id: build-base-image
+        run: |
+         ./init-docker
+         ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
 
   buildx:
     needs: get-builds
@@ -51,13 +55,12 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
   
-      - name: Build and push Docker image
+      - name: Build ${{ matrix.package }}
         id: build
         run: |
            set -e
-           #./init-docker
-           #./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
-           #./ports/build-all --push --docker-image
+           ./init-docker
+           ./ports/build ${{ matrix.package }} --push --docker-image
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
