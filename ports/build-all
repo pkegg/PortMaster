@@ -9,6 +9,8 @@ function parse_args() {
   LEGACY_PORTMASTER_OVERRIDE=""
   BUILDS=""
   DO_BUILD="true"
+  BUILD_SPLIT_TOTAL=""
+  BUILD_SPLIT=""
 
   # Parse args
   ARGS=()
@@ -36,13 +38,26 @@ function parse_args() {
         DO_BUILD="false"
         shift # past argument
         ;;
+      --build-split-total)
+        BUILD_SPLIT_TOTAL="$2"
+        shift # past argument
+        shift # past value
+        ;;
+      --build-split)
+        BUILD_SPLIT="$2"
+        shift # past argument
+        shift # past value
+
+        ;;
       -h|--help)
         echo "$0  [arguments]"
         echo "  --libraries - lists all PKG_LIBRARY=true"
         echo "  --legacy-default - lists all LEGACY_PORTMASTER=true which do not have an LEGACY_URL_OVERRIDE"
         echo "  --legacy-override-url - lists all LEGACY_PORTMASTER=true which have a LEGACY_URL_OVERRIDE"
-        echo "  --builds - lists all LEGACY_PORTMASTER=true which have a LEGACY_URL_OVERRIDE"
-
+        echo "  --builds - lists all non-legacy builds"
+        echo "  --no-builds - just output the list of builds which would be run"
+        echo "  --build-split-total - the total number to split the jobs into - used with --build-split to only build a subset of builds"
+        echo "  --build-split - the specific splits (modulus) to run.  Starts from 1.  Ex: --build-split-total=5 and --build-split=1 the first of each 5 builds will be run" 
 
         exit 1
         ;;
@@ -55,8 +70,20 @@ function parse_args() {
 }
 parse_args "$@"
 
+CURRENT_BUILD_SPLIT=0
 for directory in ${DIR}/*/; do
   directory=${directory%/}
+  CURRENT_BUILD_SPLIT="$((${CURRENT_BUILD_SPLIT} + 1))"
+  if [[ "$CURRENT_BUILD_SPLIT" -gt "$BUILD_SPLIT_TOTAL" ]]; then
+    CURRENT_BUILD_SPLIT=1
+  fi
+  #echo "current build split: ${CURRENT_BUILD_SPLIT} split: ${BUILD_SPLIT}"
+  if [[ -n "${BUILD_SPLIT_TOTAL}" ]]; then
+    if [[ "$CURRENT_BUILD_SPLIT" != "${BUILD_SPLIT}" ]]; then
+       continue
+    fi
+    
+  fi
   #echo "directory: $directory"
   if [ -f "${directory}/package.info" ]; then
     PKG_LIBRARY=""
