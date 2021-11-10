@@ -51,15 +51,18 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish draft pre-release."
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          prerelease: true
-          draft: true
-          tag_name:  "${{steps.date.outputs.date}}"
+          tag: "${{steps.date.outputs.date}}"
           name: "${{steps.date.outputs.date}}"
-          files: |
-            ports.md
+          allowUpdates: true
+          draft: true
+          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          artifacts: "ports.md"
+
   legacy:
     name: Legacy Builds - Sharded
     needs: build-base-images
@@ -93,14 +96,16 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag_name:  "${{needs.build-base-images.outputs.date}}"
-          prerelease: true
+          tag: "${{needs.build-base-images.outputs.date}}"
+          allowUpdates: true
           draft: true
-          files: |
-            release/*.zip
+          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          artifacts: "release/*.zip"
   buildx:
     needs: build-base-images
     name: Full Port Builds
@@ -137,14 +142,16 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag_name:  "${{needs.build-base-images.outputs.date}}"
-          prerelease: true
+          tag: "${{needs.build-base-images.outputs.date}}"
+          allowUpdates: true
           draft: true
-          files: |
-            release/*.zip
+          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          artifacts: "release/*.zip"
 
   release:
     needs: [buildx, legacy, build-base-images]
@@ -155,9 +162,12 @@ jobs:
       packages: write
     steps:
       - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag_name:  "${{needs.build-base-images.outputs.date}}"
+          tag: "${{needs.build-base-images.outputs.date}}"
+          allowUpdates: true
           draft: false
-          prerelease: true #TODO: make configurable
+          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
