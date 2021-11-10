@@ -28,6 +28,7 @@ jobs:
       - id: build-base-image
         run: |
          ./init-docker
+          docker buildx use portmaster-remote-builder
          ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
 
   buildx:
@@ -60,6 +61,7 @@ jobs:
         run: |
            set -e
            ./init-docker
+           docker buildx use portmaster-remote-builder
            ./ports/build ${{ matrix.package }} --push --docker-image
            
         env:
