@@ -283,7 +283,7 @@ function build_in_docker_image() {
 
 }
 
-function build_in_docker_image() {
+function test_in_docker_image() {
 
     local PACKAGE
     PACKAGE="$1"
@@ -306,8 +306,8 @@ function build_in_docker_image() {
     fi
     IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
     pushd "${PACKAGE_DIR}" &> /dev/null
-    echo "Build platform: ${BUILD_PLATFORM}"
-    docker buildx build --platform ${BUILD_PLATFORM} \
+    echo "Build platform: ${TEST_PLATFORM}"
+    docker buildx build --platform ${TEST_PLATFORM} \
         -f Dockerfile.test --tag "${DOCKER_IMAGE_BUILD}" \
         --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
         --build-arg PACKAGE=${PACKAGE} \
