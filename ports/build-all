@@ -82,7 +82,9 @@ for directory in ${DIR}/*/; do
     if [[ "$CURRENT_BUILD_SPLIT" != "${BUILD_SPLIT}" ]]; then
        continue
     fi
-    
+  fi
+  if [[ "${DO_BUILD}" == "true" ]]; then
+     echo "current disk space: $(df -h)"
   fi
   #echo "directory: $directory"
   if [ -f "${directory}/package.info" ]; then
