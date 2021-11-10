@@ -1,4 +1,4 @@
-name: build-all
+name: build-parallel
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.event.repository.name }}/portmaster
 
-concurrency: 
-  group: main
+#concurrency: 
+#  group: main
 
 jobs:
   get-builds:
