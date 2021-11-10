@@ -55,7 +55,7 @@ IMAGE_TEST=${IMAGE_BASE}/test:${BRANCH}
 IMAGE_TEST_CACHE=${IMAGE_BASE}/test/cache:${BRANCH}
 
 if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-  IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
+  IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${IMAGE_CACHE},mode=max --push"
   IMAGE_BUILD_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_BUILD_CACHE},mode=max --push"
   IMAGE_TEST_CACHE_TO="--pull --cache-to=type=registry,ref=${IMAGE_TEST_CACHE},mode=max --push"
 else

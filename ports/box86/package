@@ -1,5 +1,0 @@
-#! /bin/bash
-mkdir -p pkg/native
-cp source/native/* pkg/native
-cp -r source/x86lib pkg/lib
-cp source/bld/box86 pkg

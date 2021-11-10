@@ -26,7 +26,7 @@ jobs:
         run: |
             ls -lah
             echo -ne '::set-output name=matrix::{"package":['
-            echo -ne $(find ./ports -name package.info | sed -E 's|./ports/(.*)/package.info|"\1"|' | sort | tr '\n' ',')
+            echo -ne $(./ports/build-all  --no-build --libraries --builds --legacy-url-override| sort | tr '\n' ',')
             echo ']}'
 
       - name: Log in to the Container registry
@@ -39,10 +39,39 @@ jobs:
       - id: build-base-image
         run: |
          ./init-docker
-          docker buildx use portmaster-remote-builder
-         ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64   
+         ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64
+         ./ports/build-all --libraries --push --docker-image
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  legacy:
+    needs: get-builds
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build ${{ matrix.package }}
+        id: build
+        run: |
+           set -e
+           ./init-docker
+           ./ports/build-all --legacy-default --push --docker-image
+           
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
   buildx:
     needs: get-builds
     runs-on: ubuntu-latest
@@ -73,7 +102,6 @@ jobs:
         run: |
            set -e
            ./init-docker
-           docker buildx use portmaster-remote-builder
            ./ports/build ${{ matrix.package }} --push --docker-image
            
         env:

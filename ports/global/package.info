@@ -1,1 +1,2 @@
 PKG_NAME="_global"
+PKG_LIBRARY="true"
