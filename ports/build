@@ -101,14 +101,51 @@ function build_package() {
 
           # Get .env file ready
           env | grep "=" > .env
-          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash ../build
+          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -e ../build
           popd &> /dev/null
         fi
         echo "build done"
       fi
     fi
+
+    
   fi
 
+  if [[ -f "${PACKAGE_DIR}/test" ]]; then
+    if [[ -z "${DOCKER_WORK_DIR}" ]]; then
+      DOCKER_WORK_DIR=/work
+    fi
+    if [[ -z "${TEST_PLATFORM}" ]]; then
+      TEST_PLATFORM=linux/amd64
+    fi
+    if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
+      echo "testing inside docker image"
+      test_in_docker_image ${PACKAGE}
+    else
+      if [[ "${USE_DOCKER}" == "false" ]]; then
+          linux_platform=$(get_linux_platform)
+          if [[ "${TEST_PLATFORM}" != "${linux_platform}" ]]; then
+            echo "--------------------------------------------------------------------------------------------------"
+            echo "ERROR: TEST_PLATFORM is set to ${TEST_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
+            echo "  If you are attempting to cross-compile or this is in error, etc.  Please update TEST_PLATFORM in package.info to: ${linux_platform}"
+            exit 1
+          fi
+          echo "testing ${PACKAGE} without docker..."
+          pushd "${PACKAGE_DIR}" &> /dev/null
+          bash "./test"
+          popd &> /dev/null
+        else
+          echo "testing ${PACKAGE} with docker using ${DOCKER_IMAGE}..."
+          pushd "${PACKAGE_DIR}" &> /dev/null
+
+          # Get .env file ready
+          env | grep "=" > .env
+          ${SUDO} ${DOCKER_CMD} run --platform ${TEST_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PACKAGE_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}" ${DOCKER_IMAGE} bash -e ./test
+          popd &> /dev/null
+        fi
+        echo "test done"
+      fi
+  fi
   mkdir -p "${PACKAGE_DIR}/pkg/"
 
   if [[ -f "${PACKAGE_DIR}/run" ]]; then
@@ -204,8 +241,8 @@ function build_in_docker_image() {
     cp "${DIR}/Dockerfile.build.template" ${DIR}/${PACKAGE}/Dockerfile.build
     cp "${DIR}/clone-source" "${DIR}/${PACKAGE}/clone-source"
 
-    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build:${BRANCH}
-    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache:${BRANCH}
+    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
+    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
 
     #make lower case as docker must be lowers
     DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
@@ -243,6 +280,41 @@ function build_in_docker_image() {
 
     popd &> /dev/null
 
+
+}
+
+function build_in_docker_image() {
+
+    local PACKAGE
+    PACKAGE="$1"
+    echo "Copying ${DIR}/Dockerfile.test.template"
+    cp "${DIR}/Dockerfile.test.template" ${DIR}/${PACKAGE}/Dockerfile.test
+
+    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/test:${BRANCH}
+    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/test/cache:${BRANCH}
+
+    #make lower case as docker must be lowers
+    DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
+    DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
+    elif [[ "$DOCKER_REMOTE" == "true" ]]; then
+      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder"
+    else
+      IMAGE_CACHE_TO="--load --builder=default"
+    fi
+    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
+    pushd "${PACKAGE_DIR}" &> /dev/null
+    echo "Build platform: ${BUILD_PLATFORM}"
+    docker buildx build --platform ${BUILD_PLATFORM} \
+        -f Dockerfile.test --tag "${DOCKER_IMAGE_BUILD}" \
+        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
+        --build-arg PACKAGE=${PACKAGE} \
+        ${IMAGE_CACHE_FROM} \
+        ${IMAGE_CACHE_TO} .
+
+    popd &> /dev/null
 
 }
 function parse_args() {

@@ -69,28 +69,7 @@ echo "IMAGE: ${IMAGE} IMAGE_CACHE: ${IMAGE_CACHE}"
 echo "IMAGE_CACHE_TO: ${IMAGE_CACHE_TO}"
 docker buildx build --tag ${IMAGE} \
   --cache-from=type=registry,ref=${IMAGE_CACHE} \
-  -f "${DIR}/Dockerfile.deps" \
   ${IMAGE_CACHE_TO} \
   --platform ${BUILD_PLATFORM} ${DIR}
 
 echo "built: ${IMAGE}"
-
-docker buildx build --tag ${IMAGE_BUILD} \
-  -f ${DIR}/Dockerfile.build \
-  --build-arg BASE_IMAGE="${IMAGE}" \
-  --cache-from=type=registry,ref=${IMAGE_BUILD_CACHE} \
-  ${IMAGE_BUILD_CACHE_TO} \
-  --platform ${TEST_BUILD_PLATFORM} ${DIR}
-
-echo "built: ${IMAGE_BUILD}"
-
-echo "running tests: ${IMAGE_TEST} platform: ${TEST_BUILD_PLATFORM}"
-# Run tests sepatately on amd64 so they run faster
-#  NOTE: if amd64 is not the host platform in the future - we should change
-docker buildx build --tag ${IMAGE_TEST} \
-  -f ${DIR}/Dockerfile.build \
-  --build-arg BASE_IMAGE="${IMAGE}" \
-  --cache-from=type=registry,ref=${IMAGE_TEST_CACHE} \
-  --target test \
-  ${IMAGE_TEST_CACHE_TO} \
-  --platform ${TEST_BUILD_PLATFORM} ${DIR}

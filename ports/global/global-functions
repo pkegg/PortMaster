@@ -62,6 +62,10 @@ function get_oga_device() {
   fi
   echo "${device}"
 }
+
+# Gets the SDL device ID which can be used to get the SDL config from
+# the gamecontrollerdb.txt
+# See: get_controls
 function get_sdl_device_id() {
   local oga_device
   local device_id=unknown
@@ -81,6 +85,8 @@ function get_sdl_device_id() {
   echo "$device_id"
 }
 
+# Gets the SDL controls for the device from gamecontrollerdb.txt
+# Suggested usage: SDL_GAMECONTROLLERCONFIG="$(get_controls)"
 function get_controls() {
   local device_id
   local controls
@@ -151,6 +157,7 @@ function get_roms_dir() {
   fi
   echo "${romsfolderloc}"
 }
+
 function get_ports_dir() {
   echo "$(get_roms_dir)/ports"
 }
@@ -206,7 +213,7 @@ function user_exit() {
 }
 
 #This function makes it easier to launch (and cleanup) with oga_controls
-# NOTE: Current directory **must contain oga_controls and the executable to launch
+# NOTE: Current directory **must** contain oga_controls and the executable to launch
 function launch_with_oga_controls() {
 
   local to_launch="$1"
