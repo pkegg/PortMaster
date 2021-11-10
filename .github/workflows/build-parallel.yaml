@@ -10,18 +10,24 @@ concurrency:
   group: parallel
 
 jobs:
-  get-builds:
+  build-base-images:
+    name: Build Base Images and Libraries
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      date: ${{ steps.date.outputs.date }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           submodules: recursive
+      - name: Get date for artifacts
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
+  
       - id: set-matrix
         name: Determine Matrix Builds
         run: |
@@ -44,9 +50,19 @@ jobs:
          ./ports/build-all --libraries --push --docker-image
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish draft pre-release."
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          draft: true
+          tag_name:  "${{steps.date.outputs.date}}"
+          name: "${{steps.date.outputs.date}}"
+          files: |
+            ports.md
+          token: ${{ secrets.GITHUB_TOKEN }}
   legacy:
     name: Legacy Builds - Sharded
-    needs: get-builds
+    needs: build-base-images
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -76,16 +92,22 @@ jobs:
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+      - name: "Publish pre-release: ${{needs.build-base-images.outputs.matrix}}"
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name:  "${{needs.build-base-images.outputs.matrix}}"
+          files: |
+            release/*.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
   buildx:
-    needs: get-builds
+    needs: build-base-images
     name: Package Builds
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
     strategy:
-      matrix: ${{fromJson(needs.get-builds.outputs.matrix)}}
+      matrix: ${{fromJson(needs.build-base-images.outputs.matrix)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -112,14 +134,25 @@ jobs:
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      #- name: "Publish pre-release: ${{github.event.inputs.release_tag}}"
-      #  uses: softprops/action-gh-release@v1
-      #  with:
-      #    prerelease: true
-      #    tag_name:  "${{steps.date.outputs.date}}"
-      #    name: "${{steps.date.outputs.date}}"
-      #    files: |
-      #      release/*.zip
-      #      ports.md
-      #    token: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Update pre-release: ${{needs.build-base-images.outputs.matrix}}"
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name:  "${{needs.build-base-images.outputs.date}}"
+          files: |
+            release/*.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    needs: [buildx, legacy, build-base-images]
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name:  "${{needs.build-base-images.outputs.date}}"
+          draft: false
+          token: ${{ secrets.GITHUB_TOKEN }}
