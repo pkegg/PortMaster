@@ -92,10 +92,10 @@ jobs:
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Publish pre-release: ${{needs.build-base-images.outputs.matrix}}"
+      - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: softprops/action-gh-release@v1
         with:
-          tag_name:  "${{needs.build-base-images.outputs.matrix}}"
+          tag_name:  "${{needs.build-base-images.outputs.date}}"
           files: |
             release/*.zip
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Update pre-release: ${{needs.build-base-images.outputs.matrix}}"
+      - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: softprops/action-gh-release@v1
         with:
           tag_name:  "${{needs.build-base-images.outputs.date}}"
