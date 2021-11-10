@@ -26,39 +26,42 @@ function clone_source() {
   if [[ -f "${PACKAGE_INFO}.tmp" ]]; then
     source "${PACKAGE_INFO}.tmp"
   fi
-
+  if [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
+    GET_HANDLER_SUPPORT=git
+  fi
   if [[ "${GET_HANDLER_SUPPORT}" == "git" ]]; then
-  
-     if [[ -a "${PKG_VERSION}" ]]; then
-       echo "${PKG_VERSION} required"
-       exit 1
-     fi
-     ALREADY_CLONED=false
-     if [[ -d "${SOURCE_DIR}" ]]; then
-        pushd "${SOURCE_DIR}" &> /dev/null
-        if [[ "$(git config --get remote.origin.url)" == "$PKG_URL" ]]; then
-          git fetch
-          ALREADY_CLONED="true"
-        fi
-        popd &> /dev/null
-     fi
-     echo "source dir: ${SOURCE_DIR}"
-     if [[ "$ALREADY_CLONED" == "false" ]]; then
-        rm -rf "${SOURCE_DIR}"]
-        pushd "${PACKAGE_DIR}" &> /dev/null
-        git clone --recursive "${PKG_URL}" "${SOURCE_DIR_NAME}"
-        popd &> /dev/null
-     fi
-  
-     echo "chaning to: ${SOURCE_DIR}"
-     pushd "${SOURCE_DIR}" &> /dev/null
-     echo "Updating any submodules..."
-     git submodule update --init --recursive
-     echo "Cleaning ($(pwd))..."
-     git clean -fd
-     echo "Checking out: ${PKG_VERSION}"
-     git checkout "${PKG_VERSION}"
-     popd &> /dev/null || return
+    if [[ -n "${PKG_URL}" ]]; then
+      if [[ -a "${PKG_VERSION}" ]]; then
+        echo "${PKG_VERSION} required"
+        exit 1
+      fi
+      ALREADY_CLONED=false
+      if [[ -d "${SOURCE_DIR}" ]]; then
+         pushd "${SOURCE_DIR}" &> /dev/null
+         if [[ "$(git config --get remote.origin.url)" == "$PKG_URL" ]]; then
+           git fetch
+           ALREADY_CLONED="true"
+         fi
+         popd &> /dev/null
+      fi
+      echo "source dir: ${SOURCE_DIR}"
+      if [[ "$ALREADY_CLONED" == "false" ]]; then
+         rm -rf "${SOURCE_DIR}"]
+         pushd "${PACKAGE_DIR}" &> /dev/null
+         git clone --recursive "${PKG_URL}" "${SOURCE_DIR_NAME}"
+         popd &> /dev/null
+      fi
+   
+      echo "chaning to: ${SOURCE_DIR}"
+      pushd "${SOURCE_DIR}" &> /dev/null
+      echo "Updating any submodules..."
+      git submodule update --init --recursive
+      echo "Cleaning ($(pwd))..."
+      git clean -fd
+      echo "Checking out: ${PKG_VERSION}"
+      git checkout "${PKG_VERSION}"
+      popd &> /dev/null || return
+    fi
   elif [[ "${GET_HANDLER_SUPPORT}" == "archive" ]]; then
     echo "Checking archive..."
 
@@ -113,8 +116,6 @@ function clone_source() {
       echo "Could not unpack ${DOWNLOAD_FILE} to ${SOURCE_DIR}"
       exit 1
     fi
-  elif [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
-    echo "No GET_HANDLER_SUPPORT.  Assuming all local files"
   else
     echo "Handler: '${GET_HANDLER_SUPPORT}' not found"
     exit 1
