@@ -24,7 +24,6 @@ jobs:
           submodules: recursive
       - id: set-matrix
         run: |
-            ./ports/build-all  --no-build --builds --legacy-url-override | sed -e 's/^\|$/"/g' |sort | tr '\n' ','
             echo -ne '::set-output name=matrix::{"package":['
             echo -ne $(./ports/build-all  --no-build --builds --legacy-url-override | sed -e 's/^\|$/"/g' |sort | tr '\n' ',')
             echo ']}'
