@@ -6,8 +6,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.event.repository.name }}/portmaster
 
-#concurrency: 
-#  group: main
+concurrency: 
+  group: parallel
 
 jobs:
   get-builds:
@@ -23,6 +23,7 @@ jobs:
         with:
           submodules: recursive
       - id: set-matrix
+        name: Determine Matrix Builds
         run: |
             echo -ne '::set-output name=matrix::{"package":['
             echo -ne $(./ports/build-all  --no-build --builds --legacy-url-override | sed -e 's/^\|$/"/g' |sort | tr '\n' ',')
@@ -36,6 +37,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - id: build-base-image
+        name: Build base image and libraries
         run: |
          ./init-docker
          ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64
@@ -43,6 +45,7 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   legacy:
+    name: Legacy Builds - Sharded
     needs: get-builds
     runs-on: ubuntu-latest
     permissions:
@@ -76,6 +79,7 @@ jobs:
         
   buildx:
     needs: get-builds
+    name: Package Builds
     runs-on: ubuntu-latest
     permissions:
       contents: write
