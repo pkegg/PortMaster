@@ -103,7 +103,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
   buildx:
     needs: build-base-images
-    name: Package Builds
+    name: Full Port Builds
     runs-on: ubuntu-latest
     permissions:
       contents: write
