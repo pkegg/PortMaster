@@ -48,6 +48,9 @@ jobs:
     permissions:
       contents: write
       packages: write
+    strategy:
+      matrix:
+        shard: [1,2,3,4]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -66,7 +69,7 @@ jobs:
         run: |
            set -e
            ./init-docker
-           ./ports/build-all --legacy-default --push --docker-image
+           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 4 --legacy-default --push --docker-image
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
