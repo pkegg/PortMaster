@@ -19,7 +19,7 @@ if ! docker buildx &> /dev/null; then
   fi
   CLI_PLUGIN_DIR="$(realpath ~/.docker/cli-plugins)"
   BUILDX_BIN="${CLI_PLUGIN_DIR}/docker-buildx"
-  BUILDX_RELEASE=v0.6.3
+  BUILDX_RELEASE=v0.7.0
 
   mkdir -p ${CLI_PLUGIN_DIR}
   curl -L -o "${BUILDX_BIN}" https://github.com/docker/buildx/releases/download/${BUILDX_RELEASE}/buildx-${BUILDX_RELEASE}.linux-amd64
