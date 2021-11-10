@@ -15,11 +15,16 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-    - id: set-matrix
-      run: |
-          echo -ne '::set-output name=matrix::{"package":['
-          echo -ne '"2048","abuse"'
-          echo ']}'
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - id: set-matrix
+        run: |
+            ls -lah
+            echo -ne '::set-output name=matrix::{"package":['
+            echo -ne $(find ./ports -name package.info | sed -E 's|./ports/(.*)/package.info|"\1"|' | sort | tr '\n' ',')
+            echo ']}'
 
   buildx:
     needs: get-builds
