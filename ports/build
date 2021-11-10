@@ -262,6 +262,7 @@ function build_in_docker_image() {
         -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
         --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
         --build-arg PACKAGE=${PACKAGE} \
+        --build-arg "GITHUB_AUTH=${GITHUB_AUTH}" \
         ${IMAGE_CACHE_FROM} \
         ${IMAGE_CACHE_TO} .
 
