@@ -203,7 +203,7 @@ function build_env_docker_image() {
     DOCKER_IMAGE_CACHE=${IMAGE_BASE}/${PACKAGE}/cache:${BRANCH}
   
     if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_CACHE},mode=max --push"
+      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${DOCKER_IMAGE_CACHE},mode=max --push"
     else
       IMAGE_CACHE_TO="--load --builder default"
     fi
@@ -249,7 +249,7 @@ function build_in_docker_image() {
     DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
 
     if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
+      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
     elif [[ "$DOCKER_REMOTE" == "true" ]]; then
       IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder"
     else
@@ -298,7 +298,7 @@ function test_in_docker_image() {
     DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
 
     if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
+      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
     elif [[ "$DOCKER_REMOTE" == "true" ]]; then
       IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder"
     else
