@@ -26,7 +26,7 @@ jobs:
         run: |
             ls -lah
             echo -ne '::set-output name=matrix::{"package":['
-            echo -ne $(find ./ports -name package.info | sed -E 's|./ports/(.*)/package.info|"\1"|' | sort | tr '\n' ',')
+            echo -ne $(find ./ports -name package.info | grep -v box86 |sed -E 's|./ports/(.*)/package.info|"\1"|' | sort | tr '\n' ',')
             echo ']}'
 
       - name: Log in to the Container registry
