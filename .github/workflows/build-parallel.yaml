@@ -24,9 +24,9 @@ jobs:
           submodules: recursive
       - id: set-matrix
         run: |
-            ls -lah
+            ./ports/build-all  --no-build --builds --legacy-url-override | sed -e 's/^\|$/"/g' |sort | tr '\n' ','
             echo -ne '::set-output name=matrix::{"package":['
-            echo -ne $(./ports/build-all  --no-build --libraries --builds --legacy-url-override| sort | tr '\n' ',')
+            echo -ne $(./ports/build-all  --no-build --builds --legacy-url-override | sed -e 's/^\|$/"/g' |sort | tr '\n' ',')
             echo ']}'
 
       - name: Log in to the Container registry
