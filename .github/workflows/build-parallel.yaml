@@ -17,7 +17,9 @@ jobs:
     steps:
     - id: set-matrix
       run: |
-          echo '::set-output name=matrix::{"package":["2048","abuse"]}'
+          echo -ne '::set-output name=matrix::{"package":[
+          echo -ne '"2048","abuse"'
+          echo ']}'
 
   buildx:
     needs: get-builds
