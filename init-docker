@@ -25,6 +25,7 @@ if ! docker buildx &> /dev/null; then
   curl -L -o "${BUILDX_BIN}" https://github.com/docker/buildx/releases/download/${BUILDX_RELEASE}/buildx-${BUILDX_RELEASE}.linux-amd64
   chmod +x "${BUILDX_BIN}" 
 fi
+docker buildx version
 
 if [[ ! -f /proc/sys/fs/binfmt_misc/qemu-aarch64 || ! -f /proc/sys/fs/binfmt_misc/qemu-arm ]]; then
   docker run --rm --privileged tonistiigi/binfmt:latest --install all
