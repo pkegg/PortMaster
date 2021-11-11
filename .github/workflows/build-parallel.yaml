@@ -24,6 +24,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+          fetch-depth: 0
+
       - name: Get date for artifacts
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
@@ -78,6 +80,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+          fetch-depth: 0
+
 
       - name: Log in to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -120,6 +124,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+          fetch-depth: 0
+
 
       - name: Log in to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
