@@ -10,7 +10,7 @@ if ! docker ps -q &> /dev/null; then
   echo "You may need to follow the instructions here (and reboot): https://docs.docker.com/engine/install/linux-postinstall/"
   exit 1
 fi
-BUILDX_RELEASE=v0.7.0
+BUILDX_RELEASE=v0.6.3
 
 if ! docker buildx &> /dev/null || ! docker buildx version | grep "$BUILDX_RELEASE" &> /dev/null; then
   if ! which curl &> /dev/null; then
