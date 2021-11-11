@@ -453,6 +453,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   
   if [[ "$PKG_LIBRARY" == "true" ]]; then
     echo "Package: $PACKAGE is a library (PKG_LIBRARY=true) - not building release zip"
+    
+    #Libraries still output the git info file
+    echo -e "$NEW_GIT_INFO" > "${RELEASE_GIT_INFO_FILE}"
+
   else 
   
     GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../global)"

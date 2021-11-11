@@ -61,7 +61,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
-          artifacts: "ports.md"
+          artifacts: "ports.md, release/*.git.info"
 
   legacy:
     name: Legacy Builds - Sharded
