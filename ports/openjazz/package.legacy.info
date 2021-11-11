@@ -1,4 +1,0 @@
-PKG_GIT_SHA="a660b33a72db0eb141bceedf3b6f6b5c4150bcf3"
-PKG_VERSION="51a733540401f928d945dcad1acd1aa8bd2a5ca4"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/51a733540401f928d945dcad1acd1aa8bd2a5ca4/OpenJazz.zip"
-GET_HANDLER_SUPPORT="archive"

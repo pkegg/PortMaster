@@ -1,4 +1,0 @@
-PKG_GIT_SHA="aabbcf27015bf2fa8ad90ca7707690734f43d620"
-PKG_VERSION="51a733540401f928d945dcad1acd1aa8bd2a5ca4"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/51a733540401f928d945dcad1acd1aa8bd2a5ca4/Heart of Darkness.zip"
-GET_HANDLER_SUPPORT="archive"

@@ -1,4 +1,0 @@
-PKG_GIT_SHA="69f63a04cc35fa30f42672e385728f8846f443fd"
-PKG_VERSION="a9249ec2440f3d8d1f4004b537b1544b6d63d430"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/a9249ec2440f3d8d1f4004b537b1544b6d63d430/Blues Brothers.zip"
-GET_HANDLER_SUPPORT="archive"

@@ -1,4 +1,0 @@
-PKG_GIT_SHA="a14b85140e0e7748399bf2e817ab27988d4f6c4c"
-PKG_VERSION="3647d7f7bb43ead92428c04fb7aaf78f6c4293e7"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/3647d7f7bb43ead92428c04fb7aaf78f6c4293e7/Sonic CD.zip"
-GET_HANDLER_SUPPORT="archive"

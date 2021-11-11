@@ -1,4 +1,0 @@
-PKG_GIT_SHA="5597242843725f0e3ab8f5dbcb3c14ad889f6db8"
-PKG_VERSION="b5e180e9dcce5652c2b82e87fdbe3f87822d6147"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/b5e180e9dcce5652c2b82e87fdbe3f87822d6147/Quake.zip"
-GET_HANDLER_SUPPORT="archive"

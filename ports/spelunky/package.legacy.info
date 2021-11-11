@@ -1,4 +1,0 @@
-PKG_GIT_SHA="1f238a675a726e2a98dc2ef9acce605120be8cad"
-PKG_VERSION="3647d7f7bb43ead92428c04fb7aaf78f6c4293e7"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/3647d7f7bb43ead92428c04fb7aaf78f6c4293e7/Spelunky.zip"
-GET_HANDLER_SUPPORT="archive"

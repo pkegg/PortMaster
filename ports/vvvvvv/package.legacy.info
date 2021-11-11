@@ -1,4 +1,0 @@
-PKG_GIT_SHA="07eec92113eaca22895729962b1d6aec21c4e652"
-PKG_VERSION="15ef9b272bdfb9adced6a5b3cf3b958ae0e3018a"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/15ef9b272bdfb9adced6a5b3cf3b958ae0e3018a/VVVVVV.zip"
-GET_HANDLER_SUPPORT="archive"

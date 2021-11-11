@@ -1,4 +1,0 @@
-PKG_GIT_SHA="8026c33ebc64ad391b1a85a77eba21b891cdde65"
-PKG_VERSION="e6efc09306ef84dcb80329e6aa790b8c62744f5c"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/e6efc09306ef84dcb80329e6aa790b8c62744f5c/NAM.zip"
-GET_HANDLER_SUPPORT="archive"

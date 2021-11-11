@@ -1,4 +1,0 @@
-PKG_GIT_SHA="a9f1b9e00fe09b0a48efc3a914ab9c2a658657c8"
-PKG_VERSION="8907f9f4e0d8780cba82d6f5a2cb3a85f60c5d9d"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/8907f9f4e0d8780cba82d6f5a2cb3a85f60c5d9d/SorR.zip"
-GET_HANDLER_SUPPORT="archive"

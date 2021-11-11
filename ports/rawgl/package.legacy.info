@@ -1,4 +1,0 @@
-PKG_GIT_SHA="86de030517c81064671cfb47b1722d971c027e1b"
-PKG_VERSION="9491c2a0eb859790853edc2aababea038ceffe94"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/9491c2a0eb859790853edc2aababea038ceffe94/RAWGL.zip"
-GET_HANDLER_SUPPORT="archive"

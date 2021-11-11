@@ -1,4 +1,0 @@
-PKG_GIT_SHA="550f19d7a9e7c19983ffd0c6d41feb9f0fb2af46"
-PKG_VERSION="307c3f620184cc28ced919b63576c1f5d82df8f8"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/307c3f620184cc28ced919b63576c1f5d82df8f8/Space Cadet Pinball.zip"
-GET_HANDLER_SUPPORT="archive"

@@ -1,4 +1,0 @@
-PKG_GIT_SHA="897f4792cc5499f45d8c3349778f6d2bc69b9826"
-PKG_VERSION="d8c9ba3f191e3a9eaebe1c628bc03d7bf01bbf38"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/d8c9ba3f191e3a9eaebe1c628bc03d7bf01bbf38/Cave Story-evo.zip"
-GET_HANDLER_SUPPORT="archive"

@@ -1,4 +1,0 @@
-PKG_GIT_SHA="07d6e13c4c7c4f947505f7b7f67ef2c0ee434523"
-PKG_VERSION="dcc07d7f5b6ad527442c830469d2cc2df62312e1"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/dcc07d7f5b6ad527442c830469d2cc2df62312e1/iortcw.zip"
-GET_HANDLER_SUPPORT="archive"

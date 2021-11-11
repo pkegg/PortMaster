@@ -1,4 +1,0 @@
-PKG_GIT_SHA="5546f77e42b9dd30e253c431cdf059584ab4d259"
-PKG_VERSION="0bc47222ad82403d3b536d65c1061818623efa1b"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/0bc47222ad82403d3b536d65c1061818623efa1b/Redneck Rampage.zip"
-GET_HANDLER_SUPPORT="archive"

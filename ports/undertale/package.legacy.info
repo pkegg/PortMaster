@@ -1,4 +1,0 @@
-PKG_GIT_SHA="598fb17bb060415266fcb377c225a4d2e27c3eb7"
-PKG_VERSION="6dfa3ab3552bc5fc7e438c41ad8817ca715a6677"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/6dfa3ab3552bc5fc7e438c41ad8817ca715a6677/Undertale.zip"
-GET_HANDLER_SUPPORT="archive"

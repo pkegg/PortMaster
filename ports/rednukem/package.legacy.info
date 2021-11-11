@@ -1,4 +1,0 @@
-PKG_GIT_SHA="9a3478a3c473720b277ebed998c282e2170147f9"
-PKG_VERSION="0bc47222ad82403d3b536d65c1061818623efa1b"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/0bc47222ad82403d3b536d65c1061818623efa1b/Duke Nukem 3D.zip"
-GET_HANDLER_SUPPORT="archive"

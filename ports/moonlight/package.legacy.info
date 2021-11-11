@@ -1,4 +1,0 @@
-PKG_GIT_SHA="e5acb543b1fa708c97eaa51b1d6d50ddb2c677ec"
-PKG_VERSION="4f88b67731e7dbd1f9de0fa4999a3e6171ef6fc5"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/4f88b67731e7dbd1f9de0fa4999a3e6171ef6fc5/Moonlight.zip"
-GET_HANDLER_SUPPORT="archive"

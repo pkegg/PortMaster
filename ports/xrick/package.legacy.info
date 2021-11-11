@@ -1,4 +1,0 @@
-PKG_GIT_SHA="6fd020afb75b72a57abd99edbc4984d5ae89ab1b"
-PKG_VERSION="d988976d65ccca23706ac7e919ae70e8562094aa"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/d988976d65ccca23706ac7e919ae70e8562094aa/Rick Dangerous.zip"
-GET_HANDLER_SUPPORT="archive"

@@ -1,4 +1,0 @@
-PKG_GIT_SHA="dcfea4bb4280e8e9d0c238412d9b88aa222c65a0"
-PKG_VERSION="0bc47222ad82403d3b536d65c1061818623efa1b"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/0bc47222ad82403d3b536d65c1061818623efa1b/Blood.zip"
-GET_HANDLER_SUPPORT="archive"

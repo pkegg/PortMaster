@@ -1,4 +1,0 @@
-PKG_GIT_SHA="fcd75c9fc377d8560c7134dfa3f8def5f79cdd5b"
-PKG_VERSION="654692f8677c0cd6f22086a5d8810e8586b29ab8"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/654692f8677c0cd6f22086a5d8810e8586b29ab8/nKaruga.zip"
-GET_HANDLER_SUPPORT="archive"

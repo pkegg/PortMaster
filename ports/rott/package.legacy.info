@@ -1,4 +1,0 @@
-PKG_GIT_SHA="0deceae6fc98c67dd48d6531472c28fd62a6e513"
-PKG_VERSION="3fdd156c1f710b9febc80f92d58c39d8b20a9c40"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/3fdd156c1f710b9febc80f92d58c39d8b20a9c40/ROTT.zip"
-GET_HANDLER_SUPPORT="archive"

@@ -1,4 +1,0 @@
-PKG_GIT_SHA="b7fe4af976799ff3c1268de6bc2650b8a047d943"
-PKG_VERSION="35c36f8268d06f83ab50f0603c2bb8e186e1791a"
-PKG_URL="https://github.com/christianhaitian/PortMaster/raw/35c36f8268d06f83ab50f0603c2bb8e186e1791a/Shadow Warrior.zip"
-GET_HANDLER_SUPPORT="archive"
