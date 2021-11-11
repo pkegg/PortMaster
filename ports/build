@@ -57,7 +57,7 @@ function get_directory_git_hash() {
   fi
   echo_err "pkgdeps: ${PKG_DEPENDS}" 
 
-  for dep in ${PKG_DEPENDS//,/ }
+  for dep in ${PKG_DEPENDS_CALCULATED//,/ }
   do
     if [[ "$dep" == "$pkg_name" ]]; then
       continue
@@ -65,7 +65,7 @@ function get_directory_git_hash() {
     echo_err "dep: ${dep}" 
     echo -e "$(get_directory_git_hash "../$dep")"
   done
- 
+
   popd &> /dev/null
 
 }
@@ -106,7 +106,7 @@ function build_package() {
     if [ -t 0 ]; then
       INTERACTIVE="-it"
     fi
-  
+
     clone_source ${PACKAGE} "${PACKAGE_DIR}"
     if [[ ! -d "${SOURCE_DIR}" ]]; then
       SOURCE_DIR="${PACKAGE_DIR}"
@@ -189,7 +189,7 @@ function build_package() {
     cp "${PACKAGE_DIR}/run" "${PACKAGE_DIR}/pkg/run"
   fi
 
-  for dep in ${PKG_DEPENDS//,/ }
+  for dep in ${PKG_DEPENDS_CALCULATED//,/ }
   do
     echo "copying dep: $dep"
     cp -r ${PACKAGE_DIR}/../$dep/pkg/* ${PACKAGE_DIR}/pkg/
@@ -338,9 +338,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   shift
   parse_args "$@"
   if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
-    PKG_DEPENDS="global, $PKG_DEPENDS"
+    PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
   fi
-  for dep in ${PKG_DEPENDS//,/ }
+  for dep in ${PKG_DEPENDS_CALCULATED//,/ }
   do
     if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
       echo "building dependent package: $0 $dep"
@@ -369,7 +369,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
     echo "Legacy Portmaster Build - Getting info from legacy URLS"
 
-    
     if [[ -z "$LEGACY_URL_OVERRIDE" ]]; then
 
       GITHUB_SHA_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
@@ -450,7 +449,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
   build_package "$PACKAGE" "$PACKAGE_DIR"
-  
+
   if [[ "$PKG_LIBRARY" == "true" ]]; then
     echo "Package: $PACKAGE is a library (PKG_LIBRARY=true) - not building release zip"
     
