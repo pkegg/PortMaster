@@ -1,0 +1,4 @@
+PKG_GIT_SHA="ca786db34e35ec7d5dc5f12efbe7eb3211f384e0"
+PKG_VERSION="f248e84679f8a3483a7828600199c084f9559b51"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/f248e84679f8a3483a7828600199c084f9559b51/Fheroes2.zip"
+GET_HANDLER_SUPPORT="archive"

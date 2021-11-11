@@ -1,0 +1,4 @@
+PKG_GIT_SHA="597a4e7dd638d3329036432bc3e6f482b7079aa7"
+PKG_VERSION="d210b78607179cd9b838b1390d78b20caba70e00"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/d210b78607179cd9b838b1390d78b20caba70e00/Devilutionx.zip"
+GET_HANDLER_SUPPORT="archive"

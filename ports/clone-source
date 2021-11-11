@@ -7,6 +7,8 @@ function clone_source() {
   local PACKAGE_DIR
   PACKAGE_DIR="$2"
   local PACKAGE_INFO="${PACKAGE_DIR}/package.info"
+  local PACKAGE_INFO_LEGACY="${PACKAGE_DIR}/package.legacy.info"
+
   local SOURCE_DIR_NAME=source
   local SOURCE_DIR="${PACKAGE_DIR}/${SOURCE_DIR_NAME}"
   if [[ -z "$PACKAGE_DIR" ]]; then
@@ -23,8 +25,8 @@ function clone_source() {
   PKG_VERSION=""
   PKG_URL=""
   source "${PACKAGE_INFO}"
-  if [[ -f "${PACKAGE_INFO}.tmp" ]]; then
-    source "${PACKAGE_INFO}.tmp"
+  if [[ -f "${PACKAGE_INFO_LEGACY}" ]]; then
+    source "${PACKAGE_INFO_LEGACY}"
   fi
   if [[ -z "${GET_HANDLER_SUPPORT}" ]]; then
     GET_HANDLER_SUPPORT=git

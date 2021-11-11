@@ -1,0 +1,4 @@
+PKG_GIT_SHA="9ed5732225001542c8cb0ba20f6dea2f3f680623"
+PKG_VERSION="7539208d70a0e074c78291552c481b5e08d0a1e8"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/7539208d70a0e074c78291552c481b5e08d0a1e8/Cannonball.zip"
+GET_HANDLER_SUPPORT="archive"

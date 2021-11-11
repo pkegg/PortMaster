@@ -1,0 +1,4 @@
+PKG_GIT_SHA="b8fe0dfbeea36f6d62e0a3115333742ba47f0468"
+PKG_VERSION="7539208d70a0e074c78291552c481b5e08d0a1e8"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/7539208d70a0e074c78291552c481b5e08d0a1e8/Dinothawr.zip"
+GET_HANDLER_SUPPORT="archive"

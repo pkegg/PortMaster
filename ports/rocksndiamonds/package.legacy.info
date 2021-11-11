@@ -1,0 +1,4 @@
+PKG_GIT_SHA="7386c0235159fa9a10b9840cde1144454c4f6e18"
+PKG_VERSION="3647d7f7bb43ead92428c04fb7aaf78f6c4293e7"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/3647d7f7bb43ead92428c04fb7aaf78f6c4293e7/rocksndiamonds.zip"
+GET_HANDLER_SUPPORT="archive"

@@ -1,0 +1,4 @@
+PKG_GIT_SHA="2825c988c083d8e090217ff65ec1f3484ff56fc5"
+PKG_VERSION="af896fffaeb7d9a00da1561d810fc96d703be5b0"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/af896fffaeb7d9a00da1561d810fc96d703be5b0/SDLPoP.zip"
+GET_HANDLER_SUPPORT="archive"

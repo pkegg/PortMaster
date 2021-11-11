@@ -1,0 +1,4 @@
+PKG_GIT_SHA="6f8e45ff947b9ed516da05bdab5b35c1b5188eb3"
+PKG_VERSION="3647d7f7bb43ead92428c04fb7aaf78f6c4293e7"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/3647d7f7bb43ead92428c04fb7aaf78f6c4293e7/Maldita Castilla.zip"
+GET_HANDLER_SUPPORT="archive"

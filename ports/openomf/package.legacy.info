@@ -1,0 +1,4 @@
+PKG_GIT_SHA="c6d1c1c9f900ca297a6f5ac9687e3e4e634aaf81"
+PKG_VERSION="3a56b03b95a4adcf2bcb88a488e912bd56a5e769"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/3a56b03b95a4adcf2bcb88a488e912bd56a5e769/Openomf.zip"
+GET_HANDLER_SUPPORT="archive"

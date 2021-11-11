@@ -1,0 +1,4 @@
+PKG_GIT_SHA="33261c0ff3d7bd485014d1c7d3e46c75cee11ae7"
+PKG_VERSION="c2382c5a7a20ec37f5fe9c50dba60477a20adcf5"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/c2382c5a7a20ec37f5fe9c50dba60477a20adcf5/Tomb Raider 1.zip"
+GET_HANDLER_SUPPORT="archive"

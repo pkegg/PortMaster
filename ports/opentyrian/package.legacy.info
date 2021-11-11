@@ -1,0 +1,4 @@
+PKG_GIT_SHA="41ecef0bc9b674e5a7658bd8bfba58fd933f767b"
+PKG_VERSION="51a733540401f928d945dcad1acd1aa8bd2a5ca4"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/51a733540401f928d945dcad1acd1aa8bd2a5ca4/OpenTyrian.zip"
+GET_HANDLER_SUPPORT="archive"

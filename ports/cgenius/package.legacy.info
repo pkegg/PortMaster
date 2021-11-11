@@ -1,0 +1,4 @@
+PKG_GIT_SHA="dfea2163bdc7900adfd7b16f15b938f2e94550d3"
+PKG_VERSION="8907f9f4e0d8780cba82d6f5a2cb3a85f60c5d9d"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/8907f9f4e0d8780cba82d6f5a2cb3a85f60c5d9d/Commander Genius.zip"
+GET_HANDLER_SUPPORT="archive"

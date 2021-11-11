@@ -1,0 +1,4 @@
+PKG_GIT_SHA="b85cf6df5f0601ce2a70faffe9249c43d00619a0"
+PKG_VERSION="6e8144125ce711c3846227fa739734a98524b923"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/6e8144125ce711c3846227fa739734a98524b923/bstone-ps.zip"
+GET_HANDLER_SUPPORT="archive"

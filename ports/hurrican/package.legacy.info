@@ -1,0 +1,4 @@
+PKG_GIT_SHA="81ff89d6da14ce1d953b63526a9a3760b55411d4"
+PKG_VERSION="e7b65e7ac98e5bb51ab49edcb99ea9ba0681b167"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/e7b65e7ac98e5bb51ab49edcb99ea9ba0681b167/Hurrican.zip"
+GET_HANDLER_SUPPORT="archive"

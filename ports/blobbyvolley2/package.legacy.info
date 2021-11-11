@@ -1,0 +1,4 @@
+PKG_GIT_SHA="c314cf734091c0548e91d1ae730f274ac3bcd7a7"
+PKG_VERSION="46af32f967e05ecef201f8f72a1b81aaf71a2fc3"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/46af32f967e05ecef201f8f72a1b81aaf71a2fc3/Blobby Volley2.zip"
+GET_HANDLER_SUPPORT="archive"

@@ -1,0 +1,4 @@
+PKG_GIT_SHA="20b688cf1fe040b065cbbae832709893e70d2565"
+PKG_VERSION="fffd31836afcf802de1692a082559ad58777df23"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/fffd31836afcf802de1692a082559ad58777df23/Super Mario War.zip"
+GET_HANDLER_SUPPORT="archive"

@@ -1,0 +1,4 @@
+PKG_GIT_SHA="75ccd48098a4af2f6301d2f341fee4377e8819fc"
+PKG_VERSION="7e4ea26da82575b2ed970dacb72d176488a8a513"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/7e4ea26da82575b2ed970dacb72d176488a8a513/Prehistorik 2.zip"
+GET_HANDLER_SUPPORT="archive"

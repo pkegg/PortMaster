@@ -413,7 +413,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       BUILD_PLATFORM="$(get_linux_platform)"
     fi
 
-    PACKAGE_INFO_TMP="${PACKAGE_DIR}/package.info.tmp"
+    PACKAGE_INFO_LEGACY="${PACKAGE_DIR}/package.legacy.info"
 
     if [[ -z "${PKG_DOWNLOAD_NAME}" ]]; then
       PKG_DOWNLOAD_NAME="${PKG_NAME}"
@@ -456,11 +456,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     GET_HANDLER_SUPPORT="archive"
     echo "PKG_GIT_SHA: ${PKG_GIT_SHA} PKG_VERSION: ${PKG_VERSION} PKG_URL: ${PKG_URL}"
 
-    rm -rf "${PACKAGE_INFO_TMP}"
-    echo "PKG_GIT_SHA=\"${PKG_GIT_SHA}\"" >> "${PACKAGE_INFO_TMP}"
-    echo "PKG_VERSION=\"${PKG_VERSION}\"" >> "${PACKAGE_INFO_TMP}"
-    echo "PKG_URL=\"${PKG_URL}\"" >> "${PACKAGE_INFO_TMP}"
-    echo "GET_HANDLER_SUPPORT=\"${GET_HANDLER_SUPPORT}\"" >> "${PACKAGE_INFO_TMP}"
+    rm -rf "${PACKAGE_INFO_LEGACY}"
+    echo "PKG_GIT_SHA=\"${PKG_GIT_SHA}\"" >> "${PACKAGE_INFO_LEGACY}"
+    echo "PKG_VERSION=\"${PKG_VERSION}\"" >> "${PACKAGE_INFO_LEGACY}"
+    echo "PKG_URL=\"${PKG_URL}\"" >> "${PACKAGE_INFO_LEGACY}"
+    echo "GET_HANDLER_SUPPORT=\"${GET_HANDLER_SUPPORT}\"" >> "${PACKAGE_INFO_LEGACY}"
 
     cp "${PACKAGE_DIR}/../package.legacy.template" "${PACKAGE_DIR}/package.tmp"
   fi

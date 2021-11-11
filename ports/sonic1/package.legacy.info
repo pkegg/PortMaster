@@ -1,0 +1,4 @@
+PKG_GIT_SHA="178da8d22409b733afbe833f2be0d382477e7dbd"
+PKG_VERSION="0b15e088bcf3b9554af3699d4350c7a194fad9fd"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/0b15e088bcf3b9554af3699d4350c7a194fad9fd/Sonic 1.zip"
+GET_HANDLER_SUPPORT="archive"

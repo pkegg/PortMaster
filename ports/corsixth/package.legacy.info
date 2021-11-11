@@ -1,0 +1,4 @@
+PKG_GIT_SHA="39f457c70db26122792ac8b245f1c4ba2ea5ab04"
+PKG_VERSION="656bef0c16e7356bcfc9a463c703b22729d439a5"
+PKG_URL="https://github.com/christianhaitian/PortMaster/raw/656bef0c16e7356bcfc9a463c703b22729d439a5/CorsixTH.zip"
+GET_HANDLER_SUPPORT="archive"
