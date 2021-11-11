@@ -352,6 +352,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [[ -n "${GITHUB_TOKEN}" ]]; then
     GITHUB_AUTH="Authorization: token ${GITHUB_TOKEN}"
   fi
+
+  if [[ -z "${PKG_DOWNLOAD_NAME}" ]]; then
+    PKG_DOWNLOAD_NAME="${PKG_NAME}"
+  fi
   echo "building package: $PACKAGE"
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
@@ -364,9 +368,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
     PACKAGE_INFO_LEGACY="${PACKAGE_DIR}/package.legacy.info"
 
-    if [[ -z "${PKG_DOWNLOAD_NAME}" ]]; then
-      PKG_DOWNLOAD_NAME="${PKG_NAME}"
-    fi
     echo "Legacy Portmaster Build - Getting info from legacy URLS"
 
     if [[ -z "$LEGACY_URL_OVERRIDE" ]]; then
@@ -410,7 +411,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
   echo "package dir: ${PACKAGE_DIR}"
   NEW_GIT_INFO="$(get_directory_git_hash ${PACKAGE_DIR})"
-
   RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
   RELEASE_GIT_INFO_FILE="${RELEASE_DIR:?}/${PKG_NAME}.git.info"
   RELEASE_GIT_INFO=""
@@ -422,18 +422,18 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       exit 1
     fi
     api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=1&page=1"
-    set -o pipefail
-    latest_release=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null | grep \"html_url\" | head -1 | sed 's|.* "||g' | sed 's|",||g')
-    git_info="${latest_release}/${PKG_DOWNLOAD_NAME}.git.info"
+    echo "getting: ${api}"
+    latest_release=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null | grep \"browser_download_url\" | grep "${PKG_DOWNLOAD_NAME}.git.info" | head -1 | sed 's|.* "||g' | sed 's|"||g')
     echo "latest release: ${latest_release}"
-
     set +e
-    RELEASE_GIT_INFO=$(wget --header="$GITHUB_AUTH" -O- "${git_info}" 2>/dev/null)
-    echo "release git info: ${RELEASE_GIT_INFO}"
+    RELEASE_GIT_INFO=$(wget --header="$GITHUB_AUTH" -O- "${latest_release}" 2>/dev/null)
     set -e
   elif [[ -f "$RELEASE_GIT_INFO_FILE" ]]; then
     RELEASE_GIT_INFO="$(cat "${RELEASE_GIT_INFO_FILE}")"
   fi
+  echo "release git info: ${RELEASE_GIT_INFO}"
+
+  echo "new git info: ${NEW_GIT_INFO}"
 
   if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO}" ]]; then
     echo "Build already exists"
