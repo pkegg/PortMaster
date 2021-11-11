@@ -47,7 +47,7 @@ jobs:
         run: |
          ./init-docker
          ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64
-         ./ports/build-all --libraries --push --docker-image
+         ./ports/build-all --libraries --push
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish draft pre-release."
@@ -91,7 +91,7 @@ jobs:
         run: |
            set -e
            ./init-docker
-           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 2 --legacy-default --push --docker-image
+           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 2 --legacy-default --push
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -105,7 +105,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
-          artifacts: "release/*.zip"
+          artifacts: "release/*.zip, release/*.git.info"
   buildx:
     needs: build-base-images
     name: Full Port Builds
@@ -137,7 +137,7 @@ jobs:
         run: |
            set -e
            ./init-docker
-           ./ports/build ${{ matrix.package }} --push --docker-image
+           ./ports/build ${{ matrix.package }} --push --remote
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -151,7 +151,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
-          artifacts: "release/*.zip"
+          artifacts: "release/*.zip, release/*.git.info"
 
   release:
     needs: [buildx, legacy, build-base-images]

@@ -21,6 +21,54 @@ function get_linux_platform() {
   fi
 
 }
+# outputs to stderr
+function echo_err() {
+  echo "$@" 1>&2;
+}
+
+function get_directory_git_hash() {
+  local directory
+  directory="$1"
+  local pkg_name
+  pkg_name=$(basename "${directory}")
+
+  pushd "${directory}"  &> /dev/null
+  dirty="$(git ls-files --modified  --others --exclude-standard .)"
+  echo "${pkg_name}=$(git log --pretty=tformat:"%h" -n1 .)"
+  if [[ -n "${dirty}" ]]; then
+
+     # This makes it easy to find files that have changed
+     echo ${pkg_name}_dirty="$(echo -e "$dirty" | tr '\n' ',')"
+
+     # Makes it so if any files are changed, we rebuild
+     echo ${pkg_name}_dirty_hash="$(echo -e "$dirty" | xargs cat | git hash-object --stdin)"
+
+  fi
+
+  # Ignored files which we should still cause a rebuild
+  if [[ -f "package.tmp" ]]; then
+    echo package_tmp="$(git hash-object --stdin < ./package.tmp)"
+  fi
+  if [[ -f "package.legacy.info" ]]; then
+    echo package_legacy_info="$(git hash-object --stdin < ./package.legacy.info)"
+  fi
+  if [[ "$pkg_name" == "global" ]]; then
+    return
+  fi
+  echo_err "pkgdeps: ${PKG_DEPENDS}" 
+
+  for dep in ${PKG_DEPENDS//,/ }
+  do
+    if [[ "$dep" == "$pkg_name" ]]; then
+      continue
+    fi
+    echo_err "dep: ${dep}" 
+    echo -e "$(get_directory_git_hash "../$dep")"
+  done
+ 
+  popd &> /dev/null
+
+}
 function build_package() {
   local PACKAGE
   PACKAGE="$1"
@@ -59,56 +107,49 @@ function build_package() {
       INTERACTIVE="-it"
     fi
   
-    if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
-      echo "building inside docker image"
-      build_in_docker_image ${PACKAGE}
-    else
-      clone_source ${PACKAGE} "${PACKAGE_DIR}"
-      if [[ ! -d "${SOURCE_DIR}" ]]; then
-        SOURCE_DIR="${PACKAGE_DIR}"
-        SOURCE_DOCKER_DIR=""
-        BUILD_DIR="."
-        mkdir -p "${SOURCE_DIR}"
-      fi
-      if [[ "$INSTALL_DEPS" == "true" && -f "${PACKAGE_DIR}/install-deps" ]]; then
-        if [[ "${USE_DOCKER}" == "false" ]]; then
-          echo "Installing dependencies for ${PACKAGE} without docker..."
-          pushd "${PACKAGE_DIR}" &> /dev/null
-          ESUDO="sudo"
-          if ! which sudo &> /dev/null || [[ "$UID" == "0" ]]; then
-            ESUDO=""
-          fi
-          $ESUDO bash "${PACKAGE_DIR}/install-deps"
-          popd &> /dev/null
+    clone_source ${PACKAGE} "${PACKAGE_DIR}"
+    if [[ ! -d "${SOURCE_DIR}" ]]; then
+      SOURCE_DIR="${PACKAGE_DIR}"
+      SOURCE_DOCKER_DIR=""
+      BUILD_DIR="."
+      mkdir -p "${SOURCE_DIR}"
+    fi
+    if [[ "$INSTALL_DEPS" == "true" && -f "${PACKAGE_DIR}/install-deps" ]]; then
+      if [[ "${USE_DOCKER}" == "false" ]]; then
+        echo "Installing dependencies for ${PACKAGE} without docker..."
+        pushd "${PACKAGE_DIR}" &> /dev/null
+        ESUDO="sudo"
+        if ! which sudo &> /dev/null || [[ "$UID" == "0" ]]; then
+          ESUDO=""
         fi
-      fi
-      if [[ -f "${PACKAGE_DIR}/build" ]]; then
-        if [[ "${USE_DOCKER}" == "false" ]]; then
-          linux_platform=$(get_linux_platform)
-          if [[ "${BUILD_PLATFORM}" != "${linux_platform}" ]]; then
-            echo "--------------------------------------------------------------------------------------------------"
-            echo "ERROR: BUILD_PLATFORM is set to ${BUILD_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
-            echo "  If you are attempting to cross-compile or this is in error, etc.  Please update BUILD_PLATFORM in package.info to: ${linux_platform}"
-            exit 1
-          fi
-          echo "building ${PACKAGE} without docker..."
-          pushd "${SOURCE_DIR}" &> /dev/null
-          bash "../build"
-          popd &> /dev/null
-        else
-          echo "building ${PACKAGE} with docker..."
-          pushd "${SOURCE_DIR}" &> /dev/null
-
-          # Get .env file ready
-          env | grep "=" > .env
-          ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -e ../build
-          popd &> /dev/null
-        fi
-        echo "build done"
+        $ESUDO bash "${PACKAGE_DIR}/install-deps"
+        popd &> /dev/null
       fi
     fi
+    if [[ -f "${PACKAGE_DIR}/build" ]]; then
+      if [[ "${USE_DOCKER}" == "false" ]]; then
+        linux_platform=$(get_linux_platform)
+        if [[ "${BUILD_PLATFORM}" != "${linux_platform}" ]]; then
+          echo "--------------------------------------------------------------------------------------------------"
+          echo "ERROR: BUILD_PLATFORM is set to ${BUILD_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
+          echo "  If you are attempting to cross-compile or this is in error, etc.  Please update BUILD_PLATFORM in package.info to: ${linux_platform}"
+          exit 1
+        fi
+        echo "building ${PACKAGE} without docker..."
+        pushd "${SOURCE_DIR}" &> /dev/null
+        bash "../build"
+        popd &> /dev/null
+      else
+        echo "building ${PACKAGE} with docker..."
+        pushd "${SOURCE_DIR}" &> /dev/null
 
-    
+        # Get .env file ready
+        env | grep "=" > .env
+        ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -e ../build
+        popd &> /dev/null
+      fi
+      echo "build done"
+    fi
   fi
 
   if [[ -f "${PACKAGE_DIR}/test" ]]; then
@@ -118,41 +159,34 @@ function build_package() {
     if [[ -z "${TEST_PLATFORM}" ]]; then
       TEST_PLATFORM=linux/amd64
     fi
-    if [[ "${BUILD_IN_DOCKER_IMAGE}" == "true" ]]; then
-      echo "testing inside docker image"
-      test_in_docker_image ${PACKAGE}
-    else
-      if [[ "${USE_DOCKER}" == "false" ]]; then
-          linux_platform=$(get_linux_platform)
-          if [[ "${TEST_PLATFORM}" != "${linux_platform}" ]]; then
-            echo "--------------------------------------------------------------------------------------------------"
-            echo "ERROR: TEST_PLATFORM is set to ${TEST_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
-            echo "  If you are attempting to cross-compile or this is in error, etc.  Please update TEST_PLATFORM in package.info to: ${linux_platform}"
-            exit 1
-          fi
-          echo "testing ${PACKAGE} without docker..."
-          pushd "${PACKAGE_DIR}" &> /dev/null
-          bash "./test"
-          popd &> /dev/null
-        else
-          echo "testing ${PACKAGE} with docker using ${DOCKER_IMAGE}..."
-          pushd "${PACKAGE_DIR}" &> /dev/null
 
-          # Get .env file ready
-          env | grep "=" > .env
-          ${SUDO} ${DOCKER_CMD} run --platform ${TEST_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PACKAGE_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}" ${DOCKER_IMAGE} bash -e ./test
-          popd &> /dev/null
+    if [[ "${USE_DOCKER}" == "false" ]]; then
+        linux_platform=$(get_linux_platform)
+        if [[ "${TEST_PLATFORM}" != "${linux_platform}" ]]; then
+          echo "--------------------------------------------------------------------------------------------------"
+          echo "ERROR: TEST_PLATFORM is set to ${TEST_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
+          echo "  If you are attempting to cross-compile or this is in error, etc.  Please update TEST_PLATFORM in package.info to: ${linux_platform}"
+          exit 1
         fi
-        echo "test done"
-      fi
+        echo "testing ${PACKAGE} without docker..."
+        pushd "${PACKAGE_DIR}" &> /dev/null
+        bash "./test"
+        popd &> /dev/null
+    else
+        echo "testing ${PACKAGE} with docker using ${DOCKER_IMAGE}..."
+        pushd "${PACKAGE_DIR}" &> /dev/null
+
+        # Get .env file ready
+        env | grep "=" > .env
+        ${SUDO} ${DOCKER_CMD} run --platform ${TEST_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${PACKAGE_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}" ${DOCKER_IMAGE} bash -e ./test
+        popd &> /dev/null
+    fi
+    echo "test done"
   fi
   mkdir -p "${PACKAGE_DIR}/pkg/"
 
   if [[ -f "${PACKAGE_DIR}/run" ]]; then
     cp "${PACKAGE_DIR}/run" "${PACKAGE_DIR}/pkg/run"
-  fi
-  if [[ "${PACKAGE}" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
-    PKG_DEPENDS="global, $PKG_DEPENDS"
   fi
 
   for dep in ${PKG_DEPENDS//,/ }
@@ -233,93 +267,8 @@ function build_env_docker_image() {
     DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}
   fi
 }
-function build_in_docker_image() {
 
-    local PACKAGE
-    PACKAGE="$1"
-    echo "Copying ${DIR}/Dockerfile.build.template"
-    cp "${DIR}/Dockerfile.build.template" ${DIR}/${PACKAGE}/Dockerfile.build
-    cp "${DIR}/clone-source" "${DIR}/${PACKAGE}/clone-source"
-
-    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/build:${BRANCH}
-    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/build/cache:${BRANCH}
-
-    #make lower case as docker must be lowers
-    DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
-    DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
-
-    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --progress=plain --builder=portmaster-remote-builder --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
-    elif [[ "$DOCKER_REMOTE" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --progress=plain --builder=portmaster-remote-builder"
-    else
-     IMAGE_CACHE_TO="--load --builder=default"
-    fi
-    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
-    pushd "${PACKAGE_DIR}" &> /dev/null
-    echo "Build platform: ${BUILD_PLATFORM}"
-    docker buildx build --platform ${BUILD_PLATFORM} \
-        -f Dockerfile.build --tag "${DOCKER_IMAGE_BUILD}" \
-        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
-        --build-arg PACKAGE=${PACKAGE} \
-        --build-arg "GITHUB_AUTH=${GITHUB_AUTH}" \
-        ${IMAGE_CACHE_FROM} \
-        ${IMAGE_CACHE_TO} .
-
-    
-    ID=$(docker create ${DOCKER_IMAGE_BUILD})
-    rm -rf ./pkg
-    rm -rf ./source
-    echo "copying built images (./pkg)" 
-    docker cp "${ID}:/work/${PACKAGE}/pkg" ./pkg || true # it is OK (at least for now) if there's not a package inside
-    
-    echo "copying built images (./pkg)" 
-    docker cp "${ID}:/work/${PACKAGE}/source" ./source || true # it is OK (at least for now) if there's not a source fodler inside
-
-    echo "done"
-    docker rm -f "${ID}"
-
-    popd &> /dev/null
-
-
-}
-
-function test_in_docker_image() {
-
-    local PACKAGE
-    PACKAGE="$1"
-    echo "Copying ${DIR}/Dockerfile.test.template"
-    cp "${DIR}/Dockerfile.test.template" ${DIR}/${PACKAGE}/Dockerfile.test
-
-    DOCKER_IMAGE_BUILD=${IMAGE_BASE}/${PACKAGE}/test:${BRANCH}
-    DOCKER_IMAGE_BUILD_CACHE=${IMAGE_BASE}/${PACKAGE}/test/cache:${BRANCH}
-
-    #make lower case as docker must be lowers
-    DOCKER_IMAGE_BUILD=$(echo "$DOCKER_IMAGE_BUILD" | tr '[:upper:]' '[:lower:]')
-    DOCKER_IMAGE_BUILD_CACHE=$(echo "$DOCKER_IMAGE_BUILD_CACHE" | tr '[:upper:]' '[:lower:]')
-
-    if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE},mode=max --push"
-    elif [[ "$DOCKER_REMOTE" == "true" ]]; then
-      IMAGE_CACHE_TO="--pull --builder=portmaster-remote-builder"
-    else
-      IMAGE_CACHE_TO="--load --builder=default"
-    fi
-    IMAGE_CACHE_FROM="--cache-from=type=registry,ref=${DOCKER_IMAGE_BUILD_CACHE}"
-    pushd "${PACKAGE_DIR}" &> /dev/null
-    echo "Build platform: ${TEST_PLATFORM}"
-    docker buildx build --platform ${TEST_PLATFORM} \
-        -f Dockerfile.test --tag "${DOCKER_IMAGE_BUILD}" \
-        --build-arg DOCKER_IMAGE=${DOCKER_IMAGE} \
-        --build-arg PACKAGE=${PACKAGE} \
-        ${IMAGE_CACHE_FROM} \
-        ${IMAGE_CACHE_TO} .
-
-    popd &> /dev/null
-
-}
 function parse_args() {
-  BUILD_IN_DOCKER_IMAGE=false
   USE_DOCKER=true
   USE_DOCKER_PUSH=false
   INSTALL_DEPS=false
@@ -331,10 +280,6 @@ function parse_args() {
     key="$1"
   
     case $key in
-      -i|--docker-image)
-        BUILD_IN_DOCKER_IMAGE="true"
-        shift # past argument
-        ;;
       -n|--no-docker)
         USE_DOCKER="false"
         shift # past argument
@@ -403,6 +348,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
   done
 
+  GITHUB_AUTH=""
+  if [[ -n "${GITHUB_TOKEN}" ]]; then
+    GITHUB_AUTH="Authorization: token ${GITHUB_TOKEN}"
+  fi
   echo "building package: $PACKAGE"
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
@@ -420,10 +369,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
     echo "Legacy Portmaster Build - Getting info from legacy URLS"
 
-    GITHUB_AUTH=""
-    if [[ -n "${GITHUB_TOKEN}" ]]; then
-      GITHUB_AUTH="Authorization: token ${GITHUB_TOKEN}"
-    fi
     
     if [[ -z "$LEGACY_URL_OVERRIDE" ]]; then
 
@@ -464,13 +409,44 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
     cp "${PACKAGE_DIR}/../package.legacy.template" "${PACKAGE_DIR}/package.tmp"
   fi
+  echo "package dir: ${PACKAGE_DIR}"
+  NEW_GIT_INFO="$(get_directory_git_hash ${PACKAGE_DIR})"
 
+  RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
+  RELEASE_GIT_INFO_FILE="${RELEASE_DIR:?}/${PKG_NAME}.git.info"
+  RELEASE_GIT_INFO=""
+
+  echo "docker remote: ${DOCKER_REMOTE}"
+  if [[ "${DOCKER_REMOTE}" == "true" ]]; then
+    if [[ -z "${GITHUB_AUTH}" ]]; then
+      echo "--remote requires setting a GITHUB_TOKEN variable to authenticate with github.  Otherwise you *will* get throttled."
+      exit 1
+    fi
+    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=1&page=1"
+    set -o pipefail
+    latest_release=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null | grep \"html_url\" | head -1 | sed 's|.* "||g' | sed 's|",||g')
+    git_info="${latest_release}/${PKG_DOWNLOAD_NAME}.git.info"
+    echo "latest release: ${latest_release}"
+
+    set +e
+    RELEASE_GIT_INFO=$(wget --header="$GITHUB_AUTH" -O- "${git_info}" 2>/dev/null)
+    echo "release git info: ${RELEASE_GIT_INFO}"
+    set -e
+  elif [[ -f "$RELEASE_GIT_INFO_FILE" ]]; then
+    RELEASE_GIT_INFO="$(cat "${RELEASE_GIT_INFO_FILE}")"
+  fi
+
+  if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO}" ]]; then
+    echo "Build already exists"
+    exit 0
+  fi
+  echo 'remote checking done'
   # Default BUILD_PLATFORM to arm64 unless set in package.info or by LEGACY_PORTMASTER
   if [[ -z "$BUILD_PLATFORM" ]]; then
     BUILD_PLATFORM="linux/arm64/v8"
   fi
 
-  echo "BUILD_IN_DOCKER_IMAGE: ${BUILD_IN_DOCKER_IMAGE} USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
+  echo "USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
 
   build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
   build_package "$PACKAGE" "$PACKAGE_DIR"
@@ -479,7 +455,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Package: $PACKAGE is a library (PKG_LIBRARY=true) - not building release zip"
   else 
   
-    RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
     GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../global)"
     pushd "${PACKAGE_DIR}/pkg" &> /dev/null
   
@@ -488,7 +463,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     mkdir -p "${RELEASE_DIR}"
     rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
     rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
-  
+
+    echo -e "$NEW_GIT_INFO" > "${RELEASE_GIT_INFO_FILE}"
+
     echo "Preparing release zip..."
   
     mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"

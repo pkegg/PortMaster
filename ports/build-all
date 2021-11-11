@@ -83,9 +83,6 @@ for directory in ${DIR}/*/; do
        continue
     fi
   fi
-  if [[ "${DO_BUILD}" == "true" ]]; then
-     echo "current disk space: $(df -h)"
-  fi
   #echo "directory: $directory"
   if [ -f "${directory}/package.info" ]; then
     PKG_LIBRARY=""

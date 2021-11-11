@@ -11,4 +11,8 @@ rm -rf "${DIR}/${PACKAGE}/source"
 rm -rf "${DIR}/${PACKAGE}/pkg"
 rm -rf "${DIR}/${PACKAGE}/clone-source"
 rm -rf "${DIR}/${PACKAGE}/Dockerfile.build"
+source "${DIR}/${PACKAGE}/package.info"
+
+rm -rf "${DIR}/../release/${PKG_NAME}.git.info"
+rm -rf "${DIR}/../release/${PKG_NAME}.zip"
 echo "done"
