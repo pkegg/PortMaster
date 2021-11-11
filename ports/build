@@ -450,6 +450,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
   build_package "$PACKAGE" "$PACKAGE_DIR"
 
+  mkdir -p "${RELEASE_DIR}"
+
   if [[ "$PKG_LIBRARY" == "true" ]]; then
     echo "Package: $PACKAGE is a library (PKG_LIBRARY=true) - not building release zip"
     
@@ -463,7 +465,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   
     echo "Release dir: ${RELEASE_DIR}"
     ZIP_FILE="${RELEASE_DIR}/${PKG_NAME}.zip"
-    mkdir -p "${RELEASE_DIR}"
     rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
     rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
 
