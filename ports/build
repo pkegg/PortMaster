@@ -441,7 +441,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       sudo apt update
       sudo apt install -y jq
     fi
-    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=5&page=1"
+    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=1&page=1"
     echo "getting: ${api}"
     asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.git.info\")][0] | .url" | xargs )
     echo "asset url: ${asset_url}"
