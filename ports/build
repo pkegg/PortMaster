@@ -445,12 +445,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "getting: ${api}"
     asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.git.info\")][0] | .url" | xargs )
     echo "asset url: ${asset_url}"
+    set +e
     RELEASE_GIT_INFO_REMOTE=$(wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O- ${asset_url} 2>/dev/null)
-
+    set -e
     echo -e "release ${PKG_DOWNLOAD_NAME}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
   
-    if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
+    if [[ "${PKG_LIBRARY}" != "true" && "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
       echo "Build already exists - remote - downloading..."
+      echo "Finding: ${PKG_DOWNLOAD_NAME}.zip"
+      echo "PKG_LIBRARY: ${PKG_LIBRARY}"
       asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.zip\")][0] | .url" | xargs )
       echo "asset url: ${asset_url}"
 
