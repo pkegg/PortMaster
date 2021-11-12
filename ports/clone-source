@@ -156,9 +156,16 @@ function download_file() {
   rm -rf "${download_file_location}"
   rm -rf "${download_file_sha256_location}"
 
-  WGET_OPT="-q" #Could make configurable in future
-  if wget --header="$GITHUB_AUTH" --output-file=- --timeout=30 --tries=3 --passive-ftp --no-check-certificate -c ${WGET_OPT} --progress=bar:force --show-progress -O "${download_file_location}" "${download_url}"; then
+  WGET_OPT="--output-file=- --timeout=30 --tries=3 --passive-ftp --no-check-certificate -c -q --progress=bar:force --show-progress" #Could make configurable in future
+  if wget --header="$GITHUB_AUTH"  ${WGET_OPT}  -O "${download_file_location}" "${download_url}"; then
     return 0
+  else
+    echo "Issue with download...retrying in 10 seconds..."
+    
+    sleep 10
+    if wget --header="$GITHUB_AUTH"  ${WGET_OPT}  -O "${download_file_location}" "${download_url}"; then
+      return 0
+    fi
   fi
 
   return 1
