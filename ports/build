@@ -421,7 +421,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   mkdir -p "${RELEASE_DIR}"
   RELEASE_GIT_INFO_FILE="${RELEASE_DIR:?}/${PKG_NAME}.git.info"
   RELEASE_GIT_INFO_ZIP="${RELEASE_DIR:?}/${PKG_NAME}.zip"
-
+  
+  PKG_DIRECTORY="${PACKAGE}"
+  if [[ -n "${PKG_DIRECTORY_OVERRIDE}" ]]; then
+    PKG_DIRECTORY="$PKG_DIRECTORY_OVERRIDE"
+  fi
 
   if [[ -f "$RELEASE_GIT_INFO_FILE" ]]; then
     RELEASE_GIT_INFO_LOCAL="$(cat "${RELEASE_GIT_INFO_FILE}")"
@@ -479,15 +483,16 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       echo "Build already exists - remote - downloading..."
       wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O "${RELEASE_GIT_INFO_ZIP}" ${git_zip_asset_url} 2> /dev/null
       pushd $RELEASE_DIR &> /dev/null
-      rm -rf "${PKG_DIRECTORY_OVERRIDE}"
-      unzip "${RELEASE_GIT_INFO_ZIP}"
+      rm -rf "${PKG_DIRECTORY}"
+      unzip -o "${RELEASE_GIT_INFO_ZIP}"
       rm -rf "../ports/${PACKAGE}/pkg"
-      cp -r "${PKG_DIRECTORY_OVERRIDE}" "../ports/${PACKAGE}/pkg"
+      cp -r "${PKG_DIRECTORY}" "../ports/${PACKAGE}/pkg"
       if [[ "${NO_RELEASE_ZIP}" == "true" ]]; then
         rm -rf "${RELEASE_GIT_INFO_ZIP}"
       fi
       popd &> /dev/null
       echo -e "${RELEASE_GIT_INFO_REMOTE}" > $RELEASE_GIT_INFO_FILE
+      echo "build done - remote downloaded"
       exit 0
     fi
 
@@ -519,10 +524,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Preparing release zip..."
   
     mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
-    PKG_DIRECTORY="${PACKAGE}"
-    if [[ -n "${PKG_DIRECTORY_OVERRIDE}" ]]; then
-      PKG_DIRECTORY="$PKG_DIRECTORY_OVERRIDE"
-    fi
+
     if [[ -f "${PACKAGE_DIR}/run-legacy" ]]; then
       cp "${PACKAGE_DIR}/run-legacy" "${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
     elif [[ "${LEGACY_PORTMASTER}"  == "true" \
