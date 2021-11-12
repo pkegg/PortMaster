@@ -40,7 +40,8 @@ apt-get -y install build-essential \
            libsdl2-ttf-dev \
            ccache \
            libpsl5 \
-           libpcre2-8-0
+           libpcre2-8-0 \
+           jq
 
 # test dependencies (if we decide to separate them later)
 apt-get -y install \
