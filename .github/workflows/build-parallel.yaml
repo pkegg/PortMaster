@@ -48,7 +48,7 @@ jobs:
         run: |
          ./init-docker
          ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64
-         ./ports/build-all --libraries --push
+         ./ports/build-all --libraries --push --remote
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish draft pre-release."
@@ -92,7 +92,7 @@ jobs:
         run: |
            set -e
            ./init-docker
-           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 2 --legacy-default --push
+           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 2 --legacy-default --push --remote
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
