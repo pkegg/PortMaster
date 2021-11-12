@@ -350,7 +350,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   do
     if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
       echo "building dependent package: $0 $dep"
-      echo $0 "$dep" "${ARGS_COPY[@]} --no-release-zip"
+      $0 "$dep" "${ARGS_COPY[@]} --no-release-zip"
     fi
   done
 
