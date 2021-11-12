@@ -274,6 +274,7 @@ function parse_args() {
   INSTALL_DEPS=false
   ALWAYS_BUILD_DEPENDS=false
   NO_RELEASE_ZIP=false
+  DOCKER_REMOTE=false
 
   # Parse args
   ARGS=()
@@ -339,9 +340,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   source "${PACKAGE_DIR}/package.info"
   source "${PACKAGE_DIR}/../ports.info"
+  shift
   ARGS_COPY=("$@")
 
-  shift
+
   parse_args "$@"
   if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
     PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
@@ -350,7 +352,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   do
     if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
       echo "building dependent package: $0 $dep"
-      $0 "$dep" "${ARGS_COPY[@]} --no-release-zip"
+      echo $0 "$dep" "${ARGS_COPY[@]}" --no-release-zip
+      $0 "$dep" "${ARGS_COPY[@]}" --no-release-zip
     fi
   done
 
