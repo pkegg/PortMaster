@@ -413,33 +413,54 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NEW_GIT_INFO="$(get_directory_git_hash ${PACKAGE_DIR})"
   RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
   RELEASE_GIT_INFO_FILE="${RELEASE_DIR:?}/${PKG_NAME}.git.info"
-  RELEASE_GIT_INFO=""
+  RELEASE_GIT_INFO_ZIP="${RELEASE_DIR:?}/${PKG_NAME}.zip"
 
+
+  if [[ -f "$RELEASE_GIT_INFO_FILE" ]]; then
+    RELEASE_GIT_INFO_LOCAL="$(cat "${RELEASE_GIT_INFO_FILE}")"
+  fi
+  LINE="------------------------"
+  echo "$LINE"
+
+  echo -e "release ${PKG_DOWNLOAD_NAME}.git.info (local): \n${LINE}\n${RELEASE_GIT_INFO_LOCAL}\n${LINE}"
+
+  echo -e "calculated ${PKG_DOWNLOAD_NAME}.git.info (local): \n${LINE}\n${NEW_GIT_INFO}\n${LINE}"
+
+  if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_LOCAL}" ]]; then
+    echo "Build already exists - local"
+    exit 0
+  fi
   echo "docker remote: ${DOCKER_REMOTE}"
   if [[ "${DOCKER_REMOTE}" == "true" ]]; then
     if [[ -z "${GITHUB_AUTH}" ]]; then
       echo "--remote requires setting a GITHUB_TOKEN variable to authenticate with github.  Otherwise you *will* get throttled."
       exit 1
     fi
-    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=1&page=1"
+    if ! which jq &>/dev/null ; then
+      echo "jq is required.  Attempting install..."
+      sudo apt update
+      sudo apt install -y jq
+    fi
+    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=5&page=1"
     echo "getting: ${api}"
-    latest_release=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null | grep \"browser_download_url\" | grep "${PKG_DOWNLOAD_NAME}.git.info" | head -1 | sed 's|.* "||g' | sed 's|"||g')
-    echo "latest release: ${latest_release}"
-    set +e
-    RELEASE_GIT_INFO=$(wget --header="$GITHUB_AUTH" -O- "${latest_release}" 2>/dev/null)
-    set -e
-  elif [[ -f "$RELEASE_GIT_INFO_FILE" ]]; then
-    RELEASE_GIT_INFO="$(cat "${RELEASE_GIT_INFO_FILE}")"
-  fi
-  echo "release git info: ${RELEASE_GIT_INFO}"
+    asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.git.info\")][0] | .url" | xargs )
+    echo "asset url: ${asset_url}"
+    RELEASE_GIT_INFO_REMOTE=$(wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O- ${asset_url} 2>/dev/null)
 
-  echo "new git info: ${NEW_GIT_INFO}"
+    echo -e "release ${PKG_DOWNLOAD_NAME}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
+  
+    if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
+      echo "Build already exists - remote - downloading..."
+      asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.zip\")][0] | .url" | xargs )
+      echo "asset url: ${asset_url}"
 
-  if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO}" ]]; then
-    echo "Build already exists"
-    exit 0
+      wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O "${RELEASE_GIT_INFO_ZIP}" ${asset_url} 2>/dev/null
+
+      echo -e "${RELEASE_GIT_INFO_REMOTE}" > $RELEASE_GIT_INFO_FILE
+      exit 0
+    fi
+    echo 'remote checking done'
   fi
-  echo 'remote checking done'
   # Default BUILD_PLATFORM to arm64 unless set in package.info or by LEGACY_PORTMASTER
   if [[ -z "$BUILD_PLATFORM" ]]; then
     BUILD_PLATFORM="linux/arm64/v8"
