@@ -273,7 +273,8 @@ function parse_args() {
   USE_DOCKER_PUSH=false
   INSTALL_DEPS=false
   ALWAYS_BUILD_DEPENDS=false
-  
+  NO_RELEASE_ZIP=false
+
   # Parse args
   ARGS=()
   while [[ $# -gt 0 ]]; do
@@ -282,6 +283,10 @@ function parse_args() {
     case $key in
       -n|--no-docker)
         USE_DOCKER="false"
+        shift # past argument
+        ;;
+      --no-release-zip)
+        NO_RELEASE_ZIP="true"
         shift # past argument
         ;;
       -d|--install-deps)
@@ -304,6 +309,7 @@ function parse_args() {
         echo "$0 <package> [arguments]"
         echo "  --docker-image (-i) - builds ports in a Dockerfile (./build).  Allows caching.  Used for build server and troubleshooting build server"
         echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
+        echo "  --no-release-zip - Won't create the zip file under release.  Primarily used internally for building libraries"    
         echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
         echo "  --remote - indicates to pull docker images and not use docker image cache."
@@ -344,7 +350,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   do
     if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
       echo "building dependent package: $0 $dep"
-      $0 "$dep" "${ARGS_COPY[@]}"
+      echo $0 "$dep" "${ARGS_COPY[@]} --no-release-zip"
     fi
   done
 
@@ -412,6 +418,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "package dir: ${PACKAGE_DIR}"
   NEW_GIT_INFO="$(get_directory_git_hash ${PACKAGE_DIR})"
   RELEASE_DIR="$(realpath ${PACKAGE_DIR}/../../release)"
+  mkdir -p "${RELEASE_DIR}"
   RELEASE_GIT_INFO_FILE="${RELEASE_DIR:?}/${PKG_NAME}.git.info"
   RELEASE_GIT_INFO_ZIP="${RELEASE_DIR:?}/${PKG_NAME}.zip"
 
@@ -441,27 +448,49 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       sudo apt update
       sudo apt install -y jq
     fi
-    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=1&page=1"
+    release_lookback=5
+    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=${release_lookback}&page=1"
     echo "getting: ${api}"
-    asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.git.info\")][0] | .url" | xargs )
-    echo "asset url: ${asset_url}"
+    raw_results=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null)
+    release_count=0
+    while [[ "${release_count}" -lt "${release_lookback}" ]]; do
+
+      set +e
+      git_info_asset_url=$(echo -e "${raw_results}"  | jq ".[${release_count}] |.assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.git.info\") | .url" | xargs)
+      git_zip_asset_url=$(echo -e "${raw_results}"  | jq ".[${release_count}] |.assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.zip\") | .url " | xargs)
+      set -e
+
+      echo "git info asset id: ${git_info_asset_url} git zip asset id: ${git_zip_asset_url}"
+
+      if [[ -n "${git_info_asset_url}" && -n "${git_zip_asset_url}" ]]; then
+        break;
+      fi
+      release_count=$((${release_count} + 1))
+
+    done
+
     set +e
-    RELEASE_GIT_INFO_REMOTE=$(wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O- ${asset_url} 2>/dev/null)
+    RELEASE_GIT_INFO_REMOTE=$(wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O- ${git_info_asset_url} 2> /dev/null)
     set -e
+
     echo -e "release ${PKG_DOWNLOAD_NAME}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
   
-    if [[ "${PKG_LIBRARY}" != "true" && "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
+    if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
       echo "Build already exists - remote - downloading..."
-      echo "Finding: ${PKG_DOWNLOAD_NAME}.zip"
-      echo "PKG_LIBRARY: ${PKG_LIBRARY}"
-      asset_url=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null  | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.zip\")][0] | .url" | xargs )
-      echo "asset url: ${asset_url}"
-
-      wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O "${RELEASE_GIT_INFO_ZIP}" ${asset_url} 2>/dev/null
-
+      wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O "${RELEASE_GIT_INFO_ZIP}" ${git_zip_asset_url} 2> /dev/null
+      pushd $RELEASE_DIR &> /dev/null
+      rm -rf "${PKG_DIRECTORY_OVERRIDE}"
+      unzip "${RELEASE_GIT_INFO_ZIP}"
+      rm -rf "../ports/${PACKAGE}/pkg"
+      cp -r "${PKG_DIRECTORY_OVERRIDE}" "../ports/${PACKAGE}/pkg"
+      if [[ "${NO_RELEASE_ZIP}" == "true" ]]; then
+        rm -rf "${RELEASE_GIT_INFO_ZIP}"
+      fi
+      popd &> /dev/null
       echo -e "${RELEASE_GIT_INFO_REMOTE}" > $RELEASE_GIT_INFO_FILE
       exit 0
     fi
+
     echo 'remote checking done'
   fi
   # Default BUILD_PLATFORM to arm64 unless set in package.info or by LEGACY_PORTMASTER
@@ -476,24 +505,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   mkdir -p "${RELEASE_DIR}"
 
-  if [[ "$PKG_LIBRARY" == "true" ]]; then
-    echo "Package: $PACKAGE is a library (PKG_LIBRARY=true) - not building release zip"
-    
-    #Libraries still output the git info file
-    echo -e "$NEW_GIT_INFO" > "${RELEASE_GIT_INFO_FILE}"
+  GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../global)"
+  pushd "${PACKAGE_DIR}/pkg" &> /dev/null
 
-  else 
-  
-    GLOBAL_DIR="$(realpath ${PACKAGE_DIR}/../global)"
-    pushd "${PACKAGE_DIR}/pkg" &> /dev/null
-  
-    echo "Release dir: ${RELEASE_DIR}"
-    ZIP_FILE="${RELEASE_DIR}/${PKG_NAME}.zip"
-    rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
-    rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
+  echo "Release dir: ${RELEASE_DIR}"
+  ZIP_FILE="${RELEASE_DIR}/${PKG_NAME}.zip"
+  rm -rf "${RELEASE_DIR:?}/${PKG_NAME}"
+  rm -rf "${RELEASE_DIR:?}/${PKG_NAME}.zip"
 
-    echo -e "$NEW_GIT_INFO" > "${RELEASE_GIT_INFO_FILE}"
+  echo -e "$NEW_GIT_INFO" > "${RELEASE_GIT_INFO_FILE}"
 
+  if [[ "${NO_RELEASE_ZIP}" == "false" ]]; then
     echo "Preparing release zip..."
   
     mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
@@ -520,10 +542,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Zipping..."
     zip -FSqr "${ZIP_FILE}" .
     popd &> /dev/null
-    fi
+  fi
 
-    echo "========================================="
-    echo "Build done: ${PACKAGE}"
-    echo ""
+  echo "========================================="
+  echo "Build done: ${PACKAGE}"
+  echo ""
 
 fi
