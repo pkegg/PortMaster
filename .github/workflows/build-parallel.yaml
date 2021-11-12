@@ -76,11 +76,9 @@ jobs:
         shard: [1,2]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
+        run: |
+          REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --filter=blob:none $REPO .
 
       - name: Log in to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -120,11 +118,9 @@ jobs:
       matrix: ${{fromJson(needs.build-base-images.outputs.matrix)}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
+        run: |
+          REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --filter=blob:none $REPO .
 
       - name: Log in to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
