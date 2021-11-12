@@ -206,7 +206,7 @@ function build_package() {
     echo "Running ${PACKAGE} run using IS_TEST_MODE=true"
     PORTS_DIR=/opt/roms/ports
 
-    TEST_IMAGE=ghcr.io/${GITHUB_ORG}/portmaster/test:${BRANCH}
+    TEST_IMAGE=ghcr.io/${GITHUB_ORG}/portmaster:${BRANCH}
     echo "Test Image: ${TEST_IMAGE}"
     docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
       -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
