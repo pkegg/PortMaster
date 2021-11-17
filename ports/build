@@ -574,50 +574,60 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       sudo apt update
       sudo apt install -y jq
     fi
-    releases_url="releases?per_page=5&page=1"
+    releases_url="releases?per_page=10&page=1"
     echo "getting: ${releases_url}"
     PKG_DOWNLOAD_NAME_GITHUB="$(echo ${PKG_DOWNLOAD_NAME} | sed 's/ /./g')"
     echo "looking for asset: $PKG_DOWNLOAD_NAME_GITHUB"
-    asset_id_git_info=$(github_api "${releases_url}" | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.git.info\")][0] | .id" | xargs )
-    release_id_git_info=$(github_api "${releases_url}" | jq ".[] | {release:.id, asset_id: .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.git.info\") | .id }"| jq -s ".[0] | .release")
-    echo "Release id: ${release_id_git_info}"
-    echo "asset id: ${asset_id_git_info}"
-    set +e
-    RELEASE_GIT_INFO_REMOTE=$(github_api_asset_output "${asset_id_git_info}")
-    set -e
-    echo -e "release ${PKG_DOWNLOAD_NAME_GITHUB}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
+
+    attempts=5
+    attempt=0
+    releases_raw="$(github_api "${releases_url}")"
+    while [ "$attempt" -lt "$attempts" ]; do
+      release_id_git_info=$(echo -e "${releases_raw}" | jq ".[] | {release:.id, asset_id: .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.zip\") | .id }"| jq -s ".[$attempt] | .release")
+      asset_id_zip=$(echo -e "${releases_raw}"  | jq ".[]| select(.id == ${release_id_git_info}) | .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.zip\") | .id" | xargs )
+      asset_id_git_info=$(echo -e "${releases_raw}" | jq ".[]| select(.id == ${release_id_git_info}) | .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.git.info\") | .id" | xargs )
+      echo "release: $release_id_git_info asset_id_zip: $asset_id_zip asset_id_git_info: $asset_id_git_info"
+      if [[ -n "$asset_id_zip" && -n "$asset_id_git_info" ]]; then
+        set +e
+        RELEASE_GIT_INFO_REMOTE=$(github_api_asset_output "${asset_id_git_info}")
+        set -e
+
+        echo -e "release ${PKG_DOWNLOAD_NAME_GITHUB}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
+
+        if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
+          RELEASE_MATCHES="true"
+          break
+        fi
+      fi
+      attempt=$((attempt+1))
+    done
   
-    if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
+    if [[ "${RELEASE_MATCHES}" == "true" ]]; then
       echo "Build already exists - remote - downloading..."
       echo "Finding: ${PKG_DOWNLOAD_NAME_GITHUB}.zip"
       echo "PKG_LIBRARY: ${PKG_LIBRARY}"
-      asset_id_zip=$(github_api "${releases_url}" | jq ".[]| select(.id == ${release_id_git_info}) | .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.zip\") | .id" | xargs )
       echo "asset id zip: ${asset_id_zip}"
 
-      if [[ -n "${asset_id_zip}" ]]; then
-        github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
-        pushd $RELEASE_DIR &> /dev/null
+      github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
+      pushd "$RELEASE_DIR" &> /dev/null
 
-        if [[ -f "$RELEASE_GIT_INFO_ZIP" ]]; then
-          rm -rf "./${PKG_NAME}"
-          if ! unzip -o "${RELEASE_GIT_INFO_ZIP}"; then
-            echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
-            rm -rf "${PACKAGE_DIR}/pkg"
-            cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
-    
-            echo "Updating git info: $RELEASE_GIT_INFO_FILE"
-            echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
-            echo "Remote download success"
-            exit 0
-          else
-            echo "downloaded zip seems corrupted"
-          fi
+      if [[ -f "$RELEASE_GIT_INFO_ZIP" ]]; then
+        rm -rf "./${PKG_NAME}"
+        if unzip -o "${RELEASE_GIT_INFO_ZIP}"; then
+          echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
+          rm -rf "${PACKAGE_DIR}/pkg"
+          cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
+  
+          echo "Updating git info: $RELEASE_GIT_INFO_FILE"
+          echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
+          echo "Remote download success"
+          exit 0
         else
-          echo "zip not found.  Something went wrong downloading.."
-        fi 
+          echo "downloaded zip seems corrupted"
+        fi
       else
-        echo "Zip: ${PKG_DOWNLOAD_NAME_GITHUB}.zip not found..."
-      fi
+        echo "zip not found.  Something went wrong downloading.."
+      fi 
     fi
 
     echo 'remote checking done'
