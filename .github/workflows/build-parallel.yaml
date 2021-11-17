@@ -109,7 +109,7 @@ jobs:
            ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 4 --legacy-default --legacy-url-override  --push --remote
            
         env:
-            GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+            GITHUB_TOKEN: ${{ needs.build-base-images.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
@@ -117,7 +117,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token:  ${{ steps.token.outputs.token }}
+          token: "${{ needs.build-base-images.outputs.token}}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -142,7 +142,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ needs.build-base-images.outputs.token}}
       
       - name: Build ${{ matrix.package }}
         id: build
@@ -152,7 +152,7 @@ jobs:
            ./ports/build ${{ matrix.package }} --push --remote
            
         env:
-            GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+            GITHUB_TOKEN: ${{ needs.build-base-images.outputs.token}}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
@@ -160,7 +160,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: ${{ steps.token.outputs.token }}
+          token: "${{ needs.build-base-images.outputs.token}}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -181,7 +181,7 @@ jobs:
           allowUpdates: true
           draft: false
           prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ needs.build-base-images.outputs.token}}
           omitBodyDuringUpdate: true
           replacesArtifacts: false
           omitNameDuringUpdate: true
