@@ -1,10 +1,125 @@
 #!/bin/bash
 set -e
+set -o pipefail
 BRANCH=main
 IMAGE_BASE=ghcr.io/pkegg/portmaster
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source ${DIR}/clone-source
 export CCACHE_DIR="../.ccache"
+
+GITHUB_API_URL=https://api.github.com/repos
+CACHE_DIR="/tmp/cache/github"
+
+function github_api() {
+  local url="$1"
+  local org="$2"
+  local repo="$3"
+  local accept="$4"
+  local response
+  if [[ -z "${org}" ]]; then
+    org=$GITHUB_ORG
+  fi
+  if [[ -z "${repo}" ]]; then
+    repo=PortMaster
+  fi
+
+  if ! which wget &> /dev/null; then
+    echo "ERROR: wget not found!  Please install wget."
+    exit
+  fi
+  response="$(_github_call "$GITHUB_API_URL/${org}/${repo}/${url}" "$accept")"
+
+  echo -e "${response}"
+}
+function _github_call() {
+  local apiUrl="$1"
+  local accept_header="$2"
+  local headers=""
+  if [[ -n "${accept_header}" ]]; then
+     headers="--header=Accept:${accept_header}"
+  fi
+  
+  local return_code
+  cache_file="$CACHE_DIR/${org}/${repo}/${url}"
+  cache_dir="$(dirname "$cache_file")"
+  mkdir -p "${cache_dir}"
+
+  echo_err "cache file: $cache_file"
+
+  cache=""
+  if [[ -f "$cache_file" ]]; then
+    cache="$(cat "$cache_file")"
+    etag="$(_get_header "ETag" "$cache" | sed "s|^.*W/||g" )"
+    echo_err "etag: ${etag}"
+  fi
+  echo_err wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q
+
+  output="$(wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q 2>&1 )"
+
+  response="$(echo -e "${output}" | tail -n +2 | grep -v "^[A-Za-z]" | tail -n +2)"
+  return_code="$(_get_return "$output")"
+  #echo_err "output: ${output}"
+  
+  echo_err "return code: $return_code"
+  if [[ "$return_code" == "200" ]]; then
+    rate_limit="$(_get_header "X-RateLimit-Limit" "${output}")"
+    rate_limit_remaining="$(_get_header "X-RateLimit-Remaining" "${output}")"
+    rate_limit_used="$(_get_header "X-RateLimit-Used" "${output}")"
+  
+    echo_err "rate limit: $rate_limit"
+    echo_err "remaining: $rate_limit_remaining"
+    echo_err "used: $rate_limit_used"
+    echo -e "${output}" > "$cache_file"
+  elif [[ "$return_code" == "404" ]]; then
+    echo_err "404"
+  else
+    echo_err "cache hit"
+  fi
+  if [[ -f "${cache_file}" ]]; then
+    response="$(cat "$cache_file" |  tail -n +2 |grep -v "^[A-Za-z].*:" | tail -n +2)"
+  fi
+
+  echo -e "${response}"
+
+}
+function _get_header() {
+  local header="$1"
+  local output="$2"
+  response="$(echo -e "$output" | grep "^${header}: " | sed "s|^${header}: ||g" | xargs)"
+  echo -e "$response"
+
+}
+function _get_return() {
+  local output="$1"
+  local response
+  response="$(echo  "$output" | grep "HTTP/" | head -1 | xargs  | awk '{print $2}')"
+  echo -e "$response"
+
+}
+function github_api_asset_output()
+{
+  local asset_id=$1
+  local org="$GITHUB_ORG"
+  local repo="PortMaster"
+
+  response=$(github_api "releases/assets/${asset_id}" "" "" "application/octet-stream")
+
+  #echo_err wget --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O- "$GITHUB_API_URL/${org}/${repo}/releases/assets/${asset_id}"
+  #response=$(wget --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O- "$GITHUB_API_URL/${org}/${repo}/releases/assets/${asset_id}")
+  echo "${response}"
+}
+function github_api_asset_download()
+{
+  local asset_id="$1"
+  local output_file="$2"
+  local output_dir
+  output_dir=$(dirname "$output_file")
+  mkdir -p "${output_dir}"
+  
+  echo_err wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"
+  wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"
+}
+
 function get_linux_platform() {
   local raw_linux_platform
   raw_linux_platform="$(uname -m)"
@@ -381,24 +496,23 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
     if [[ -z "$LEGACY_URL_OVERRIDE" ]]; then
 
-      GITHUB_SHA_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
-      PKG_VERSION_URL="https://api.github.com/repos/${LEGACY_PORTMASTER_ORG}/${LEGACY_PORTMASTER_REPO}/commits?sha=${LEGACY_PORTMASTER_BRANCH}&path=${PKG_DOWNLOAD_NAME}.zip&page=1&per_page=1"
+      GITHUB_SHA_URL="contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
       echo "Github SHA URL: ${GITHUB_SHA_URL}"
-      PKG_GIT_SHA=$(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q 2> /dev/null | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+
+      PKG_GIT_SHA=$(github_api "$GITHUB_SHA_URL" "$LEGACY_PORTMASTER_ORG" "$LEGACY_PORTMASTER_REPO"  | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
       if [[ -z "${PKG_GIT_SHA}" ]]; then
-        echo "debug info: $(curl -H "${GITHUB_AUTH}" -L "${GITHUB_SHA_URL}" -q)"
         echo "Could not find ${PKG_NAME}.zip in ${GITHUB_SHA_URL}"
-        
         exit 1
       fi
+      exit 1
+      echo "PKG_GIT_SHA: $PKG_GIT_SHA"
+
+      PKG_VERSION_URL="commits?sha=${LEGACY_PORTMASTER_BRANCH}&path=${PKG_DOWNLOAD_NAME}.zip&page=1&per_page=1"
       echo "Package Version URL: ${PKG_VERSION_URL}"
-      if ! which wget &> /dev/null; then
-        echo "ERROR: wget not found!  Please install wget."
-        exit
-      fi
-      PKG_VERSION=$(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}" -q 2> /dev/null | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+
+      PKG_VERSION=$(github_api "$PKG_VERSION_URL" "$LEGACY_PORTMASTER_ORG" "$LEGACY_PORTMASTER_REPO" | grep -i sha | head -1 | sed -E 's|.*: "(.*)",|\1|g')
       if [[ -z "${PKG_VERSION}" ]]; then
-        echo "debug info: $(wget --header="$GITHUB_AUTH" -O- "${PKG_VERSION_URL}")"
+        debug_github "${PKG_VERSION_URL}" "${LEGACY_PORTMASTER_ORG}" "${LEGACY_PORTMASTER_REPO}"
         echo "Could not find a sha in: ${GITHUB_SHA_URL}"
         exit 1
       fi
@@ -455,47 +569,30 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       sudo apt update
       sudo apt install -y jq
     fi
-    release_lookback=5
-    api="https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=${release_lookback}&page=1"
-    echo "getting: ${api}"
-    raw_results=$(wget --header="$GITHUB_AUTH" -O- "${api}" 2>/dev/null)
-    release_count=0
-    while [[ "${release_count}" -lt "${release_lookback}" ]]; do
-
-      set +e
-      git_info_asset_url=$(echo -e "${raw_results}"  | jq ".[${release_count}] |.assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.git.info\") | .url" | xargs)
-      git_zip_asset_url=$(echo -e "${raw_results}"  | jq ".[${release_count}] |.assets[] | select(.name==\"${PKG_DOWNLOAD_NAME}.zip\") | .url " | xargs)
-      set -e
-
-      echo "git info asset id: ${git_info_asset_url} git zip asset id: ${git_zip_asset_url}"
-
-      if [[ -n "${git_info_asset_url}" && -n "${git_zip_asset_url}" ]]; then
-        break;
-      fi
-      release_count=$((${release_count} + 1))
-
-    done
-
+    releases_url="releases?per_page=5&page=1"
+    echo "getting: ${releases_url}"
+    PKG_DOWNLOAD_NAME_GITHUB="$(echo ${PKG_DOWNLOAD_NAME} | sed 's/ /./g')"
+    echo "looking for asset: $PKG_DOWNLOAD_NAME_GITHUB"
+    asset_id_git_info=$(github_api "${releases_url}" | jq "[.[].assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.git.info\")][0] | .id" | xargs )
+    release_id_git_info=$(github_api "${releases_url}" | jq ".[] | {release:.id, asset_id: .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.git.info\") | .id }"| jq -s ".[0] | .release")
+    echo "Release id: ${release_id_git_info}"
+    echo "asset id: ${asset_id_git_info}"
     set +e
-    RELEASE_GIT_INFO_REMOTE=$(wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O- ${git_info_asset_url} 2> /dev/null)
+    RELEASE_GIT_INFO_REMOTE=$(github_api_asset_output "${asset_id_git_info}")
     set -e
-
-    echo -e "release ${PKG_DOWNLOAD_NAME}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
+    echo -e "release ${PKG_DOWNLOAD_NAME_GITHUB}.git.info (remote): \n${LINE}\n${RELEASE_GIT_INFO_REMOTE}\n${LINE}"
   
     if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_REMOTE}" ]]; then
       echo "Build already exists - remote - downloading..."
-      wget --header 'Accept:application/octet-stream' --header "Authorization: token $GITHUB_TOKEN" -O "${RELEASE_GIT_INFO_ZIP}" ${git_zip_asset_url} 2> /dev/null
-      pushd $RELEASE_DIR &> /dev/null
-      rm -rf "${PKG_DIRECTORY}"
-      unzip -o "${RELEASE_GIT_INFO_ZIP}"
-      rm -rf "../ports/${PACKAGE}/pkg"
-      cp -r "${PKG_DIRECTORY}" "../ports/${PACKAGE}/pkg"
-      if [[ "${NO_RELEASE_ZIP}" == "true" ]]; then
-        rm -rf "${RELEASE_GIT_INFO_ZIP}"
-      fi
-      popd &> /dev/null
-      echo -e "${RELEASE_GIT_INFO_REMOTE}" > $RELEASE_GIT_INFO_FILE
-      echo "build done - remote downloaded"
+      echo "Finding: ${PKG_DOWNLOAD_NAME_GITHUB}.zip"
+      echo "PKG_LIBRARY: ${PKG_LIBRARY}"
+      asset_id_zip=$(github_api "${releases_url}" | jq ".[]| select(.id == ${release_id_git_info}) | .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.zip\") | .id" | xargs )
+      echo "asset id zip: ${asset_id_zip}"
+
+      github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
+      echo "Updating git info: $RELEASE_GIT_INFO_FILE"
+      echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
+      echo "Remote download success"
       exit 0
     fi
 
