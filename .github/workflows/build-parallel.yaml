@@ -50,7 +50,7 @@ jobs:
          ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64
          ./ports/build-all --libraries --push --remote
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.BUILD_TOKEN | default(secrets.GITHUB_TOKEN) }}
       - name: "Publish draft pre-release."
         uses: ncipollo/release-action@v1
         with:
