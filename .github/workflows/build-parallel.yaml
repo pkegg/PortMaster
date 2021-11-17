@@ -19,7 +19,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       date: ${{ steps.date.outputs.date }}
-      token: ${{ steps.token.outputs.token }}
+      build_token: ${{ steps.token.outputs.token }}
     steps:
       - name: Checkout
         run: |
@@ -89,7 +89,7 @@ jobs:
       matrix:
         shard: [1,2,3,4]
     steps:
-      - name: Checkout (${{ needs.build-base-images.outputs.token }})
+      - name: Checkout (${{ needs.build-base-images.outputs.build_token }})
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git clone --filter=blob:none $REPO .
@@ -109,7 +109,7 @@ jobs:
            ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 4 --legacy-default --legacy-url-override  --push --remote
            
         env:
-            GITHUB_TOKEN: ${{ needs.build-base-images.outputs.token }}
+            GITHUB_TOKEN: ${{ needs.build-base-images.outputs.build_token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
@@ -152,7 +152,7 @@ jobs:
            ./ports/build ${{ matrix.package }} --push --remote
            
         env:
-            GITHUB_TOKEN: ${{ needs.build-base-images.outputs.token}}
+            GITHUB_TOKEN: ${{ needs.build-base-images.outputs.build_token}}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
