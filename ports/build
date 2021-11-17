@@ -594,12 +594,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
         pushd $RELEASE_DIR &> /dev/null
 
-        rm -rf "./${PKG_DOWNLOAD_NAME}"
-        unzip -q "${RELEASE_GIT_INFO_ZIP}"
+        rm -rf "./${PKG_NAME}"
+        unzip -o "${RELEASE_GIT_INFO_ZIP}"
 
-        echo "download: ${PKG_DOWNLOAD_NAME}"
+        echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
         rm -rf "${PACKAGE_DIR}/pkg"
-        cp -r "${PKG_DOWNLOAD_NAME}" "${PACKAGE_DIR}/pkg"
+        cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
 
         echo "Updating git info: $RELEASE_GIT_INFO_FILE"
         echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
