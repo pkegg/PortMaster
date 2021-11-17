@@ -588,11 +588,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       asset_id_zip=$(github_api "${releases_url}" | jq ".[]| select(.id == ${release_id_git_info}) | .assets[] | select(.name==\"${PKG_DOWNLOAD_NAME_GITHUB}.zip\") | .id" | xargs )
       echo "asset id zip: ${asset_id_zip}"
 
-      github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
-      echo "Updating git info: $RELEASE_GIT_INFO_FILE"
-      echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
-      echo "Remote download success"
-      exit 0
+      if [[ -n "${asset_id_zip}" ]]; then
+        github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
+        echo "Updating git info: $RELEASE_GIT_INFO_FILE"
+        echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
+        echo "Remote download success"
+        exit 0
+      else
+        echo "Zip: ${PKG_DOWNLOAD_NAME_GITHUB}.zip not found..."
+      fi
     fi
 
     echo 'remote checking done'
