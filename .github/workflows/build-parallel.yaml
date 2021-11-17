@@ -128,7 +128,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: "${{ steps.token.outputs.token }}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -165,7 +165,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ steps.token.outputs.token }}
       
       - name: Build ${{ matrix.package }}
         id: build
@@ -183,7 +183,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: "${{ steps.token.outputs.token }}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -197,6 +197,18 @@ jobs:
       contents: write
       packages: write
     steps:
+      - name: Get token
+        id: token
+        run: | 
+          default_token=${{secrets.GITHUB_TOKEN}}
+          pat=${{secrets.BUILD_TOKEN}}
+          
+          if [[ -n "${pat}" ]]; then
+            echo "::set-output name=token::${pat}"
+            echo "using pat"
+          else
+            echo "::set-output name=token::${default_token}"
+            echo "using default"
       - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
@@ -204,7 +216,7 @@ jobs:
           allowUpdates: true
           draft: false
           prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
           omitBodyDuringUpdate: true
           replacesArtifacts: false
           omitNameDuringUpdate: true
