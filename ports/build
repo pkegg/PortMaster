@@ -262,9 +262,15 @@ function build_package() {
         echo "building ${PACKAGE} with docker..."
         pushd "${SOURCE_DIR}" &> /dev/null
 
+        DOCKER_ARGS=""
+        if [[ "$DOCKER_REMOTE" == "true" ]]; then
+          DOCKER_ARGS="--pull=always"
+        fi
         # Get .env file ready
         env | grep "=" > .env
-        ${SUDO} ${DOCKER_CMD} run --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -e ../build
+
+        ${SUDO} ${DOCKER_CMD} run --init --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} bash -e "../build"
+        echo "err: $?"
         popd &> /dev/null
       fi
       echo "build done"
@@ -327,7 +333,11 @@ function build_package() {
 
     TEST_IMAGE=ghcr.io/${GITHUB_ORG}/portmaster:${BRANCH}
     echo "Test Image: ${TEST_IMAGE}"
-    docker run ${INTERACTIVE} --rm --platform ${BUILD_PLATFORM} \
+    DOCKER_ARGS=""
+    if [[ "${DOCKER_REMOTE}" == "true" ]]; then
+      DOCKER_ARGS="--pull=always"
+    fi
+    docker run ${INTERACTIVE} ${DOCKER_ARGS} --rm --platform ${BUILD_PLATFORM} \
       -v "$(realpath ${PACKAGE_DIR}/pkg/):${PORTS_DIR}/${PACKAGE}" \
       -w "${PORTS_DIR}/${PACKAGE}" ${TEST_IMAGE} \
       bash -c "IS_TEST_MODE=true bash \"./run\""
@@ -394,6 +404,7 @@ function parse_args() {
   ALWAYS_BUILD_DEPENDS=false
   NO_RELEASE_ZIP=false
   DOCKER_REMOTE=false
+  REMOTE_BUILD_CACHE=false
   NO_BUILD_CACHE=false
   PACKAGE=""
   PACKAGE_DIR=""
@@ -416,6 +427,10 @@ function parse_args() {
         NO_BUILD_CACHE="true"
         shift # past argument
         ;;
+      --remote-build-cache)
+        REMOTE_BUILD_CACHE="true"
+        shift # past argument
+        ;;
       -d|--install-deps)
         INSTALL_DEPS="true"
         shift # past argument
@@ -424,7 +439,7 @@ function parse_args() {
         ALWAYS_BUILD_DEPENDS="true"
         shift # past argument
         ;;
-      -r|--remote)
+      --docker-remote)
         DOCKER_REMOTE="true"
         shift # past argument
         ;;
@@ -435,11 +450,12 @@ function parse_args() {
       -h|--help)
         echo "$0 <package> [arguments]"
         echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
-        echo "  --no-build-cache - Always rebuilds packages and does not check for a pre-build zip.  Disables --remote if both are passed"
+        echo "  --no-build-cache - Always rebuilds packages and does not check for a pre-build zip.  Disables --remote-build-cache if both are passed"
         echo "  --no-release-zip - Won't create the zip file under release.  Primarily used internally for building libraries"    
         echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
-        echo "  --remote - indicates to look for pre-built images in GitHub releases.  Requires setting GITHUB_TOKEN due to high github API usage."
+        echo "  --remote-build-cache - indicates to look for pre-built images in GitHub releases.  Requires setting GITHUB_TOKEN due to high github API usage."
+        echo "  --docker-remote - do not use local docker images and always pull images.  Meant to help simulate build server locally. Will not build changes to install-deps for ports"
         echo "  --always-build-depends - always build PKG_DEPENDS before package.  If not set, dependent package will only be built if /pkg folder does not exist"
         exit 1
         ;;
@@ -462,7 +478,7 @@ function parse_args() {
     echo "Please provide port to build. Ex: $0 smw"
     exit 1
   fi
-  PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
+  PACKAGE_DIR="$(realpath "$DIR/${PACKAGE}")"
   if [[ ! -d "${PACKAGE_DIR}" ]]; then
     echo "Please provide a port which exists in the ports directory. ${PACKAGE_DIR} does not exist."
     exit 1
@@ -492,7 +508,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
   for dep in ${PKG_DEPENDS_CALCULATED//,/ }
   do
-    if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" || -z "$("$PACKAGE_DIR/../$dep/pkg")" ]]; then
+    if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" || -z "$(ls -A "$PACKAGE_DIR/../$dep/pkg")" ]]; then
       echo "building dependent package: $0 $dep"
       echo $0 "$dep" "${ARGS_COPY[@]}" --no-release-zip
 
@@ -588,8 +604,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Build already exists - local"
     exit 0
   fi
-  echo "docker remote: ${DOCKER_REMOTE}"
-  if [[ "${DOCKER_REMOTE}" == "true" && "$NO_BUILD_CACHE" == "false" ]]; then
+  echo "use remote build cache: ${REMOTE_BUILD_CACHE}"
+  if [[ "${REMOTE_BUILD_CACHE}" == "true" && "$NO_BUILD_CACHE" == "false" ]]; then
     if [[ -z "${GITHUB_AUTH}" ]]; then
       echo "--remote requires setting a GITHUB_TOKEN variable to authenticate with github.  Otherwise you *will* get throttled."
       exit 1
