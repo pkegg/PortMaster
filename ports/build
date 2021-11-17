@@ -35,6 +35,7 @@ function _github_call() {
   local apiUrl="$1"
   local accept_header="$2"
   local headers=""
+  set +e
   if [[ -n "${accept_header}" ]]; then
      headers="--header=Accept:${accept_header}"
   fi
@@ -78,7 +79,7 @@ function _github_call() {
   if [[ -f "${cache_file}" ]]; then
     response="$(cat "$cache_file" |  tail -n +2 |grep -v "^[A-Za-z].*:" | tail -n +2)"
   fi
-
+  set -e
   echo -e "${response}"
 
 }
@@ -117,7 +118,9 @@ function github_api_asset_download()
   mkdir -p "${output_dir}"
   
   echo_err wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"
-  wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"
+  if ! wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"; then
+    echo "Error!  Could not download!"
+  fi
 }
 
 function get_linux_platform() {
@@ -594,17 +597,21 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
         pushd $RELEASE_DIR &> /dev/null
 
-        rm -rf "./${PKG_NAME}"
-        unzip -o "${RELEASE_GIT_INFO_ZIP}"
-
-        echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
-        rm -rf "${PACKAGE_DIR}/pkg"
-        cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
-
-        echo "Updating git info: $RELEASE_GIT_INFO_FILE"
-        echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
-        echo "Remote download success"
-        exit 0
+        if [[ -f "$RELEASE_GIT_INFO_ZIP" ]]; then
+          rm -rf "./${PKG_NAME}"
+          unzip -o "${RELEASE_GIT_INFO_ZIP}"
+  
+          echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
+          rm -rf "${PACKAGE_DIR}/pkg"
+          cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
+  
+          echo "Updating git info: $RELEASE_GIT_INFO_FILE"
+          echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
+          echo "Remote download success"
+          exit 0
+        else
+          echo "zip not found.  Something went wrong downloading.."
+        fi 
       else
         echo "Zip: ${PKG_DOWNLOAD_NAME_GITHUB}.zip not found..."
       fi
