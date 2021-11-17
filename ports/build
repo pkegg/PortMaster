@@ -468,7 +468,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
       echo "building dependent package: $0 $dep"
       echo $0 "$dep" "${ARGS_COPY[@]}" --no-release-zip
-      $0 "$dep" "${ARGS_COPY[@]}" --no-release-zip
+
+      # shellcheck disable=2068 # code is irrelevant because we want to pass args separately
+      $0 "$dep" ${ARGS_COPY[@]} --no-release-zip
     fi
   done
 
@@ -480,7 +482,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [[ -z "${PKG_DOWNLOAD_NAME}" ]]; then
     PKG_DOWNLOAD_NAME="${PKG_NAME}"
   fi
-  echo "building package: $PACKAGE"
+  echo "building package: $PACKAGE download name: $PKG_DOWNLOAD_NAME"
 
   if [[ "${LEGACY_PORTMASTER}" == "true" ]]; then
     
@@ -589,6 +591,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       echo "asset id zip: ${asset_id_zip}"
 
       github_api_asset_download "${asset_id_zip}" "${RELEASE_GIT_INFO_ZIP}"
+      pushd $RELEASE_DIR &> /dev/null
+
+      rm -rf "./${PKG_DOWNLOAD_NAME}"
+      unzip -q "${RELEASE_GIT_INFO_ZIP}"
+
+      echo "download: ${PKG_DOWNLOAD_NAME}"
+      rm -rf "${PACKAGE_DIR}/pkg"
+      cp -r "${PKG_DOWNLOAD_NAME}" "${PACKAGE_DIR}/pkg"
+
       echo "Updating git info: $RELEASE_GIT_INFO_FILE"
       echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
       echo "Remote download success"
