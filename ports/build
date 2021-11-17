@@ -394,6 +394,9 @@ function parse_args() {
   ALWAYS_BUILD_DEPENDS=false
   NO_RELEASE_ZIP=false
   DOCKER_REMOTE=false
+  NO_BUILD_CACHE=false
+  PACKAGE=""
+  PACKAGE_DIR=""
 
   # Parse args
   ARGS=()
@@ -407,6 +410,10 @@ function parse_args() {
         ;;
       --no-release-zip)
         NO_RELEASE_ZIP="true"
+        shift # past argument
+        ;;
+      --no-build-cache)
+        NO_BUILD_CACHE="true"
         shift # past argument
         ;;
       -d|--install-deps)
@@ -427,53 +434,65 @@ function parse_args() {
         ;;
       -h|--help)
         echo "$0 <package> [arguments]"
-        echo "  --docker-image (-i) - builds ports in a Dockerfile (./build).  Allows caching.  Used for build server and troubleshooting build server"
         echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
+        echo "  --no-build-cache - Always rebuilds packages and does not check for a pre-build zip.  Disables --remote if both are passed"
         echo "  --no-release-zip - Won't create the zip file under release.  Primarily used internally for building libraries"    
         echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
-        echo "  --remote - indicates to pull docker images and not use docker image cache."
+        echo "  --remote - indicates to look for pre-built images in GitHub releases.  Requires setting GITHUB_TOKEN due to high github API usage."
         echo "  --always-build-depends - always build PKG_DEPENDS before package.  If not set, dependent package will only be built if /pkg folder does not exist"
         exit 1
         ;;
+      -*|--*)
+        echo "Unknown option: $1"
+        shift #past argument
+        ;;
       *)    # unknown option
-        ARGS+=("$1") # save it in an array for later
-        shift # past argument
+        if [[ -z "${PACKAGE}" ]]; then
+          PACKAGE="$1"
+        else
+          echo "Unknown argument: $1"
+          ARGS+=("$1") # save it in an array for later
+        fi
+        shift
         ;;
     esac
   done
-
+  if [[ -z "${PACKAGE}" ]]; then
+    echo "Please provide port to build. Ex: $0 smw"
+    exit 1
+  fi
+  PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
+  if [[ ! -d "${PACKAGE_DIR}" ]]; then
+    echo "Please provide a port which exists in the ports directory. ${PACKAGE_DIR} does not exist."
+    exit 1
+  fi
+  if [[ ! -f "${PACKAGE_DIR}/package.info" ]]; then
+    echo "The port '$PACKAGE' does not have a package.info file. Please create: ${PACKAGE_DIR}/package.info with appropriate values."
+    exit 1
+  fi
   if [[ "$USE_DOCKER" == "true" ]] && ! which docker &> /dev/null; then
     echo "WARNING: docker not found.  Assuming: --no-docker which means you must manually run in a chroot or only run cross-compile builds"
     sleep 1
     USE_DOCKER=false
   fi
 }
- 
 
 # only run code if we are not being sourced.  This allows other scripts to source this script for function reuse
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   
-  PACKAGE=$1
-  if [[ -z "${PACKAGE}" ]]; then
-    echo "Please provide port to build. Ex: $0 smw"
-    exit 1
-  fi
-  PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
+  ARGS_COPY=("$@")
+  parse_args "$@"
 
   source "${PACKAGE_DIR}/package.info"
   source "${PACKAGE_DIR}/../ports.info"
-  shift
-  ARGS_COPY=("$@")
 
-
-  parse_args "$@"
   if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
     PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
   fi
   for dep in ${PKG_DEPENDS_CALCULATED//,/ }
   do
-    if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" ]]; then
+    if [[ "$ALWAYS_BUILD_DEPENDS" == "true" || ! -d "$PACKAGE_DIR/../$dep/pkg" || -z "$("$PACKAGE_DIR/../$dep/pkg")" ]]; then
       echo "building dependent package: $0 $dep"
       echo $0 "$dep" "${ARGS_COPY[@]}" --no-release-zip
 
@@ -563,12 +582,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   echo -e "calculated ${PKG_DOWNLOAD_NAME}.git.info (local): \n${LINE}\n${NEW_GIT_INFO}\n${LINE}"
 
-  if [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_LOCAL}" ]]; then
+  if [[ "$NO_BUILD_CACHE" == "true" ]]; then
+    echo "Not using build cache..."
+  elif [[ "${NEW_GIT_INFO}" == "${RELEASE_GIT_INFO_LOCAL}" ]]; then
     echo "Build already exists - local"
     exit 0
   fi
   echo "docker remote: ${DOCKER_REMOTE}"
-  if [[ "${DOCKER_REMOTE}" == "true" ]]; then
+  if [[ "${DOCKER_REMOTE}" == "true" && "$NO_BUILD_CACHE" == "false" ]]; then
     if [[ -z "${GITHUB_AUTH}" ]]; then
       echo "--remote requires setting a GITHUB_TOKEN variable to authenticate with github.  Otherwise you *will* get throttled."
       exit 1
