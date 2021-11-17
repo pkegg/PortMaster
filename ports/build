@@ -600,16 +600,18 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
         if [[ -f "$RELEASE_GIT_INFO_ZIP" ]]; then
           rm -rf "./${PKG_NAME}"
-          unzip -o "${RELEASE_GIT_INFO_ZIP}"
-  
-          echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
-          rm -rf "${PACKAGE_DIR}/pkg"
-          cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
-  
-          echo "Updating git info: $RELEASE_GIT_INFO_FILE"
-          echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
-          echo "Remote download success"
-          exit 0
+          if ! unzip -o "${RELEASE_GIT_INFO_ZIP}"; then
+            echo "download: ${PKG_DOWNLOAD_NAME} directory: ${PKG_DIRECTORY_OVERRIDE}"
+            rm -rf "${PACKAGE_DIR}/pkg"
+            cp -r "${PKG_DIRECTORY}" "${PACKAGE_DIR}/pkg"
+    
+            echo "Updating git info: $RELEASE_GIT_INFO_FILE"
+            echo -e "${RELEASE_GIT_INFO_REMOTE}" > "$RELEASE_GIT_INFO_FILE"
+            echo "Remote download success"
+            exit 0
+          else
+            echo "downloaded zip seems corrupted"
+          fi
         else
           echo "zip not found.  Something went wrong downloading.."
         fi 
