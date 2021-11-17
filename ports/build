@@ -447,7 +447,7 @@ function parse_args() {
     echo "WARNING: docker not found.  Assuming: --no-docker which means you must manually run in a chroot or only run cross-compile builds"
     sleep 1
     USE_DOCKER=false
-  fi 
+  fi
 }
  
 
@@ -455,6 +455,10 @@ function parse_args() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   
   PACKAGE=$1
+  if [[ -z "${PACKAGE}" ]]; then
+    echo "Please provide port to build. Ex: $0 smw"
+    exit 1
+  fi
   PACKAGE_DIR="$(realpath "ports/${PACKAGE}")"
 
   source "${PACKAGE_DIR}/package.info"
