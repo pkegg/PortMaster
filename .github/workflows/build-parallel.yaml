@@ -33,7 +33,7 @@ jobs:
         name: Determine Matrix Builds
         run: |
             echo -ne '::set-output name=matrix::{"package":['
-            echo -ne $(./ports/build-all  --no-build --builds --legacy-url-override | sed -e 's/^\|$/"/g' |sort | tr '\n' ',')
+            echo -ne $(./ports/build-all  --no-build --builds | sed -e 's/^\|$/"/g' |sort | tr '\n' ',')
             echo ']}'
 
       - name: Log in to the Container registry
@@ -73,7 +73,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        shard: [1,2]
+        shard: [1,2,3,4]
     steps:
       - name: Checkout
         run: |
@@ -92,7 +92,7 @@ jobs:
         run: |
            set -e
            ./init-docker
-           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 2 --legacy-default --push --remote
+           ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 4 --legacy-default --legacy-url-override  --push --remote
            
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
