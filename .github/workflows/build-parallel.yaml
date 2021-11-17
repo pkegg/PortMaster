@@ -19,6 +19,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       date: ${{ steps.date.outputs.date }}
+      token: ${{ steps.token.outputs.token }}
     steps:
       - name: Checkout
         run: |
@@ -28,7 +29,20 @@ jobs:
       - name: Get date for artifacts
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
-  
+      - name: Get token
+        id: token
+        run: | 
+          default_token=${{secrets.GITHUB_TOKEN}}
+          pat=${{secrets.BUILD_TOKEN}}
+          
+          if [[ -n "${pat}" ]]; then
+            echo "::set-output name=token::${pat}"
+            echo "using pat"
+          else
+            echo "::set-output name=token::${default_token}"
+            echo "using default"
+          fi
+          
       - id: set-matrix
         name: Determine Matrix Builds
         run: |
@@ -41,7 +55,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ steps.token.outputs.token }}
       
       - id: build-base-image
         name: Build base image and libraries
@@ -50,7 +64,7 @@ jobs:
          ./ports/build-base-images --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64
          ./ports/build-all --libraries --push --remote
         env:
-            GITHUB_TOKEN: ${{ secrets.BUILD_TOKEN | default(secrets.GITHUB_TOKEN) }}
+            GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Publish draft pre-release."
         uses: ncipollo/release-action@v1
         with:
@@ -59,7 +73,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           artifacts: "ports.md, release/*.git.info, release/*.zip"
@@ -85,7 +99,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ needs.build-base-images.outputs.token}}
       
       - name: Build ${{ matrix.package }}
         id: build
@@ -95,7 +109,7 @@ jobs:
            ./ports/build-all --build-shard ${{ matrix.shard }} --build-shard-total 4 --legacy-default --legacy-url-override  --push --remote
            
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
@@ -103,7 +117,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token:  ${{ steps.token.outputs.token }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -130,10 +144,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Get date for artifacts
-        id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
-  
       - name: Build ${{ matrix.package }}
         id: build
         run: |
@@ -142,7 +152,7 @@ jobs:
            ./ports/build ${{ matrix.package }} --push --remote
            
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
@@ -150,7 +160,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
