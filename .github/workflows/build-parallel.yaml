@@ -106,6 +106,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
+          replacesArtifacts: false
           artifacts: "release/*.zip, release/*.git.info"
   buildx:
     needs: build-base-images
@@ -152,6 +153,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
+          replacesArtifacts: false
           artifacts: "release/*.zip, release/*.git.info"
 
   release:
@@ -171,4 +173,5 @@ jobs:
           prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
+          replacesArtifacts: false
           omitNameDuringUpdate: true
