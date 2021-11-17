@@ -209,6 +209,7 @@ jobs:
           else
             echo "::set-output name=token::${default_token}"
             echo "using default"
+          fi
       - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         with:
