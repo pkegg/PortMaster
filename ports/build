@@ -1,10 +1,12 @@
 #!/bin/bash
 set -e
 set -o pipefail
-BRANCH=main
-IMAGE_BASE=ghcr.io/pkegg/portmaster
+
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source ${DIR}/clone-source
+source "${DIR}/ports.info"
+BRANCH="${GITHUB_BRANCH}"
+IMAGE_BASE=ghcr.io/${GITHUB_ORG}/portmaster
 export CCACHE_DIR="../.ccache"
 
 GITHUB_API_URL=https://api.github.com/repos
@@ -501,7 +503,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   parse_args "$@"
 
   source "${PACKAGE_DIR}/package.info"
-  source "${PACKAGE_DIR}/../ports.info"
 
   if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
     PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
