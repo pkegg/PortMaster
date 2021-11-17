@@ -51,13 +51,13 @@ function _github_call() {
 
   cache=""
   if [[ -f "$cache_file" ]]; then
-    cache="$(cat "$cache_file")"
+    cache="$(cat "$cache_file" |col -b )"
     etag="$(_get_header "ETag" "$cache" | sed "s|^.*W/||g" )"
-    echo_err "etag: ${etag}"
+    echo_err "etag: '${etag}'"
   fi
   echo_err wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q
 
-  output="$(wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q 2>&1 )"
+  output="$(wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q 2>&1 |col -b)"
 
   response="$(echo -e "${output}" | tail -n +2 | grep -v "^[A-Za-z]" | tail -n +2)"
   return_code="$(_get_return "$output")"
@@ -77,7 +77,9 @@ function _github_call() {
     echo_err "404"
     return
   else
-    echo_err "cache hit"
+    echo_err "output: ${output}"
+    echo_err "cache hit.  Look at: $cache_file for more info"
+    
   fi
   if [[ -f "${cache_file}" ]]; then
     response="$(cat "$cache_file" |  tail -n +2 |grep -v "^[A-Za-z].*:" | tail -n +2)"
@@ -108,8 +110,6 @@ function github_api_asset_output()
 
   response=$(github_api "releases/assets/${asset_id}" "" "" "application/octet-stream")
 
-  #echo_err wget --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O- "$GITHUB_API_URL/${org}/${repo}/releases/assets/${asset_id}"
-  #response=$(wget --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O- "$GITHUB_API_URL/${org}/${repo}/releases/assets/${asset_id}")
   echo "${response}"
 }
 function github_api_asset_download()
@@ -120,7 +120,6 @@ function github_api_asset_download()
   output_dir=$(dirname "$output_file")
   mkdir -p "${output_dir}"
   
-  echo_err wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"
   if ! wget -S --header="$GITHUB_AUTH" --header 'Accept:application/octet-stream' -O "${output_file}" "$GITHUB_API_URL/${GITHUB_ORG}/PortMaster/releases/assets/${asset_id}"; then
     echo "Error!  Could not download!"
   fi
@@ -545,7 +544,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       GITHUB_SHA_URL="contents?sha=${LEGACY_PORTMASTER_BRANCH}&path=/&page=1&per_page=1"
       echo "Github SHA URL: ${GITHUB_SHA_URL}"
 
-      PKG_GIT_SHA=$(github_api "$GITHUB_SHA_URL" "$LEGACY_PORTMASTER_ORG" "$LEGACY_PORTMASTER_REPO"  | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g')
+      if ! PKG_GIT_SHA=$(github_api "$GITHUB_SHA_URL" "$LEGACY_PORTMASTER_ORG" "$LEGACY_PORTMASTER_REPO"  | grep -i "${PKG_DOWNLOAD_NAME}.zip" -A 3 | grep -i "\"sha\"" | head -1 | sed -E 's|.*: "(.*)",|\1|g'); then
+         PKG_GIT_SHA=""
+      fi
       if [[ -z "${PKG_GIT_SHA}" ]]; then
         echo "Could not find ${PKG_NAME}.zip in ${GITHUB_SHA_URL}"
         exit 1
