@@ -89,7 +89,7 @@ jobs:
       matrix:
         shard: [1,2,3,4]
     steps:
-      - name: Checkout
+      - name: Checkout (${{ needs.build-base-images.outputs.token }})
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git clone --filter=blob:none $REPO .
@@ -99,7 +99,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ needs.build-base-images.outputs.token}}
+          password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build ${{ matrix.package }}
         id: build
@@ -117,7 +117,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: "${{ needs.build-base-images.outputs.token}}"
+          token: "${{ secrets.GITHUB_TOKEN }}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -142,7 +142,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ needs.build-base-images.outputs.token}}
+          password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build ${{ matrix.package }}
         id: build
@@ -160,7 +160,7 @@ jobs:
           allowUpdates: true
           draft: true
           prerelease: true
-          token: "${{ needs.build-base-images.outputs.token}}"
+          token: "${{ secrets.GITHUB_TOKEN }}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           replacesArtifacts: false
@@ -181,7 +181,7 @@ jobs:
           allowUpdates: true
           draft: false
           prerelease: true
-          token: ${{ needs.build-base-images.outputs.token}}
+          token: ${{ secrets.GITHUB_TOKEN }}
           omitBodyDuringUpdate: true
           replacesArtifacts: false
           omitNameDuringUpdate: true
