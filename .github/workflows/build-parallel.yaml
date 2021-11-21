@@ -167,6 +167,13 @@ jobs:
           omitNameDuringUpdate: true
           replacesArtifacts: false
           artifacts: "release/*.zip, release/*.git.info"
+      - name: PR artifacts
+        uses: actions/upload-artifact@v2
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          name: legacy-ports
+          path: |
+            release/*.zip
   buildx:
     needs: build-base-images
     name: Full Port Builds
@@ -232,7 +239,13 @@ jobs:
           omitNameDuringUpdate: true
           replacesArtifacts: false
           artifacts: "release/*.zip, release/*.git.info"
-
+      - name: PR artifacts
+        uses: actions/upload-artifact@v2
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          name: ${{ matrix.package }}
+          path: |
+            release/*.zip
   release:
     needs: [buildx, legacy, build-base-images]
     name: Release
