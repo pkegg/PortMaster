@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
   pull_request_target:
     # We don't need to run builds when these files change
     paths-ignore:
@@ -23,7 +26,9 @@ env:
   IMAGE_NAME: ${{ github.event.repository.name }}/portmaster
 
 concurrency: 
-  group: parallel
+  #main will take 'build' and others will be in 'build{pr number}'
+  group: build${{ github.event.pull_request.number }}
+  cancel-in-progress: true #only 1 build at a time per main/PR
 
 jobs:
   build-base-images:
