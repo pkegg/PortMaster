@@ -36,6 +36,16 @@ setup() {
   run get_os
   assert_output "ubuntu"
 }
+@test "get os - mac" {
+  create_mac
+  run get_os
+  assert_output "mac"
+}
+@test "get os - RetroOZ" {
+  create_retro_oz
+  run get_os
+  assert_output "RetroOZ"
+}
 @test "get os - unknown" {
   run get_os
   assert_output "unknown"
@@ -72,12 +82,6 @@ setup() {
   create_rk2020
   run get_device
   assert_output "rk2020"
-}
-
-@test "get device - Gameforce Chi" {
-  create_chi
-  run get_device
-  assert_output "chi"
 }
 
 @test "get device - Gameforce Chi" {
