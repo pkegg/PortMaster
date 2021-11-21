@@ -9,6 +9,7 @@ on:
     branches:
       - main
     types: [opened, synchronize]
+    
   workflow_dispatch:
     inputs:
       no_cache:
@@ -32,10 +33,14 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       date: ${{ steps.date.outputs.date }}
     steps:
+      - uses: hmarr/debug-action@v2
       - name: Checkout
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git clone --filter=blob:none $REPO .
+          if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
+            git checkout "${{ github.event.pull_request.head.sha }}"
+          fi
 
       - name: Get date for artifacts
         id: date
@@ -110,6 +115,9 @@ jobs:
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git clone --filter=blob:none $REPO .
+          if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
+            git checkout "${{ github.event.pull_request.head.sha }}"
+          fi
       - name: Get token
         id: token
         run: | 
@@ -169,6 +177,9 @@ jobs:
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git clone --filter=blob:none $REPO .
+          if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
+            git checkout "${{ github.event.pull_request.head.sha }}"
+          fi
       - name: Get token
         id: token
         run: | 
