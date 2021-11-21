@@ -56,11 +56,12 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" && -n "$GITHUB_BASE_REF" && -n "$GI
   CACHE_FROM="$GITHUB_BASE_REF"
   echo "branch: ${BRANCH}"
   echo "EVENT_NAME: ${GITHUB_EVENT_NAME} BASE_REF: $GITHUB_BASE_REF REF_NAME: $GITHUB_REF_NAME"
-
+  IMAGE_CACHE_TO=""
+else
+  IMAGE_CACHE_TO=${IMAGE_BASE}/cache:${BRANCH}
 fi
 IMAGE=${IMAGE_BASE}:${BRANCH}
 IMAGE_CACHE_FROM=${IMAGE_BASE}/cache:${CACHE_FROM}
-IMAGE_CACHE_TO=${IMAGE_BASE}/cache:${BRANCH}
 
 if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
   IMAGE_CACHE_TO_ARGS="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${IMAGE_CACHE_TO},mode=max --push"

@@ -37,11 +37,12 @@ jobs:
       - name: Checkout
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-          git clone --filter=blob:none $REPO .
+          git clone --no-checkout --filter=blob:none $REPO .
           if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
             git checkout "${{ github.event.pull_request.head.sha }}"
+          else
+            git checkout
           fi
-
       - name: Get date for artifacts
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
@@ -65,7 +66,6 @@ jobs:
             echo -ne '::set-output name=matrix::{"package":['
             echo -ne $(./ports/build-all  --no-build --builds | sed -e 's/^\|$/"/g' |sort | tr '\n' ',')
             echo ']}'
-
       - name: Log in to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
@@ -114,9 +114,11 @@ jobs:
       - name: Checkout
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-          git clone --filter=blob:none $REPO .
+          git clone --no-checkout --filter=blob:none $REPO .
           if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
             git checkout "${{ github.event.pull_request.head.sha }}"
+          else
+            git checkout
           fi
       - name: Get token
         id: token
@@ -153,6 +155,8 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
+        if: github.event_name != 'pull_request'
+
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
           allowUpdates: true
@@ -176,9 +180,11 @@ jobs:
       - name: Checkout
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-          git clone --filter=blob:none $REPO .
+          git clone --no-checkout --filter=blob:none $REPO .
           if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
             git checkout "${{ github.event.pull_request.head.sha }}"
+          else
+            git checkout
           fi
       - name: Get token
         id: token
