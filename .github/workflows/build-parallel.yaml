@@ -27,7 +27,7 @@ env:
 
 concurrency: 
   #main will take 'build' and others will be in 'build{pr number}'
-  group: build${{ github.event.pull_request.number }}
+  group: ${{github.event_name}}-${{ github.event.pull_request.number }}
   cancel-in-progress: true #only 1 build at a time per main/PR
 
 jobs:
@@ -42,6 +42,7 @@ jobs:
       date: ${{ steps.date.outputs.date }}
     steps:
       - uses: hmarr/debug-action@v2
+        name: "debug: ${{github.event_name}}-${{ github.event.pull_request.number }}"
       - name: Checkout
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
