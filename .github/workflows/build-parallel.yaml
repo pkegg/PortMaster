@@ -157,6 +157,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
+        if: github.event_name != 'pull_request'
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
           allowUpdates: true
