@@ -64,7 +64,7 @@ IMAGE=${IMAGE_BASE}:${BRANCH}
 IMAGE_CACHE_FROM=${IMAGE_BASE}/cache:${CACHE_FROM}
 
 if [[ "${USE_DOCKER_PUSH}" == "true" ]]; then
-  IMAGE_CACHE_TO_ARGS="--pull --builder=portmaster-remote-builder --cache-to=type=registry,ref=${IMAGE_CACHE_TO},mode=max --push"
+  IMAGE_CACHE_TO_ARGS="--pull --builder=portmaster-remote-builder --push"
 else
   IMAGE_CACHE_TO_ARGS="--load --builder default"
 fi
