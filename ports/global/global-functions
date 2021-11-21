@@ -110,12 +110,11 @@ function get_sdl_controls() {
 }
 
 # Gets the current OS
-#  Options: ArkOS, 351ELEC, TheRA, ubuntu, unknown
-#  NOTE: ubuntu is to be used as fallback for testing off-device (mostly applicable for portmaster)
+#  Options: ArkOS, 351ELEC, TheRA, RetroOZ, ubuntu, mac, unknown
+#  NOTE: ubuntu (and mac) is to be used as fallback for testing off-device (mostly applicable for portmaster)
 function get_os() {
   if [[ -z "$__OS" ]]; then
     __OS="unknown"
-    
     if [[ -f "${__ROOT_DIR}/boot/rk3326-rg351v-linux.dtb" || -d "${__ROOT_DIR}/opt/system/Advanced/" ]]; then
       __OS="ArkOS"
     elif [[ -e "${__ROOT_DIR}/storage/.config/.OS_ARCH" ]]; then
@@ -123,6 +122,8 @@ function get_os() {
     elif [[ -e "${__ROOT_DIR}/usr/share/plymouth/themes/text.plymouth" \
             && $(grep "title=" "${__ROOT_DIR}/usr/share/plymouth/themes/text.plymouth") == *"TheRA"* ]]; then
       __OS="TheRA"
+    elif [[ -e "${__ROOT_DIR}/opt/.retrooz/device" ]]; then
+      __OS="RetroOZ"
     elif grep -q "ID=ubuntu" ${__ROOT_DIR}/etc/os-release &> /dev/null; then
       __OS="ubuntu"
     elif [[ $OSTYPE == 'darwin'* ]]; then
@@ -147,7 +148,8 @@ function get_sudo() {
 }
 
 function get_sudo_kill() {
-  local sudo="$(get_sudo)"
+  local sudo
+  sudo="$(get_sudo)"
   local sudokill
   if [[ "$sudo" == "sudo" ]]; then
     sudokill="-sudokill" # for ArkOS use "-sudokill"
@@ -262,7 +264,8 @@ function get_wget() {
    echo "wget"
 }
 function in_china() {
-  local grep=$(get_grep)
+  local grep
+  grep=$(get_grep)
   ISITCHINA=$(curl -s --connect-timeout 30 -m 60 http://demo.ip-api.com/json | ${grep} -Po '"country":.*?[^\\]"' )
   local in_china=false
   if [[ "$ISITCHINA" == "\"country\":\"China\"" ]]; then

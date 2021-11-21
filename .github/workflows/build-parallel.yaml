@@ -1,6 +1,9 @@
 name: build-parallel
 
 on:
+  push:
+    branches:
+      - main
   pull_request_target:
     # We don't need to run builds when these files change
     paths-ignore:
