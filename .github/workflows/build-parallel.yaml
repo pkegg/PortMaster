@@ -88,7 +88,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Publish draft pre-release."
         uses: ncipollo/release-action@v1
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         with:
           tag: "${{steps.date.outputs.date}}"
           name: "${{steps.date.outputs.date}}"
@@ -155,7 +155,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
 
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
@@ -221,7 +221,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
           allowUpdates: true
@@ -256,7 +256,7 @@ jobs:
           fi
       - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
           allowUpdates: true
