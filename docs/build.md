@@ -47,7 +47,7 @@ The following files can be used to build a port.
     - `PKG_DIRECTORY_OVERRIDE` - By default, there is a directory inside the zip which matches the port folder name.  This allows customizing the directory in the zip.
     - `PKG_ZIP_NAME_OVERRIDE` - By default, the zip is named according to `PKG_NAME`.  This allows overriding the name of the output zip file.
     - `PKG_URL` - The source code url.  Will be cloned into `source`. Smart enough to do a `git pull` if already exists.
-    - `PKG_VERSION` (Required - if PKG_URL) - the version of source code - typically git hash or tag.  NOTE: though branch is technically allowed, it is not 'supported' as the package will not be rebuilt unless something changes in the ports directory.
+    - `PKG_VERSION` (Required - if PKG_URL) - the version of source code - must be git hash or tag as, due to caching, the ackage will not be rebuilt unless a file changes in the ports directory (ex: `main` would never be updated).
     - `PKG_DEPENDS` - A comma separated list of dependent packages which will be built first.  Dependent packages will be built and their `pkg` contents into this ports `pkg` folder.
     - `PKG_LIBRARY` - Means this package can be used in another `PKG_DEPENDS`.  Used to 'pre-build' all libraries on build server.
     - `GET_HANDLER_SUPPORT` - currently only `git` and `archive` are supported. Can be left off and defaults to `git` if PKG_URL is set.
