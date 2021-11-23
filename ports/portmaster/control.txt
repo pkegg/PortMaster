@@ -7,10 +7,7 @@
 DIR="$(realpath $( dirname "${BASH_SOURCE[0]}" ))"
 source $DIR/global-functions
 
-#controlfolder is provided for backwards compatibility as it was global
 controlfolder="$DIR"
-
-#directory is provided for backwards compatibility
 directory=$(get_arkos_roms_dir_name)
 
 ESUDO=$(get_sudo)
@@ -28,6 +25,8 @@ get_controls() {
   DEVICE="$(get_sdl_device_id)"
   param_device="$(get_oga_device)"
   CONTROLS="$(get_sdl_controls)"
-
-	sdl_controllerconfig="${CONTROLS}"
+  
+  sdl_controllerconfig="${CONTROLS}"
 }
+
+GPTOKEYB="$DIR/gptokeyb $ESUDOKILL"
