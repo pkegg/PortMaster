@@ -50,7 +50,7 @@ The following files can be used to build a port.
     - `PKG_URL` - The source code url.  Will be cloned into `source`. Smart enough to do a `git pull` if already exists.
     - `PKG_VERSION` (Required - if PKG_URL) - the version of source code - typically git hash or tag.  
       - NOTE: though a branch name (`main`) is technically allowed for now, it is not 'supported' as the package will not be rebuilt unless something changes in the ports directory.  See the build caching section.
-    - `PKG_DEPENDS` - A comma separated list of dependent packages which will be built first and included in it's `pkg`.  Dependent packages will be built and their `pkg` contents into this ports `pkg` folder.
+    - `PKG_DEPENDS` - A comma separated list of dependent packages which will be built first and included in it's `pkg`.  Dependent packages will be built and their `pkg` contents into this ports `pkg` folder.  Transitive dependendencies (package A depends on B which depends on C are not supported) to keep things simple.
       - NOTE: `PKG_DEPENDS` artifacts cannot be utilized by the `build` step, but only the `package` step.  This enables depedency updates to only require repackaging and not a full rebuild.
     - `PKG_LIBRARY` - Means this package can be used in another `PKG_DEPENDS`.  Used to 'pre-build' all libraries on build server.
     - `GET_HANDLER_SUPPORT` - currently only `git` and `archive` are supported. Can be left off and defaults to `git` if PKG_URL is set.

@@ -20,4 +20,5 @@ In general - the new build system approach aims to keep backwards compatibility 
 
 - **PortMaster**
    - `/ports/portmaster` includes a refactored version of PortMaster using the new build functionality which utilizes `global-functions` and downloads from releases.
+    - `control.txt` is kept, but updated to use `global-functions`
     - We **could** switch to it at some point (update `/PortMaster.zip`) and set LEGACY=true as default.  This would basically rollout the new portmaster, but still download everything as before.  If that works, update PortMaster.zip again to LEGACY=false.
