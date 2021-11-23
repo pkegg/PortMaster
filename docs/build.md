@@ -19,6 +19,7 @@ Most scripts are located in `./ports` but frequently used scripts (`build`, `cle
       - `--install-deps` - Automatically install dependencies if docker is not installed.  Useful in a chroot. 
     - `--no-build-cache` - Run a rebuild rather depend on the build cache.
     - `--docker-remote` - Helps to simulate build server and will not use local docker images
+    - see `--help` for full list.  Most other options are only used by github actions during build and/or `./build-all`
 
 - `build-all` - calls `build` for all ports. Accepts all `./build` parameters and will pass them through.
 - `bump-versions` - updates `PKG_VERSION` in package.info files to the latest git version.  Respects `PKG_BRANCH` or will use default branch.
@@ -47,8 +48,10 @@ The following files can be used to build a port.
     - `PKG_DIRECTORY_OVERRIDE` - By default, there is a directory inside the zip which matches the port folder name.  This allows customizing the directory in the zip.
     - `PKG_ZIP_NAME_OVERRIDE` - By default, the zip is named according to `PKG_NAME`.  This allows overriding the name of the output zip file.
     - `PKG_URL` - The source code url.  Will be cloned into `source`. Smart enough to do a `git pull` if already exists.
-    - `PKG_VERSION` (Required - if PKG_URL) - the version of source code - must be git hash or tag as, due to caching, the ackage will not be rebuilt unless a file changes in the ports directory (ex: `main` would never be updated).
-    - `PKG_DEPENDS` - A comma separated list of dependent packages which will be built first.  Dependent packages will be built and their `pkg` contents into this ports `pkg` folder.
+    - `PKG_VERSION` (Required - if PKG_URL) - the version of source code - typically git hash or tag.  
+      - NOTE: though a branch name (`main`) is technically allowed for now, it is not 'supported' as the package will not be rebuilt unless something changes in the ports directory.  See the build caching section.
+    - `PKG_DEPENDS` - A comma separated list of dependent packages which will be built first and included in it's `pkg`.  Dependent packages will be built and their `pkg` contents into this ports `pkg` folder.
+      - NOTE: `PKG_DEPENDS` artifacts cannot be utilized by the `build` step, but only the `package` step.  This enables depedency updates to only require repackaging and not a full rebuild.
     - `PKG_LIBRARY` - Means this package can be used in another `PKG_DEPENDS`.  Used to 'pre-build' all libraries on build server.
     - `GET_HANDLER_SUPPORT` - currently only `git` and `archive` are supported. Can be left off and defaults to `git` if PKG_URL is set.
     - `PKG_GLOBAL` - If set to `false`, global depedencies will not be copied in.
@@ -69,3 +72,51 @@ The following files can be used to build a port.
   - `test` - will run tests inside a docker image
   - `install-deps` - provides any addition dependencies for build beyond main Dockerfile.
   
+# Build Caching Overview
+**tl;dr;** Caching is important, so we made a caching layer to speed up builds.  Disable it on build with `./build --no-build-cache`.
+
+---
+
+Caching builds is quite important due to a variety of factors:
+  - Takes a long time to build certain ports (CPU intensive, etc)
+  - The sheer *number* of ports in PortMaster.
+    - If we build them all squentially, it could take many hours (or days) to build even if they build pretty fast.  There won't ever be 'less' ports.
+  - The low CPU specs of Github Actions 'free' builders
+    - Ideally - we use GitHub actions to build for free - but the free builders are not particularly powerful
+
+To address this, we've create a build caching system that can be used to determine if a given port needs to be rebuilt (or it's dependencies rebuilt and it repackaged).  Initially docker was considered, but the sheer scale of number of docker images being created caused issues in github's container registry and errored very unreliably.
+
+**Build Caching 101: Something must change in a port folder for it to be rebuilt**
+The main idea is that: in order for a port to be rebuilt, something that ports folder *must* change.  This makes it easy to take a `hash` of the files in the directory to determine if anything has changed.
+
+This is a big reason why `PKG_VERSION` cannot/should not be set to `main` an instead is set to the git hash.
+
+At it's simplest, the build caching system just uses git to look at the last change hash on a port folder (and dependent folders) and records that in a .git.info file.  Ex:
+```
+portmaster=52b0424
+global=3f9a625
+oga_controls_portmaster=4d151fc
+dialog=52b0424
+```
+
+Then, it is easy to determine if a port needs to be rebuilt.  In the above example, if the `portmaster` lines change - `portmaster` needs to be rebuild.  If the dependencies change, those dependencies need to be rebuilt and portmaster needs to be repackaged.
+
+This works great for a build server, but what about local changes?  In the case of local changes, any files known to git are recorded and then hashed.  This makes it so even local changes use this smart caching behavior. 
+
+Ex:
+```
+portmaster=52b0424
+portmaster_dirty=control.txt,package.info,
+portmaster_dirty_hash=9db57015f8a83455700dc20621ac5becb76b03f3
+global=3f9a625
+oga_controls_portmaster=4d151fc
+dialog=52b0424
+```
+
+If there are issues - or something outside of a port folder needs to retrigger a build, `--no-build-cache` can be used.
+
+## Remote Build Caching
+By default, `./build` does not look at github releases for build cache due to the high number of API request to do so and only looks at local files in `./releases`.  Remote build caching can be enabled by running `./build --remote-build-cache` and is used when running with GitHub Actions.  In order to use, `export GITHUB_TOKEN=<token>` must be run in your terminal to provide a valid token and increase GitHub's API rate limit from 60 request an hour.  
+See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+
+Remote build caching will use GitHub APIs to evaluate the previous releases `.git.info` files and see if it matches your local files.  If it's a match, the port's `.zip` will be downloaded and used instead of fully rebuilding.  `./build` is smart enough to detect cases where dependencies have changed so only repackaging is needed.  This allows quick rebuilds of things like `global` or `oga_controls` without rebuilding a ton of packages
