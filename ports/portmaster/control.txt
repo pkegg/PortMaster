@@ -1,4 +1,5 @@
 #! /bin/bash
+
 # This file is maintained for backwards compatibility and simplicity if using global-functions
 # directly is not desired
 
