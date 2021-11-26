@@ -331,7 +331,7 @@ function launch_with_oga_controls() {
     echo_err "/dev/uinput not found"
   fi
 
-  $esudo ./oga_controls $to_launch $param_device &
+  $esudo $(realpath ./oga_controls) $to_launch $param_device &
   if [[ -x "./$to_launch" ]]; then
     $esudo "./$to_launch" 2>&1 | tee -a ./log.txt
   else
