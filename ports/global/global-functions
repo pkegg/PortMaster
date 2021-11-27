@@ -19,7 +19,7 @@
 
 ## Initialize internal global variables
 ### - all should start with __ and be CAPITALIZED to avoid collisions with other globals
-### - all other variables should be local
+### - all other variables should be local and lower case to indicate they are local
 __ROOT_DIR=""  # Allows simulating a file system
 __DEVICE=""    # Cache for detecting device as it should not change
 __OS=""        # Cache for detecting OS as it should not change 
