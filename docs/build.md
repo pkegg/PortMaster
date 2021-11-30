@@ -67,7 +67,7 @@ The following files can be used to build a port.
     - The script can output build artifacts to the `pkg` directory.  For longer builds or complex packaging logic, it is suggested to use a `package` script.  This allows faster rebuilds on packaging changes even in the cloud.
     - NOTE: Will be run with bash.
   - `package` - script to package build.
-    - Will be run from the port directory and should populate the `pkg` directory.  Should only use `bash` as it is currently not run in a container.
+    - Will be run from the port directory and should populate the `pkg` directory.
     - Not strictly required if copying files into `pkg` is done in the `build` script.  But convenient if `build` takes a long time.
   - `test` - will run tests inside a docker image
   - `install-deps` - provides any addition dependencies for build beyond main Dockerfile.
