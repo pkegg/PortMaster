@@ -234,100 +234,74 @@ function build_package() {
   local BUILD_DIR
   BUILD_DIR="$(realpath ${PACKAGE_DIR}/..)"
 
-  PACKAGE_SCRIPT="${PACKAGE_DIR}/package"
-  if [[ ! -f "$PACKAGE_SCRIPT" && -f "$PACKAGE_SCRIPT.tmp" ]]; then
-    PACKAGE_SCRIPT="$PACKAGE_SCRIPT.tmp"
-  fi
-
-  if [[ -f "${PACKAGE_DIR}/build" || -f "${PACKAGE_SCRIPT}" ]]; then
-
-    if [[ -z "${DOCKER_WORK_DIR}" ]]; then
-      DOCKER_WORK_DIR=/work
-    fi
-
-    GID=$(id -g)
-    DOCKER_CMD=docker
-  
-    # Use 'sudo' if docker ps doesn't work.  In theory, other things than missing sudo could cause this.  But sudo needed is a common issue and easy to fix.
-    SUDO=""
-    if ! docker ps -q &> /dev/null && sudo docker ps -q &> /dev/null; then
-     SUDO="sudo"
-    fi
- 
-    # Launch docker as interactive if this is an interactive shell (allows ctrl-c for manual and running non-interactive - aka: build server)
-    INTERACTIVE=""
-    if [ -t 0 ]; then
-      INTERACTIVE="-it"
-    fi
-
+  if [[ -n "$PKG_URL" ]]; then
     clone_source ${PACKAGE} "${PACKAGE_DIR}"
-    if [[ ! -d "${SOURCE_DIR}" ]]; then
-      SOURCE_DIR="${PACKAGE_DIR}"
-      SOURCE_DOCKER_DIR=""
-      BUILD_DIR="."
-      mkdir -p "${SOURCE_DIR}"
-    fi
-    if [[ "$INSTALL_DEPS" == "true" && -f "${PACKAGE_DIR}/install-deps" ]]; then
-      if [[ "${USE_DOCKER}" == "false" ]]; then
-        echo "Installing dependencies for ${PACKAGE} without docker..."
-        pushd "${PACKAGE_DIR}" &> /dev/null
-        ESUDO="sudo"
-        if ! which sudo &> /dev/null || [[ "$UID" == "0" ]]; then
-          ESUDO=""
-        fi
-        $ESUDO bash "${PACKAGE_DIR}/install-deps"
-        popd &> /dev/null
+  fi
+  if [[ ! -d "${SOURCE_DIR}" ]]; then
+    SOURCE_DIR="${PACKAGE_DIR}"
+    SOURCE_DOCKER_DIR=""
+    BUILD_DIR="."
+    mkdir -p "${SOURCE_DIR}"
+  fi
+  if [[ "$INSTALL_DEPS" == "true" && -f "${PACKAGE_DIR}/install-deps" ]]; then
+    if [[ "${USE_DOCKER}" == "false" ]]; then
+      echo "Installing dependencies for ${PACKAGE} without docker..."
+      pushd "${PACKAGE_DIR}" &> /dev/null
+      ESUDO="sudo"
+      if ! which sudo &> /dev/null || [[ "$UID" == "0" ]]; then
+        ESUDO=""
       fi
+      $ESUDO bash "${PACKAGE_DIR}/install-deps"
+      popd &> /dev/null
     fi
-    if [[ -f "${PACKAGE_DIR}/build" ]]; then
+  fi
+  if [[ -f "${PACKAGE_DIR}/build" ]]; then
 
-      local build_command="bash ../build"
+    local build_command="bash ../build"
 
-
-      if [[ "${USE_DOCKER}" == "false" ]]; then
-        linux_platform=$(get_linux_platform)
-        if [[ "${BUILD_PLATFORM}" == "any" || "${BUILD_PLATFORM}" != "${linux_platform}" ]]; then
-          echo "--------------------------------------------------------------------------------------------------"
-          echo "ERROR: BUILD_PLATFORM is set to ${BUILD_PLATFORM} but current platform is: ${linux_platform} ($(uname -m))"
-          echo "  If you are attempting to cross-compile or this is in error, etc.  Please update BUILD_PLATFORM in package.info to: ${linux_platform}"
-          exit 1
-        fi
-        if [[ "${BUILD_PLATFORM}" == "any" ]]; then
-          BUILD_PLATFORM=${linux_platform}
-        fi
-        echo "building ${PACKAGE} without docker..."
-        pushd "${SOURCE_DIR}" &> /dev/null
-        if [[ "${BUILD_SHELL}" == "true" ]]; then
-          build_command="bash"
-          echo "starting build shell..."
-        fi
-        ${build_command}
-        popd &> /dev/null
-      else
-        echo "building ${PACKAGE} with docker..."
-        pushd "${SOURCE_DIR}" &> /dev/null
-
-        DOCKER_ARGS=""
-        if [[ "$DOCKER_REMOTE" == "true" ]]; then
-          DOCKER_ARGS="--pull=always"
-        fi
-        # Get .env file ready
-        env | grep -E "$ENV_OPTIONS" | grep "=" > .env
-        if [[ "${BUILD_SHELL}" == "true" ]]; then
-          build_command="bash"
-          echo "starting build shell..."
-        fi
-        ${SUDO} ${DOCKER_CMD} run --init --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} $build_command
-        echo "err: $?"
-
-        popd &> /dev/null
-      fi
-      if [[ "$BUILD_SHELL" == "true" ]]; then
-        echo "Build shell done"
+    if [[ "${USE_DOCKER}" == "false" ]]; then
+      linux_platform=$(get_linux_platform)
+      if [[ "${BUILD_PLATFORM}" == "any" || "${BUILD_PLATFORM}" != "${linux_platform}" ]]; then
+        echo "--------------------------------------------------------------------------------------------------"
+        echo "ERROR: BUILD_PLATFORM is set to ${BUILD_PLATFORM} but current platform is: ${linux_platform} ($(uname -m))"
+        echo "  If you are attempting to cross-compile or this is in error, etc.  Please update BUILD_PLATFORM in package.info to: ${linux_platform}"
         exit 1
       fi
-      echo "build done"
+      if [[ "${BUILD_PLATFORM}" == "any" ]]; then
+        BUILD_PLATFORM=${linux_platform}
+      fi
+      echo "building ${PACKAGE} without docker..."
+      pushd "${SOURCE_DIR}" &> /dev/null
+      if [[ "${BUILD_SHELL}" == "true" ]]; then
+        build_command="bash"
+        echo "starting build shell..."
+      fi
+      ${build_command}
+      popd &> /dev/null
+    else
+      echo "building ${PACKAGE} with docker..."
+      pushd "${SOURCE_DIR}" &> /dev/null
+
+      DOCKER_ARGS=""
+      if [[ "$DOCKER_REMOTE" == "true" ]]; then
+        DOCKER_ARGS="--pull=always"
+      fi
+      # Get .env file ready
+      env | grep -E "$ENV_OPTIONS" | grep "=" > .env
+      if [[ "${BUILD_SHELL}" == "true" ]]; then
+        build_command="bash"
+        echo "starting build shell..."
+      fi
+      ${SUDO} ${DOCKER_CMD} run --init --platform ${BUILD_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "${BUILD_DIR}:${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${SOURCE_DOCKER_DIR}" ${DOCKER_IMAGE} $build_command
+      echo "err: $?"
+
+      popd &> /dev/null
     fi
+    if [[ "$BUILD_SHELL" == "true" ]]; then
+      echo "Build shell done"
+      exit 1
+    fi
+    echo "build done"
   fi
 
   if [[ -z "${TEST_PLATFORM}" ]]; then
@@ -434,12 +408,35 @@ function package_port() {
     cp -r ${PACKAGE_DIR}/../$dep/pkg/* ${PACKAGE_DIR}/pkg/
   done
 
+  pushd "${PACKAGE_DIR}" &> /dev/null
+  PACKAGE_SCRIPT="./package"
+  if [[ ! -f "$PACKAGE_SCRIPT" && -f "$PACKAGE_SCRIPT.tmp" ]]; then
+    PACKAGE_SCRIPT="$PACKAGE_SCRIPT.tmp"
+  fi
   if [[ -f "${PACKAGE_SCRIPT}" ]]; then
     echo "Running custom package script: ${PACKAGE_SCRIPT}"
-    pushd "${PACKAGE_DIR}/" &> /dev/null
-    bash ${PACKAGE_SCRIPT}
-    popd
+
+    if [[ -z "${PACKAGE_PLATFORM}" ]]; then
+      PACKAGE_PLATFORM="$BUILD_PLATFORM"
+    fi
+    if [[ "${USE_DOCKER}" == "false" ]]; then
+        linux_platform=$(get_linux_platform)
+        if [[ "${PACKAGE_PLATFORM}" != "any" && "${PACKAGE_PLATFORM}" != "${linux_platform}" ]]; then
+          echo "--------------------------------------------------------------------------------------------------"
+          echo "ERROR: PACKAGE_PLATFORM is set to ${PACKAGE_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
+          echo "  If you are attempting to cross-compile or this is in error, etc.  Please update PACKAGE_PLATFORM in package.info to: ${linux_platform} or any"
+          exit 1
+        fi
+        echo "packaging ${PACKAGE} without docker..."
+        bash -e ${PACKAGE_SCRIPT}
+    else
+        echo "packaging ${PACKAGE} with docker using ${DOCKER_IMAGE}..."
+        # Get .env file ready
+        env | grep -E "$ENV_OPTIONS" | grep "=" > .env
+        ${SUDO} ${DOCKER_CMD} run --platform ${PACKAGE_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "$(realpath ${PACKAGE_DIR}/..):${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${PACKAGE}" ${DOCKER_IMAGE} bash -e ${PACKAGE_SCRIPT}
+    fi
   fi
+  popd &> /dev/null
 
   if [[ -f "${PACKAGE_DIR}/pkg/run" ]] && grep -q IS_TEST_MODE "${PACKAGE_DIR}/pkg/run"; then
     echo "Running ${PACKAGE} run using IS_TEST_MODE=true"
@@ -784,6 +781,25 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   echo "USE_DOCKER: ${USE_DOCKER} USE_DOCKER_PUSH: ${USE_DOCKER_PUSH} BUILD_PLATFORM: ${BUILD_PLATFORM}"
 
+  # Set global docker variables
+  if [[ -z "${DOCKER_WORK_DIR}" ]]; then
+    DOCKER_WORK_DIR=/work
+  fi
+
+  GID=$(id -g)
+  DOCKER_CMD=docker
+
+  # Use 'sudo' if docker ps doesn't work.  In theory, other things than missing sudo could cause this.  But sudo needed is a common issue and easy to fix.
+  SUDO=""
+  if ! docker ps -q &> /dev/null && sudo docker ps -q &> /dev/null; then
+   SUDO="sudo"
+  fi
+
+  # Launch docker as interactive if this is an interactive shell (allows ctrl-c for manual and running non-interactive - aka: build server)
+  INTERACTIVE=""
+  if [ -t 0 ]; then
+    INTERACTIVE="-it"
+  fi
   #if the release git info matches (but not dependencies, or it would have been an exact match), we don't need to rebuild, just repackage
   # - Still rebuild on NO_BUILD_CACHE (--no-build-cache)
   # - Still rebuild if the /pkg directory is empty for some reason
@@ -818,6 +834,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     MAIN_SCRIPT_LOCATION="${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
     if [[ "${PKG_NO_MAIN_SCRIPT}" == "true" ]]; then
       echo "Not creating a main: ${PKG_NAME}.sh script due to PKG_NO_MAIN_SCRIPT=true"
+    elif [[ "${PKG_LIBRARY}" == "true" ]]; then
+      echo "Not creating a main: ${PKG_NAME}.sh script as PKG_LIBRARY=true"
     elif [[ -f "${PACKAGE_DIR}/run-legacy" ]]; then
       cp "${PACKAGE_DIR}/run-legacy" "${MAIN_SCRIPT_LOCATION}"
     elif [[ "${LEGACY_PORTMASTER}"  == "true" \
