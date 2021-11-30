@@ -419,8 +419,12 @@ function package_port() {
     if [[ -z "${PACKAGE_PLATFORM}" ]]; then
       PACKAGE_PLATFORM="$BUILD_PLATFORM"
     fi
+    linux_platform=$(get_linux_platform)
+
+    if [[ "${PACKAGE_PLATFORM}" == "any" ]]; then
+      PACKAGE_PLATFORM=${linux_platform}
+    fi
     if [[ "${USE_DOCKER}" == "false" ]]; then
-        linux_platform=$(get_linux_platform)
         if [[ "${PACKAGE_PLATFORM}" != "any" && "${PACKAGE_PLATFORM}" != "${linux_platform}" ]]; then
           echo "--------------------------------------------------------------------------------------------------"
           echo "ERROR: PACKAGE_PLATFORM is set to ${PACKAGE_PLATFORM} but current platform is: ${linux_platform} ($(uname -m)"
@@ -433,7 +437,7 @@ function package_port() {
         echo "packaging ${PACKAGE} with docker using ${DOCKER_IMAGE}..."
         # Get .env file ready
         env | grep -E "$ENV_OPTIONS" | grep "=" > .env
-        ${SUDO} ${DOCKER_CMD} run --platform ${PACKAGE_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "$(realpath ${PACKAGE_DIR}/..):${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/${PACKAGE}" ${DOCKER_IMAGE} bash -e ${PACKAGE_SCRIPT}
+        ${SUDO} ${DOCKER_CMD} run --platform ${PACKAGE_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "$(realpath ${PACKAGE_DIR}/../..):${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/ports/${PACKAGE}" ${DOCKER_IMAGE} bash -e ${PACKAGE_SCRIPT}
     fi
   fi
   popd &> /dev/null
