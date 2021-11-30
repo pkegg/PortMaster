@@ -345,9 +345,7 @@ function build_env_docker_image() {
   local PACKAGE_DIR
   PACKAGE_DIR="$2"
   local DOCKERFILE
-  DOCKERFILE="${PACKAGE_DIR}/Dockerfile"
 
-  DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
 
   if [[ ! -f "${DOCKERFILE}" && -f "${PACKAGE_DIR}/install-deps" ]]; then
     DOCKERFILE="${PACKAGE_DIR}/Dockerfile.deps"
@@ -385,9 +383,6 @@ function build_env_docker_image() {
       fi
       popd &> /dev/null
     fi 
-  else
-    echo "${PACKAGE_DIR}/Dockerfile does not exist"
-    DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}
   fi
 }
 
@@ -408,6 +403,10 @@ function package_port() {
     cp -r ${PACKAGE_DIR}/../$dep/pkg/* ${PACKAGE_DIR}/pkg/
   done
 
+  if [[ "$REPACKAGE_DEPENDENCIES" == "true" ]]; then
+    echo "not re-running package script as we only need dependencies"
+    return
+  fi
   pushd "${PACKAGE_DIR}" &> /dev/null
   PACKAGE_SCRIPT="./package"
   if [[ ! -f "$PACKAGE_SCRIPT" && -f "$PACKAGE_SCRIPT.tmp" ]]; then
@@ -804,6 +803,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [ -t 0 ]; then
     INTERACTIVE="-it"
   fi
+  DOCKERFILE="${PACKAGE_DIR}/Dockerfile"
+  if [[ -f "${DOCKERFILE}" || -f "${PACKAGE_DIR}/install-deps" ]]; then
+    DOCKER_IMAGE=${IMAGE_BASE}/${PACKAGE}:${BRANCH}
+  else
+    echo "${PACKAGE_DIR}/Dockerfile does not exist"
+    DOCKER_IMAGE=${IMAGE_BASE}:${BRANCH}
+  fi
   #if the release git info matches (but not dependencies, or it would have been an exact match), we don't need to rebuild, just repackage
   # - Still rebuild on NO_BUILD_CACHE (--no-build-cache)
   # - Still rebuild if the /pkg directory is empty for some reason
@@ -813,6 +819,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     build_env_docker_image "$PACKAGE" "$PACKAGE_DIR"
     build_package "$PACKAGE" "$PACKAGE_DIR"
   else
+    REPACKAGE_DEPENDENCIES=true
     echo "Dependencies changed - need to repackage"
   fi
 
