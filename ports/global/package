@@ -5,3 +5,4 @@ source ../ports.info
 sed "s/__GITHUB_ORG__/${GITHUB_ORG}/g" < ./global-functions > pkg/global-functions
 
 cp ./gamecontrollerdb.txt pkg/
+cp ./control.txt pkg/
