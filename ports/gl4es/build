@@ -5,6 +5,6 @@ export CCACHE_DIR="../../.ccache"
 
 mkdir -p build
 cd build
-cmake .. -DODROID=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DNOEGL=1 -DNOX11=1
+cmake .. -DODROID=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DNOX11=1 -DDEFAULT_ES=2 
 make -j$(nproc)
 

@@ -217,7 +217,7 @@ function get_directory_git_hash() {
         continue
       fi
       echo_err "dep: ${dep}" 
-      echo -e "$(get_directory_git_hash "../$dep" "true")"
+      echo -e "$(get_directory_git_hash "../$dep" "false")"
     done
   fi
 
@@ -591,6 +591,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
     PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
+  elif [[ "$PKG_LIBRARY" == "true" ]]; then
+    PKG_DEPENDS_CALCULATED="$PKG_DEPENDS"
   fi
 
   for dep in ${PKG_DEPENDS_CALCULATED//,/ }
