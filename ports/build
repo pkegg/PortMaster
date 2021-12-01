@@ -852,9 +852,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     elif [[ -f "${PACKAGE_DIR}/run-legacy" ]]; then
       cp "${PACKAGE_DIR}/run-legacy" "${MAIN_SCRIPT_LOCATION}"
     elif [[ "${LEGACY_PORTMASTER}"  == "true" \
-           && -f "${PACKAGE_DIR}/source/${PKG_NAME}.sh" \
            && ! -f "${PACKAGE_DIR}/run" ]]; then
-      cp "${PACKAGE_DIR}/source/${PKG_NAME}.sh" "${MAIN_SCRIPT_LOCATION}"
+      cp ${PACKAGE_DIR}/source/*.sh "${MAIN_SCRIPT_LOCATION}"
     else
       cp "${GLOBAL_DIR}/global-run.sh" "${MAIN_SCRIPT_LOCATION}"
       sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${MAIN_SCRIPT_LOCATION}"
