@@ -589,9 +589,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "================================="
   echo ""
 
-  if [[ "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]]; then
+  if [[ "$LEGACY_PORTMASTER" != "true" && "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]] || [[ "$PKG_GLOBAL" == "true" ]]; then
     PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
-  elif [[ "$PKG_LIBRARY" == "true" ]]; then
+  else
     PKG_DEPENDS_CALCULATED="$PKG_DEPENDS"
   fi
 
@@ -667,6 +667,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "PKG_GIT_SHA=\"${PKG_GIT_SHA}\"" >> "${PACKAGE_INFO_LEGACY}"
     echo "PKG_VERSION=\"${PKG_VERSION}\"" >> "${PACKAGE_INFO_LEGACY}"
     echo "PKG_URL=\"${PKG_URL}\"" >> "${PACKAGE_INFO_LEGACY}"
+    echo "PKG_GLOBAL=\"false\"" >> "${PACKAGE_INFO_LEGACY}"
     echo "GET_HANDLER_SUPPORT=\"${GET_HANDLER_SUPPORT}\"" >> "${PACKAGE_INFO_LEGACY}"
 
     cp "${PACKAGE_DIR}/../package.legacy.template" "${PACKAGE_DIR}/package.tmp"
