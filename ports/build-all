@@ -34,7 +34,7 @@ function parse_args() {
         BUILDS="true"
         shift # past argument
         ;;
-      --no-build)
+      --no-build*)
         DO_BUILD="false"
         shift # past argument
         ;;
@@ -88,7 +88,12 @@ for directory in ${DIR}/*/; do
     PKG_LIBRARY=""
     LEGACY_URL_OVERRIDE=""
     LEGACY_PORTMASTER=""
+    BUILD_ALL=""
     source "${directory}/package.info"
+
+    if [[ "${BUILD_ALL}" == "false" ]]; then
+      continue
+    fi
     TO_BUILD="$(basename ${directory})"
     DEFAULT=true
     if [[ "${LEGACY_PORTMASTER_OVERRIDE}" == "true" ]]; then
