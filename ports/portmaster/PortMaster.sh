@@ -100,7 +100,7 @@ echo_err "version: ${CURRENT_VERSION}"
 
 dialog_initialize "PortMaster v$CURRENT_VERSION $EXTRA_INFO"
 
-launch_with_oga_controls "Portmaster.sh"
+launch_with_oga_controls "portmaster"
 
 if ! is_network_connected; then
   dialog_msg "$TITLE" "\nYour network connection doesn't seem to be working. \

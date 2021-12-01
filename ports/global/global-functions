@@ -238,7 +238,7 @@ function get_console() {
   local console="/dev/tty0"
 
   #Allows someone to override the console manually.  Ex: export CONSOLE=/dev/stdout
-  if [[ -n "${CONSOLE}" ]]; then
+  if [[ -n "${CONSOLE:-}" ]]; then
     console="${CONSOLE}"
   elif [[ "ubuntu" == "${os}" || "unknown" == "${os}" || "mac" == "${os}" ]]; then
     console="/dev/stdout"
