@@ -282,9 +282,22 @@ jobs:
             echo "::set-output name=token::${default_token}"
             echo "using default"
           fi
-      - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
+      - name: "Publish release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
         if: github.event_name == 'workflow_dispatch'
+        with:
+          tag: "${{needs.build-base-images.outputs.date}}"
+          allowUpdates: true
+          draft: false
+          prerelease: false
+          token: ${{ steps.token.outputs.token }}
+          omitBodyDuringUpdate: true
+          replacesArtifacts: false
+          omitNameDuringUpdate: true
+
+      - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
+        uses: ncipollo/release-action@v1
+        if: github.event_name == 'push'
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
           allowUpdates: true
