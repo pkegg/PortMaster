@@ -217,7 +217,7 @@ function get_directory_git_hash() {
         continue
       fi
       echo_err "dep: ${dep}" 
-      echo -e "$(get_directory_git_hash "../$dep" "false")"
+      echo -e "$(get_directory_git_hash "../$dep" "true")"
     done
   fi
 
@@ -587,9 +587,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   source "${PACKAGE_DIR}/package.info"
   echo "Building: ${PACKAGE}"
   echo "================================="
-  echo ""
-
-  if [[ "$LEGACY_PORTMASTER" != "true" && "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]] || [[ "$PKG_GLOBAL" == "true" ]]; then
+  echo "pkg depends: ${PKG_DEPENDS}"
+  if [[ "$LEGACY_PORTMASTER" != "true" && "$PACKAGE" != "global" && "$PKG_GLOBAL" != "false" && "$PKG_LIBRARY" != "true" ]] || [[ "$PKG_LIBRARY" != "true" && "$PKG_GLOBAL" == "true" ]]; then
     PKG_DEPENDS_CALCULATED="global, $PKG_DEPENDS"
   else
     PKG_DEPENDS_CALCULATED="$PKG_DEPENDS"
