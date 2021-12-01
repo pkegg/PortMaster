@@ -57,14 +57,27 @@ echo_err "OS: ${OS} ROMS_DIR: ${ROMS_DIR} TOOLS_DIR: ${TOOLS_DIR} CONSOLE: ${CON
 if [[ -z "${LEGACY:-}" ]]; then
   LEGACY="false"
 fi
+if [[ -z "${PRERELEASE:-}" ]]; then
+  PRERELEASE="false"
+fi
 
 WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/latest/download/"
+EXTRA_INFO="(${GITHUB_ORG})"
+WEBSITE_IN_CHINA="${WEBSITE}"
 
-if [[ "${LEGACY}" == "true" ]]; then
+#PRERELEASE mode checks for the latest prerelease/release
+if [[ "${PRERELEASE}" == "true" ]]; then
+  LATEST_TAG=$(wget -O- "https://api.github.com/repos/${GITHUB_ORG}/PortMaster/releases?per_page=1&page=1&draft=false" |grep tag_name | sed 's|.*: "||g' | sed 's|",$||g')
+  WEBSITE="https://github.com/${GITHUB_ORG}/PortMaster/releases/download/${LATEST_TAG}/"
+  WEBSITE_IN_CHINA="${WEBSITE}"
+  EXTRA_INFO="(${GITHUB_ORG} prerelease: ${LATEST_TAG})"
+
+#LEGACY mode downloads zips from root of repo
+elif [[ "${LEGACY}" == "true" ]]; then
   WEBSITE="https://raw.githubusercontent.com/${GITHUB_ORG}/PortMaster/main/"
   WEBSITE_IN_CHINA="http://139.196.213.206/arkos/ports/"
-else
-  WEBSITE_IN_CHINA="${WEBSITE}"
+  EXTRA_INFO="(${GITHUB_ORG} legacy mode)"
+
 fi
 
 if [ "${OS}" == "351ELEC" ]; then
@@ -85,7 +98,7 @@ fi
 CURRENT_VERSION="$(curl "file://$VERSION_FILE")"
 echo_err "version: ${CURRENT_VERSION}"
 
-dialog_initialize "PortMaster v$CURRENT_VERSION"
+dialog_initialize "PortMaster v$CURRENT_VERSION $EXTRA_INFO"
 
 launch_with_oga_controls "Portmaster.sh"
 
@@ -100,7 +113,7 @@ if [[ "$(in_china)" == "true" ]]; then
   WEBSITE="${WEBSITE_IN_CHINA}"
 fi
 
-dialog_clear
+#dialog_clear
 
 
 function UpdateCheck() {
@@ -191,10 +204,10 @@ Cleanup() {
   set +e
 
   echo_err "removing ports.md"
-  $ESUDO rm -f ${PORTMASTER_TMP}/portmaster/ports.md
+  #$ESUDO rm -f ${PORTMASTER_TMP}/portmaster/ports.md
 
   echo_err "done"
-  dialog_clear
+  #dialog_clear
 }
 
 MainMenu() {
