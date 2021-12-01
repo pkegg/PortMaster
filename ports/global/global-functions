@@ -236,7 +236,11 @@ function get_console() {
   local os
   os=$(get_os)
   local console="/dev/tty0"
-  if [[ "ubuntu" == "${os}" || "unknown" == "${os}" || "mac" == "${os}" ]]; then
+
+  #Allows someone to override the console manually.  Ex: export CONSOLE=/dev/stdout
+  if [[ -n "${CONSOLE}" ]]; then
+    console="${CONSOLE}"
+  elif [[ "ubuntu" == "${os}" || "unknown" == "${os}" || "mac" == "${os}" ]]; then
     console="/dev/stdout"
   fi
   echo "${console}"
