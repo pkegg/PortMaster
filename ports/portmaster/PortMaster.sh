@@ -76,8 +76,13 @@ initialize_permissions
 if [ ! -d "${PORTMASTER_TMP}/portmaster" ]; then
   $ESUDO mkdir ${PORTMASTER_TMP}/portmaster
 fi
+VERSION_FILE="${DIR}/version"
+if [[ ! -f "${VERSION_FILE}" ]]; then
+  #This is just to run directly from source control
+  VERSION_FILE="${DIR}/../../version"
+fi
 
-CURRENT_VERSION="$(curl "file://$(realpath "${DIR}")/version")"
+CURRENT_VERSION="$(curl "file://$VERSION_FILE")"
 echo_err "version: ${CURRENT_VERSION}"
 
 dialog_initialize "PortMaster v$CURRENT_VERSION"
