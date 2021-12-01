@@ -63,7 +63,7 @@ function get_device() {
 function get_oga_device() {
   local device
   device="$(get_device)"
-  if [[ "${device}" == "rg351v" || "${device}" == "rg351v" ]]; then
+  if [[ "${device}" == "rg351p" || "${device}" == "rg351v" ]]; then
     device="anbernic"
   elif [[ "${device}" == "rg351mp" ]]; then
     device="ogs"
