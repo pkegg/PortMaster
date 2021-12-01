@@ -42,7 +42,7 @@ jobs:
       date: ${{ steps.date.outputs.date }}
     steps:
       - uses: hmarr/debug-action@v2
-        name: "debug: ${{github.event_name}}-${{ github.event.pull_request.number }}"
+        name: "debug: ${{github.event_name}}${{ github.event.pull_request.number }}"
       - name: Checkout
         run: |
           REPO="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
@@ -52,9 +52,14 @@ jobs:
           else
             git checkout
           fi
-      - name: Get date for artifacts
+      - name: Get release name for artifacts
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
+        run: |
+          if [[ "${{github.event_name}}" == "push" ]]; then
+            echo "::set-output name=date::dev"
+          else
+            echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
+          fi
       - name: Get token
         id: token
         run: | 
@@ -97,7 +102,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Publish draft pre-release."
         uses: ncipollo/release-action@v1
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' or github.event_name == 'push'
         with:
           tag: "${{steps.date.outputs.date}}"
           name: "${{steps.date.outputs.date}}"
@@ -164,7 +169,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' or github.event_name == 'push'
 
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
@@ -178,7 +183,7 @@ jobs:
           artifacts: "release/*.zip, release/*.git.info"
       - name: PR artifacts
         uses: actions/upload-artifact@v2
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' and github.event_name != 'workflow_dispatch' 
         with:
           name: legacy-ports
           path: |
@@ -237,7 +242,7 @@ jobs:
             GITHUB_TOKEN: ${{ steps.token.outputs.token }}
       - name: "Update pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' or github.event_name == 'push'
         with:
           tag: "${{needs.build-base-images.outputs.date}}"
           allowUpdates: true
@@ -250,7 +255,7 @@ jobs:
           artifacts: "release/*.zip, release/*.git.info"
       - name: PR artifacts
         uses: actions/upload-artifact@v2
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' and github.event_name != 'push' 
         with:
           name: ${{ matrix.package }}
           path: |
