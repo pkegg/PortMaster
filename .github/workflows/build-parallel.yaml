@@ -112,6 +112,7 @@ jobs:
           token: ${{ steps.token.outputs.token }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
+          replacesArtifacts: true
           artifacts: "ports.md, release/*.git.info, release/*.zip, version"
 
   legacy:
@@ -179,7 +180,7 @@ jobs:
           token: "${{ steps.token.outputs.token }}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
-          replacesArtifacts: false
+          replacesArtifacts: true
           artifacts: "release/*.zip, release/*.git.info"
       - name: PR artifacts
         uses: actions/upload-artifact@v2
@@ -251,7 +252,7 @@ jobs:
           token: "${{ steps.token.outputs.token }}"
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
-          replacesArtifacts: false
+          replacesArtifacts: true
           artifacts: "release/*.zip, release/*.git.info"
       - name: PR artifacts
         uses: actions/upload-artifact@v2
