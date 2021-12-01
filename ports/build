@@ -9,7 +9,7 @@ BRANCH="${GITHUB_BRANCH}"
 IMAGE_BASE=ghcr.io/${GITHUB_ORG}/portmaster
 CACHE_FROM="$BRANCH"
 # Update things for Pull requests
-if [[ "$GITHUB_EVENT_NAME" == "pull_request_target" && -n "$GITHUB_BASE_REF" && -n "$GITHUB_REF_NAME" ]] ; then
+if [[ "${GITHUB_EVENT_NAME:-}" == "pull_request_target" && -n "$GITHUB_BASE_REF" && -n "$GITHUB_REF_NAME" ]] ; then
   PR_NUM=$(echo $GITHUB_REF_NAME | sed 's|/.*||g')
   BRANCH="pr-${PR_NUM}"
   CACHE_FROM="$GITHUB_BASE_REF"
