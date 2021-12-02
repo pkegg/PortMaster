@@ -6,8 +6,12 @@ if ! which docker &> /dev/null; then
 fi
 
 if ! groups | grep -q docker; then
+  echo "adding docker group to this user" 
   sudo usermod -aG docker $USER
-  newgrp docker
+  echo "attempting to ensure group permissions are active"
+  if ! newgrp docker; then
+    newgrp docker
+  fi
 fi  
 
 if ! docker ps -q &> /dev/null; then
