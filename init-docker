@@ -1,5 +1,5 @@
 #! /bin/bash
-
+set -e
 if ! which docker &> /dev/null; then
   echo "Please install docker.  It is suggested to install docker from https://docs.docker.com/engine/install/"
   exit 1
@@ -18,7 +18,7 @@ if ! docker buildx &> /dev/null; then
      echo "please install curl"
      exit 1
   fi
-  CLI_PLUGIN_DIR="$(realpath ~/.docker/cli-plugins)"
+  CLI_PLUGIN_DIR="$(realpath ~/)/.docker/cli-plugins"
   BUILDX_BIN="${CLI_PLUGIN_DIR}/docker-buildx"
 
   mkdir -p ${CLI_PLUGIN_DIR}
