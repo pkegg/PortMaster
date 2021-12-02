@@ -740,12 +740,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       fi
 
     fi
-    releases_url="releases?per_page=10&page=1"
+    releases_url="releases?per_page=20&page=1"
     echo "getting: ${releases_url}"
     PKG_ZIP_NAME_OVERRIDE_GITHUB="$(echo ${PKG_ZIP_NAME_OVERRIDE} | sed 's/ /./g')"
     echo "looking for asset: $PKG_ZIP_NAME_OVERRIDE_GITHUB"
 
-    attempts=5
+    attempts=20
     attempt=0
     releases_raw="$(github_api "${releases_url}")"
     while [ "$attempt" -lt "$attempts" ]; do
