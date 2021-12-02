@@ -709,8 +709,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
     if ! which jq &>/dev/null ; then
       echo "jq is required.  Attempting install..."
-      sudo apt update
-      sudo apt install -y jq
+      if [[ ${OSTYPE:-} == 'darwin'* ]]; then
+        brew install jq
+      else
+        sudo apt update
+        sudo apt install -y jq
+      fi
+
     fi
     releases_url="releases?per_page=10&page=1"
     echo "getting: ${releases_url}"
@@ -850,14 +855,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     elif [[ "${PKG_LIBRARY}" == "true" ]]; then
       echo "Not creating a main: ${PKG_NAME}.sh script as PKG_LIBRARY=true"
     elif [[ -f "${PACKAGE_DIR}/run-legacy" ]]; then
-      echo "run-legacy"
+      echo "Utilizing run-legacy for main script"
       cp "${PACKAGE_DIR}/run-legacy" "${MAIN_SCRIPT_LOCATION}"
     elif [[ "${LEGACY_PORTMASTER}"  == "true" \
            && ! -f "${PACKAGE_DIR}/run" ]]; then
-      echo "legacy portmaster"
+      echo "Utilizing existing (legacy) .sh script"
       cp ${PACKAGE_DIR}/source/*.sh "${MAIN_SCRIPT_LOCATION}"
     else
-      echo "global run"
+      echo "Utilizing standard run script"
       cp "${GLOBAL_DIR}/global-run.sh" "${MAIN_SCRIPT_LOCATION}"
       sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${MAIN_SCRIPT_LOCATION}"
       rm -f "${MAIN_SCRIPT_LOCATION}.bak"
