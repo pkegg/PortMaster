@@ -8,10 +8,10 @@ fi
 if ! groups | grep -q docker; then
   echo "adding docker group to this user" 
   sudo usermod -aG docker $USER
-  echo "attempting to ensure group permissions are active"
-  if ! newgrp docker; then
-    newgrp docker
-  fi
+  echo "Added 'docker' group to this user"
+  echo "ERROR: You must re-login or run: newgrp docker"
+  echo "  Then rerun this script"
+  exit 1
 fi  
 
 if ! docker ps -q &> /dev/null; then
