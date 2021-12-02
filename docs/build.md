@@ -1,7 +1,14 @@
-# tldr; - build a port
+# tldr; - build a port - docker
 - install [docker](https://docs.docker.com/get-docker/) on linux/mac/wsl2.
-- check install with: `./init-docker`
-- `./build <port name>`
+  - `apt-get install docker.io` works on Ubuntu 20.04+ on linux.
+- check/update docker permisssions/plugins with: `./init-docker`
+- build a port: `./build <port name>`
+  - Ex (these are implemented as 'real' builds): `2048`, `cdogs`, `hcl`, `portmaster`
+- Find the output zip under `./release/<PKG_NAME>.zip`
+
+# tldr; - build a port - Christian's VM (arm64 chroot)
+- run `./ports/install-deps` to install dependencies into chroot  
+- build a port. Ex:  `./build cdogs --install-deps --no-docker`
 - Find the output zip under `./release/<PKG_NAME>.zip`
 
 # Build Scripts Overview
