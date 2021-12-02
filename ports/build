@@ -710,7 +710,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if ! which jq &>/dev/null ; then
       echo "jq is required.  Attempting install..."
       if [[ ${OSTYPE:-} == 'darwin'* ]]; then
-        brew install jq
+        if ! brew install jq; then
+          echo "Could not install jq.  Please install it!"
+          exit 1
+        fi
       else
         sudo apt update
         sudo apt install -y jq
@@ -846,7 +849,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   if [[ "${NO_RELEASE_ZIP}" == "false" ]]; then
     echo "Preparing release zip..."
-    set -x
     mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
 
     MAIN_SCRIPT_LOCATION="${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
