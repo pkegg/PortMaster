@@ -841,7 +841,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   if [[ "${NO_RELEASE_ZIP}" == "false" ]]; then
     echo "Preparing release zip..."
-  
+    set -x
     mkdir -p "${RELEASE_DIR:?}/${PKG_NAME}/"
 
     MAIN_SCRIPT_LOCATION="${RELEASE_DIR}/${PKG_NAME}/${PKG_NAME}.sh"
@@ -850,17 +850,20 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     elif [[ "${PKG_LIBRARY}" == "true" ]]; then
       echo "Not creating a main: ${PKG_NAME}.sh script as PKG_LIBRARY=true"
     elif [[ -f "${PACKAGE_DIR}/run-legacy" ]]; then
+      echo "run-legacy"
       cp "${PACKAGE_DIR}/run-legacy" "${MAIN_SCRIPT_LOCATION}"
     elif [[ "${LEGACY_PORTMASTER}"  == "true" \
            && ! -f "${PACKAGE_DIR}/run" ]]; then
+      echo "legacy portmaster"
       cp ${PACKAGE_DIR}/source/*.sh "${MAIN_SCRIPT_LOCATION}"
     else
+      echo "global run"
       cp "${GLOBAL_DIR}/global-run.sh" "${MAIN_SCRIPT_LOCATION}"
       sed -i.bak "s/__PACKAGE__/${PACKAGE}/g" "${MAIN_SCRIPT_LOCATION}"
       rm -f "${MAIN_SCRIPT_LOCATION}.bak"
     fi
-  
-    cp -r "./" "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
+    echo "copying to package"
+    cp -R ./ "${RELEASE_DIR}/${PKG_NAME}/${PKG_DIRECTORY}"
     popd &> /dev/null
   
     pushd "${RELEASE_DIR}/${PKG_NAME}" &> /dev/null || exit 1
