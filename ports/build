@@ -479,13 +479,23 @@ function parse_args() {
   PACKAGE=""
   PACKAGE_DIR=""
   BUILD_SHELL=""
-
+  CLEAN=""
+  FORCE_PLATFORM=""
   # Parse args
   ARGS=()
   while [[ $# -gt 0 ]]; do
     key="$1"
   
     case $key in
+      --clean)
+        CLEAN=true
+        shift # past argument
+        ;;
+      --force-platform)
+        FORCE_PLATFORM="$2"
+        shift # past argument
+        shift # past value
+        ;;
       --shell)
         BUILD_SHELL=true
         NO_BUILD_CACHE=true
@@ -526,6 +536,8 @@ function parse_args() {
         ;;
       -h|--help)
         echo "$0 <package> [arguments]"
+        echo "  --clean - Run ./clean before building"
+        echo "  --force-platform - Builds a package on a different platform than specified in ports.info.  This typically is only for testing can can break builds.  Options: linux/amd64, linux/arm/v7, linux/arm64/v8"
         echo "  --shell - Instead of running the packages 'build' script, launch a shell for debugging.  Implies '--no-build-deps and --no-build-cache'"
         echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
         echo "  --no-build-cache - Always rebuilds packages and does not check for a pre-build zip.  Disables --remote-build-cache if both are passed"
@@ -608,6 +620,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       $0 "$dep" ${ARGS_COPY[@]} --no-release-zip
     fi
   done
+
+  if [[ -n "${FORCE_PLATFORM}" ]]; then
+    BUILD_PLATFORM="${FORCE_PLATFORM}"
+  fi
+  if [[ "$CLEAN" == "true" ]]; then
+    echo "cleaning..."
+    $DIR/clean ${PACKAGE}
+  fi
 
   GITHUB_AUTH=""
   if [[ -n "${GITHUB_TOKEN}" ]]; then
