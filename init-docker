@@ -5,18 +5,29 @@ if ! which docker &> /dev/null; then
   exit 1
 fi
 
+if ! groups | grep -q docker; then
+  sudo usermod -aG docker $USER
+  newgrp docker
+fi  
+
 if ! docker ps -q &> /dev/null; then
+  echo "Something seems wrong.  This command does not work: docker ps"
   echo "Please ensure that you can access docker without sudo"
-  echo "You may need to follow the instructions here (and reboot): https://docs.docker.com/engine/install/linux-postinstall/"
+  echo "You may need to follow the instructions here (and reboot) or start docker service: https://docs.docker.com/engine/install/linux-postinstall/"
   exit 1
 fi
 BUILDX_RELEASE=v0.7.0
 
 if ! docker buildx &> /dev/null; then
   if ! which curl &> /dev/null; then
-     echo "curl is required to install buildx" 
-     echo "please install curl"
-     exit 1
+     if which apt &> /dev/null; then
+       sudo apt update
+       sudo apt install curl -y
+     else
+       echo "curl is required to install buildx" 
+       echo "please install curl"
+       exit 1
+     fi
   fi
   CLI_PLUGIN_DIR="$(realpath ~/)/.docker/cli-plugins"
   BUILDX_BIN="${CLI_PLUGIN_DIR}/docker-buildx"
