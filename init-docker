@@ -1,8 +1,14 @@
 #! /bin/bash
 set -e
 if ! which docker &> /dev/null; then
-  echo "Please install docker.  It is suggested to install docker from https://docs.docker.com/engine/install/"
+  if which apt &> /dev/null; then
+    echo "Attempting to install docker.  If you do not want this.  Install manually from https://docs.docker.com/engine/install/"
+    sudo apt update
+    sudo apt install docker.io -y
+  else
+    echo "Please install docker.  It is suggested to install docker from https://docs.docker.com/engine/install/"
   exit 1
+  fi
 fi
 
 if ! groups | grep -q docker; then
@@ -25,6 +31,7 @@ BUILDX_RELEASE=v0.7.0
 if ! docker buildx &> /dev/null; then
   if ! which curl &> /dev/null; then
      if which apt &> /dev/null; then
+       echo "Installing curl..."
        sudo apt update
        sudo apt install curl -y
      else
