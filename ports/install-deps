@@ -42,7 +42,9 @@ apt-get -y install build-essential \
            ccache \
            libpsl5 \
            libpcre2-8-0 \
-           jq
+           jq \
+           libegl-mesa0 \
+           libegl1
 
 # test dependencies (if we decide to separate them later)
 apt-get -y install \
