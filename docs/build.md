@@ -2,7 +2,7 @@
 - Install [docker](https://docs.docker.com/get-docker/) on linux/mac/wsl2.
   - `apt-get install docker.io` works on Ubuntu 20.04+ on linux.
 - Check/update docker permisssions/plugins with: `./init-docker`
-- Build a port: `./build <port name>`
+- Build a port: `./build <port name>`.  See the [ports](../ports/) directory for all ports.
   - Ex (these are implemented as 'real' builds): `2048`, `cdogs`, `hcl`, `portmaster`.  See `./build --help` for all options.
 - Find the output zip under `./release/<PKG_NAME>.zip`
 
