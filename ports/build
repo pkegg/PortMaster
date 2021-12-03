@@ -464,6 +464,12 @@ function package_port() {
         env | grep -E "$ENV_OPTIONS" | grep "=" > .env
         ${SUDO} ${DOCKER_CMD} run --platform ${PACKAGE_PLATFORM} ${INTERACTIVE} --env-file .env --rm --user ${UID}:"${GID}" -v "$(realpath ${PACKAGE_DIR}/../..):${DOCKER_WORK_DIR}" -w "${DOCKER_WORK_DIR}/ports/${PACKAGE}" ${DOCKER_IMAGE} bash -e ${PACKAGE_SCRIPT}
     fi
+
+    if [[ -z "$(ls -A "${PACKAGE_DIR}/pkg")" ]]; then
+      echo_err "ERROR: Package dir: ${PACKAGE_DIR}/pkg is empty."
+      echo_err "   Something must be copied to the ./pkg folder.  This is a coding error"
+      exit 1
+    fi
   fi
   popd &> /dev/null
 
@@ -922,7 +928,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   
     pushd "${RELEASE_DIR}/${PKG_NAME}" &> /dev/null || exit 1
     echo "Zipping..."
-    zip -FSqr "${ZIP_FILE}" .
+    zip -FSr "${ZIP_FILE}" .
     popd &> /dev/null
   fi
 
