@@ -561,14 +561,13 @@ function parse_args() {
         shift # past argument
         ;;
       -h|--help)
-        echo "$0 <package> [arguments]"
+      echo "$0 <package> [arguments]"
         echo "  --clean - Run ./clean before building"
-        echo "  --force-platform - Builds a package on a different platform than specified in ports.info.  This typically is only for testing can can break builds.  Options: linux/amd64, linux/arm/v7, linux/arm64/v8"
+        echo "  --force-platform - Builds a package on a different platform than specified in package.info.  This typically is only for testing can can break builds.  Options: linux/amd64, linux/arm/v7, linux/arm64/v8"
         echo "  --shell - Instead of running the packages 'build' script, launch a shell for debugging.  Implies '--no-build-deps and --no-build-cache'"
-        echo "  --no-docker (-n) - Runs ./build script directly without docker overhead.  For troubleshooting and internal use as part of --docker-image"
+        echo "  --no-docker (-n) - Runs ./build script directly w/o docker.  Used for qemu 'chroot's and building natively (arm64 linux)"
         echo "  --no-build-cache - Always rebuilds packages and does not check for a pre-build zip.  Disables --remote-build-cache if both are passed"
         echo "  --no-build-deps - Don't attempt to build dependencies"
-        echo "  --no-release-zip - Won't create the zip file under release.  Primarily used internally for building libraries"    
         echo "  --install-deps (-d) - Runs the ./install-deps script automatically using 'sudo' if 'sudo' binary exists and the user is not root.  Only needed with --no-docker"
         echo "  --push (-p) - pushes docker images.  Meant for build server"
         echo "  --remote-build-cache - indicates to look for pre-built images in GitHub releases.  Requires setting GITHUB_TOKEN due to high github API usage."
