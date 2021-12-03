@@ -1,16 +1,16 @@
-# tldr; - build a port - docker
+# tl;dr - build a port - docker
 - Install [docker](https://docs.docker.com/get-docker/) on linux/mac/wsl2.
   - `apt-get install docker.io` works on Ubuntu 20.04+ on linux.
 - Check/update docker permisssions/plugins with: `./init-docker`
-- build a port: `./build <port name>`
+- Build a port: `./build <port name>`
   - Ex (these are implemented as 'real' builds): `2048`, `cdogs`, `hcl`, `portmaster`.  See `./build --help` for all options.
 - Find the output zip under `./release/<PKG_NAME>.zip`
 
-# tldr; - build a port - Christian's VM (arm64 chroot)
-- run `./ports/install-deps` to install dependencies into chroot  
-- build a port. Ex:  `./build cdogs --install-deps --no-docker`
+# tl;dr - build a port - Christian's VM (arm64 chroot)
+- Run `./ports/install-deps` to install dependencies into chroot  
+- Build a port. Ex:  `./build cdogs --install-deps --no-docker`
 - Find the output zip under `./release/<PKG_NAME>.zip`
-- 
+
 # Build Goals
 - **Backwards Compatible** - Build must be possible to phase-in builds without disruption (or minimal disruption) to the existing process.
 - **Standardized** - Ports should be built in a standard and repeatable way.
@@ -18,9 +18,9 @@
   -  **Multi-Platform (linux/mac/win)** - Most OS's should work to to build: Linux, Windows (WSL2) and Mac.  Christian's chroots should work.
   -  **Multi-Architecture (amd64/arm/arm64)** - Users can build on/for different architectures (arm, arm64, amd64, etc) without **requiring** cross-compilation.
     - **Allow Cross Compile (but don't require)** - If a porter *wants* to setup cross-compile so compilation is faster on amd64, that should be possible
-- **Automation** - Commits should be built and available to the end user.  'Releases' should be possible from the GitHub UI.
+- **Automation** - Commits should be built and available to the end user.  'Releases' should be possible from the GitHub UI.  All artifacts should be hosted via GitHub.
 - **Deduplication** - Build should support duplication of code from ports (examples: copy `control.txt` into all ports, setup global functions for ports, centralize device detection, deduplicate box86 and other libraries, etc)
-- **Testable** - It should be possible to run automated tests (`bats`) during build and 'run' scripts should be mostly runnable in linux off device.
+- **Testable** - It should be possible to run automated tests (`bats`, etc) during build.
  
 # Build Scripts Overview
 The build uses docker buildx to provide the dependencies and the docker+qemu emulation needed to run builds for arm/arm64 platforms.  Builds are smart enough to only rebuild if changed.  Having a build system means port builds are repeatable, easier to add and and can include common files/dependencies across all ports.
