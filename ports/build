@@ -61,7 +61,8 @@ function github_api() {
   echo -e "${response}"
 }
 function _github_call() {
-  local apiUrl="$GITHUB_API_URL/$1"
+  local apiUrl="$1"
+  local apiFullUrl="$GITHUB_API_URL/$1"
   local accept_header="$2"
   local headers=""
   set +e
@@ -70,7 +71,7 @@ function _github_call() {
   fi
   
   local return_code
-  cache_file="$CACHE_DIR/${apiUrl}"
+  local cache_file="$CACHE_DIR/${apiUrl}"
   cache_dir="$(dirname "$cache_file")"
   mkdir -p "${cache_dir}"
 
@@ -82,9 +83,9 @@ function _github_call() {
     etag="$(_get_header "ETag" "$cache" | sed "s|^.*W/||g" )"
     echo_err "etag: '${etag}'"
   fi
-  echo_err wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q
+  echo_err wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiFullUrl" -q
 
-  output="$(wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiUrl" -q 2>&1 |col -b)"
+  output="$(wget --save-headers ${headers} --header="$GITHUB_AUTH" --header="If-None-Match: \"$etag\"" -O- "$apiFullUrl" -q 2>&1 |col -b)"
 
   response="$(echo -e "${output}" | tail -n +2 | grep -v "^[A-Za-z]" | tail -n +2)"
   return_code="$(_get_return "$output")"
@@ -136,7 +137,7 @@ function github_api_asset_output()
   local repo="PortMaster"
   local url="releases/assets/${asset_id}"
   local apiUrl="${org}/${repo}/${url}"
-  
+  local cache_file
   cache_file="$CACHE_DIR/${apiUrl}"
   cache=""
   if [[ -f "$cache_file" ]]; then
@@ -163,7 +164,7 @@ function github_api_asset_download()
   local repo="PortMaster"
   local url="releases/assets/${asset_id}"
   local apiUrl="${org}/${repo}/${url}"
-  cache_file="$CACHE_DIR/${apiUrl}"
+  local cache_file="$CACHE_DIR/${apiUrl}"
   cache=""
   if [[ -f "$cache_file" ]]; then
     cache="$(cat "$cache_file" |col -b )"
