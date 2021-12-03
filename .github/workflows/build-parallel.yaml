@@ -7,11 +7,13 @@ on:
     paths-ignore:
       - 'README.md'
       - 'docs/**'
+      - '.github/**'
   pull_request_target:
     # We don't need to run builds when these files change
     paths-ignore:
       - 'README.md'
       - 'docs/**'
+      - '.github/**'
     branches:
       - main
     types: [opened, synchronize]
