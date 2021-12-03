@@ -16,4 +16,6 @@ jobs:
         name: "debug: ${{github.event_name}}${{ github.event.pull_request.number }}"
       - name: Test
         run: |
-          sshpass -p "${{ secrets.CHINA_PASS }}" ssh -oStrictHostKeyChecking=no pkegg@139.196.213.206 bash -c "'echo I am here' > .githubtest && cat .githubtest && ls -lah"
+          sshpass -p "${{ secrets.CHINA_PASS }}" \
+            ssh -oStrictHostKeyChecking=no pkegg@139.196.213.206 bash \
+            -c "'echo I am here on github' > .githubtest && cat .githubtest && curl http://139.196.213.206/arkos/ports/.githubtest 2>&1"
