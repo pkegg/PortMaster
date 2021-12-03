@@ -1,2 +1,3 @@
 PKG_NAME="RigelEngine"
+PKG_DIRECTORY_OVERRIDE="RigelEngine"
 LEGACY_PORTMASTER="true"
