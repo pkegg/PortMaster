@@ -9,6 +9,8 @@ for directory in ${DIR}/*/; do
     if [[ -z "${PKG_URL}" ]]; then
       continue
     fi
+
+
     if [[ -n "${GET_HANDLER_SUPPORT}" && "${GET_HANDLER_SUPPORT}" != "git" ]]; then
       echo "Cannot bump version in: ${file}.  Only GET_HANDLER_SUPPORT=git supported."
       continue
@@ -19,9 +21,24 @@ for directory in ${DIR}/*/; do
     
     UPS_VERSION=$(git ls-remote ${PKG_URL} | grep "${GIT_HEAD}$" | awk '{ print substr($1,1,40) }')
     if [[ -n "$UPS_VERSION" ]]; then
-      if [[ "${PKG_VERSION}" != "${UPS_VERSION}" ]]; then
+        pinned_comment=$(grep "^PKG_VERSION=.*#[ ]*pinned:" ${file} | sed 's|.*#[ ]*pinned*||g';)
+    
+      if [[ -n "$pinned_comment" ]]; then
+        echo "Package: $(basename $directory) pinned to version: ${PKG_VERSION}"
+        echo "  Package URL: ${PKG_URL}"
+        echo "  Comment${pinned_comment}"
+        
+        if [[ "${PKG_VERSION}" == "${UPS_VERSION}" ]]; then
+          UPS_VERSION=""
+        fi
+        echo "  New Version: ${UPS_VERSION}"
+        echo ""
+      elif [[ "${PKG_VERSION}" != "${UPS_VERSION}" ]]; then
+        
         sed -i "s/PKG_VERSION=.*/PKG_VERSION=\"${UPS_VERSION}\"/" "$file"
-        echo "updated package: ${pkg} version: $UPS_VERSION old version: ${PKG_VERSION}"
+        echo "Updated package: ${pkg}"
+        echo "  version: $UPS_VERSION old version: ${PKG_VERSION}"
+        echo ""
       fi
     fi
     UPS_VERSION=""
