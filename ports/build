@@ -780,7 +780,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       asset_id_git_info=$(echo -e "${releases_raw}" | jq ".[]| select(.id == ${release_id_git_info}) | .assets[] | select(.name==\"${PKG_ZIP_NAME_OVERRIDE_GITHUB}.git.info\") | .id" | xargs )
       echo "release: $release_id_git_info asset_id_zip: $asset_id_zip asset_id_git_info: $asset_id_git_info"
       echo "git info: $(echo -e "$asset_id_git_info")"
-      previou
+
       if [[ -n "$asset_id_zip" && -n "$asset_id_git_info" ]]; then
         set +e
         RELEASE_GIT_INFO_REMOTE=$(github_api_asset_output "${asset_id_git_info}")
