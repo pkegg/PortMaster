@@ -1,0 +1,21 @@
+name: test-connectivity
+
+on:
+  workflow_dispatch:
+
+concurrency: 
+  group: china-sync
+  cancel-in-progress: true #only 1 sync at a time
+
+jobs:
+  build-base-images:
+    name: Test china connectivity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hmarr/debug-action@v2
+        name: "debug: ${{github.event_name}}${{ github.event.pull_request.number }}"
+      - name: Test
+        run: |
+          apt-get update
+          apt-get install sshpass
+          sshpass -p "${{ secrets.CHINA_PASS }}" ssh pkegg@139.196.213.206 bash -c "'echo I am here' > .githubtest && cat .githubtest && ls -lah"
