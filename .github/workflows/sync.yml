@@ -70,7 +70,6 @@ jobs:
           fi
       - name: "Publish pre-release: ${{needs.build-base-images.outputs.date}}"
         uses: ncipollo/release-action@v1
-        if: github.event_name == 'push'
         with:
           tag: "${{steps.date.outputs.date}}"
           allowUpdates: true
