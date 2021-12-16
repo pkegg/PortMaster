@@ -47,6 +47,7 @@ jobs:
           fileName: "*"
           
       - name: rsync files
+        if: steps.sync.outputs.sync == "true"
         run: |
           rsync_user="${{ secrets.RSYNC_USER }}"
           rsync_password='${{ secrets.RSYNC_PASSWORD }}'
