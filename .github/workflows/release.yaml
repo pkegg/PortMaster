@@ -1,0 +1,47 @@
+name: release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency: 
+  group: release # only 1 release at a time
+
+jobs:
+  build:
+    env:
+      LARGE_FILE_REPOSITORY: "pkegg/PortMaster-Hosting"
+      LARGE_FILE_TAG: "large-files"
+      
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: hmarr/debug-action@v2
+        name: "debug: ${{github.event_name}}"
+     
+      - uses: actions/checkout@v2
+ 
+      - uses: robinraju/release-downloader@v1.2
+        with:
+          repository: "${{env.LARGE_FILE_REPOSITORY}}"
+          tag: "${{env.LARGE_FILE_TAG}}"
+          fileName: "*"
+      - name: Get release name for artifacts
+        id: date
+        run: |
+          if [[ "${{github.event_name}}" == "push" ]]; then
+            echo "::set-output name=date::dev-$(date +'%Y-%m-%d_%H%M')"
+          else
+            echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M')"
+          fi
+      - name: "Publish release: ${{needs.build-base-images.outputs.date}}"
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "${{steps.date.outputs.date}}"
+          allowUpdates: true
+          draft: false
+          prerelease: false
+          replacesArtifacts: false
+          omitNameDuringUpdate: true
+          artifacts: "ports.md, *.zip, version"
